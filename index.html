@@ -18,7 +18,7 @@
         import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
-		const firebaseConfig = {
+		const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
 			authDomain: "salesonwheels-f6eec.firebaseapp.com",
 			projectId: "salesonwheels-f6eec",
@@ -26,7 +26,8 @@
             messagingSenderId: "432785821226",
             appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
 			};
-
+			
+			
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -238,6 +239,8 @@
                         <span id="current-user-display" class="text-xs bg-blue-700 dark:bg-gray-700 px-2 py-0.5 rounded-full text-blue-100 opacity-0 transition-opacity">Driver</span>
                         <div id="sync-status" class="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Online"></div>
                     </div>
+                    <!-- Restored Date Header -->
+                    <p id="current-date-header" class="text-xs text-blue-200 dark:text-gray-400 mt-1"></p>
                 </div>
                 <button onclick="toggleTheme()" class="p-1 rounded-full hover:bg-white/20 transition">
                     <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
@@ -480,7 +483,7 @@
         
         let currentUser = null;
         let unsubscribeSnapshot = null;
-        let unsubscribeProfile = null; // New: Listen for approval status
+        let unsubscribeProfile = null; 
         let chartInstance = null;
         let hourlyChartInstance = null;
 
@@ -491,17 +494,21 @@
                 if (user) {
                     currentUser = user;
                     
-                    // Update User Info UI
+                    // CRITICAL FIX: Immediately hide Login and Show Pending status
+                    // This prevents "flicker" or getting stuck on login while DB loads
+                    document.getElementById('login-modal').classList.add('hidden');
+                    document.getElementById('approval-modal').classList.remove('hidden');
+
+                    // Update UI Info
                     const name = user.displayName || user.email.split('@')[0];
                     document.getElementById('profile-email').innerText = user.email;
                     document.getElementById('profile-name').innerText = name;
                     document.getElementById('profile-initial').innerText = name.charAt(0).toUpperCase();
                     document.getElementById('current-user-display').innerText = name;
 
-                    // 1. Check/Create User Profile (for approval status)
+                    // 1. Check/Create User Profile
                     const profileRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'profile');
                     
-                    // Listen to profile changes real-time (Autoswitch when approved)
                     if (unsubscribeProfile) unsubscribeProfile();
                     unsubscribeProfile = window.onSnapshot(profileRef, async (snap) => {
                         let status = 'pending';
@@ -532,7 +539,7 @@
                             // Start Data Sync if not already started
                             if (!unsubscribeSnapshot) startSync(user.uid);
                         } else {
-                            // Block Access
+                            // Block Access - Keep Approval Modal Visible
                             document.getElementById('login-modal').classList.add('hidden');
                             document.getElementById('approval-modal').classList.remove('hidden');
                         }
@@ -554,8 +561,8 @@
 
         window.handleGoogleLogin = async function() {
             try {
+                // Show feedback during pop-up
                 await window.signInWithPopup(window.auth, window.googleProvider);
-                // Auth listener handles the rest
             } catch (error) {
                 console.error(error);
                 showToast("Google Sign-In Failed: " + error.message);
@@ -618,8 +625,6 @@
                 const user = userCredential.user;
 
                 await updateProfile(user, { displayName: name });
-                // Note: The auth listener will detect the login and create the firestore profile with 'pending' status
-
                 showToast("Account created! Waiting for approval.");
             } catch (error) {
                 console.error(error);
