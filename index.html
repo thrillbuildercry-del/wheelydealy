@@ -17,8 +17,10 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
-		const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // --- CONFIGURATION START ---
+        // PASTE YOUR FIREBASE CONFIG HERE FROM THE CONSOLE
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
 			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
 			authDomain: "salesonwheels-f6eec.firebaseapp.com",
 			projectId: "salesonwheels-f6eec",
@@ -26,8 +28,10 @@
             messagingSenderId: "432785821226",
             appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
 			};
+		 const appId = "sales-tracker-v1"; 	
 			
-			
+        // --- CONFIGURATION END ---
+
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -88,7 +92,7 @@
             border-radius: 8px;
             padding: 12px;
             position: fixed;
-            z-index: 60;
+            z-index: 200; /* HIGH PRIORITY: Ensures errors show ON TOP of login modal */
             left: 50%;
             bottom: 80px;
             transform: translateX(-50%);
