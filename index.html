@@ -35,6 +35,14 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200">
 
+    <!-- Loading Overlay (New) -->
+    <div id="loading-overlay" class="modal-overlay hidden z-[150]">
+        <div class="text-white flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+            <p>Loading Profile...</p>
+        </div>
+    </div>
+
     <!-- Auth Modal -->
     <div id="login-modal" class="modal-overlay">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm overflow-y-auto max-h-[90vh]">
@@ -55,16 +63,18 @@
         </div>
     </div>
 
-    <!-- Approval Pending Modal -->
+    <!-- Approval Pending / Error Modal -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
             <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
                 <i data-lucide="clock" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-bold dark:text-white">Approval Pending</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Contact the Boss to approve your account.</p>
-            <div class="animate-pulse text-xs text-blue-500 mb-6">Waiting for authorization...</div>
-            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
+            <h2 class="text-2xl font-bold dark:text-white">Status Check</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">
+                Your account is waiting for approval, or we couldn't load your profile.
+            </p>
+            <div class="animate-pulse text-xs text-blue-500 mb-6">If you are stuck, try signing out.</div>
+            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out / Reset</button>
         </div>
     </div>
 
@@ -335,23 +345,29 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+                // Show Loading Overlay
                 document.getElementById('login-modal').classList.add('hidden');
+                document.getElementById('loading-overlay').classList.remove('hidden');
                 
                 // 1. Get/Create Profile & Check Role
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
+                
+                // Add explicit error handler to this snapshot listener
                 unsubProfile = onSnapshot(profileRef, async (snap) => {
                     let role = 'driver';
                     let status = 'pending';
                     
                     if (!snap.exists()) {
                         // Create New Profile
-                        await setDoc(profileRef, {
-                            name: user.displayName || user.email, 
-                            email: user.email, 
-                            role: 'driver', 
-                            status: 'pending', 
-                            createdAt: Date.now()
-                        });
+                        try {
+                            await setDoc(profileRef, {
+                                name: user.displayName || user.email, 
+                                email: user.email, 
+                                role: 'driver', 
+                                status: 'pending', 
+                                createdAt: Date.now()
+                            });
+                        } catch (e) { console.error("Profile Error:", e); }
                     } else {
                         const data = snap.data();
                         role = data.role || 'driver';
@@ -367,6 +383,9 @@
                     }, { merge: true });
 
                     userRole = role;
+                    
+                    // Hide loading once we have data
+                    document.getElementById('loading-overlay').classList.add('hidden');
 
                     if (status === 'approved' || role === 'admin') {
                         document.getElementById('approval-modal').classList.add('hidden');
@@ -375,9 +394,15 @@
                     } else {
                         document.getElementById('approval-modal').classList.remove('hidden');
                     }
+                }, (error) => {
+                    // ERROR HANDLER: If we can't read profile (e.g. permission issues), show the error/reset screen
+                    console.error("Auth Listener Error:", error);
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    document.getElementById('approval-modal').classList.remove('hidden');
                 });
             } else {
                 document.getElementById('login-modal').classList.remove('hidden');
+                document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('driver-app').classList.add('hidden');
                 document.getElementById('admin-app').classList.add('hidden');
             }
