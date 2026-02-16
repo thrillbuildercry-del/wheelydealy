@@ -47,7 +47,7 @@
             border-radius: 8px;
             padding: 12px;
             position: fixed;
-            z-index: 200; /* HIGH PRIORITY: Ensures errors show ON TOP of login modal */
+            z-index: 200; /* High priority to show over modals */
             left: 50%;
             bottom: 80px;
             transform: translateX(-50%);
@@ -107,7 +107,7 @@
             <!-- Login Form -->
             <div id="login-form" class="space-y-4">
                 <!-- Google Button -->
-                <button onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition flex justify-center items-center">
+                <button type="button" onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition flex justify-center items-center">
                     <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -131,12 +131,12 @@
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
                     <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
                 </div>
-                <button onclick="window.handleLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
+                <button type="button" onclick="window.handleLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
                     <span>Sign In</span>
                 </button>
                 <div class="text-center mt-4">
                     <p class="text-sm text-gray-500 dark:text-gray-400">New Driver?</p>
-                    <button onclick="window.toggleAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Create Account</button>
+                    <button type="button" onclick="window.toggleAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Create Account</button>
                 </div>
             </div>
 
@@ -154,12 +154,12 @@
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
                     <input type="password" id="reg-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
                 </div>
-                <button onclick="window.handleRegister()" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
+                <button type="button" onclick="window.handleRegister()" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
                     <span>Create Account</span>
                 </button>
                 <div class="text-center mt-4">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Have an account?</p>
-                    <button onclick="window.toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Back to Login</button>
+                    <button type="button" onclick="window.toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Back to Login</button>
                 </div>
             </div>
         </div>
@@ -179,7 +179,7 @@
                 <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                 Waiting for admin...
             </div>
-            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold py-3 rounded-lg">
+            <button type="button" onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold py-3 rounded-lg">
                 Sign Out
             </button>
         </div>
@@ -417,59 +417,7 @@
         // Initialize Icons
         lucide.createIcons();
 
-        // --- CONFIGURATION START ---
-        // PASTE YOUR FIREBASE CONFIG HERE
-
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
-			authDomain: "salesonwheels-f6eec.firebaseapp.com",
-			projectId: "salesonwheels-f6eec",
-			storageBucket: "salesonwheels-f6eec.firebasestorage.app",
-            messagingSenderId: "432785821226",
-            appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
-			};
-			const appId = "sales-tracker-v1";
-        // --- CONFIGURATION END ---
-
-        let app, auth, db, googleProvider;
-        let isFirebaseInitialized = false;
-
-        // --- Initialize Firebase Safely ---
-        try {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.warn("Firebase Config is empty. Please configure it in the code.");
-                throw new Error("Missing Firebase Configuration");
-            }
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            googleProvider = new GoogleAuthProvider();
-            isFirebaseInitialized = true;
-        } catch (e) {
-            console.error("Firebase Initialization Failed:", e);
-            // We will show a toast when window loads
-        }
-
-        // --- Constants & State ---
-        const PRICING = {
-            1: { price: 80, profit: 20, supplier: 60 },
-            2: { price: 150, profit: 40, supplier: 110 },
-            3: { price: 220, profit: 60, supplier: 160 },
-            4: { price: 280, profit: 80, supplier: 200 }
-        };
-        const SUPPLIER_COST_PER_ITEM = 60; 
-
-        let appData = { stock: 0, currentTransactions: [], history: [] };
-        let currentUser = null;
-        let unsubscribeSnapshot = null;
-        let unsubscribeProfile = null; 
-        let chartInstance = null;
-        let hourlyChartInstance = null;
-
-        // --- Exposed Window Functions ---
-        // These need to be on 'window' so HTML onclick="" works
-
+        // 1. Define Window Functions FIRST (so buttons don't break if init fails)
         window.showToast = function(message) { 
             const toast = document.getElementById("toast"); 
             toast.innerText = message; 
@@ -506,16 +454,6 @@
             }
         };
 
-        window.handleGoogleLogin = async function() {
-            if (!isFirebaseInitialized) { window.showToast("Error: Firebase config missing!"); return; }
-            try {
-                await signInWithPopup(auth, googleProvider);
-            } catch (error) {
-                console.error(error);
-                window.showToast("Google Sign-In Failed: " + error.message);
-            }
-        };
-
         window.toggleAuthMode = function(mode) {
             const loginForm = document.getElementById('login-form');
             const regForm = document.getElementById('register-form');
@@ -532,6 +470,53 @@
                 loginForm.classList.remove('hidden');
                 title.innerText = "Driver Login";
                 subtitle.innerText = "Sign in to access your route data.";
+            }
+        };
+
+        // --- CONFIGURATION START ---
+        // PASTE YOUR FIREBASE CONFIG HERE
+
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
+			authDomain: "salesonwheels-f6eec.firebaseapp.com",
+			projectId: "salesonwheels-f6eec",
+			storageBucket: "salesonwheels-f6eec.firebasestorage.app",
+            messagingSenderId: "432785821226",
+            appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
+			};
+			const appId = "sales-tracker-v1";
+        
+        // --- CONFIGURATION END ---
+
+        let app, auth, db, googleProvider;
+        let isFirebaseInitialized = false;
+
+        // --- Initialize Firebase Safely ---
+        try {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.warn("Firebase Config is empty. Please configure it in the code.");
+                throw new Error("Missing Firebase Configuration");
+            }
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            googleProvider = new GoogleAuthProvider();
+            isFirebaseInitialized = true;
+        } catch (e) {
+            console.error("Firebase Initialization Failed:", e);
+            // Wait for window load to show toast if init fails immediately
+        }
+
+        // --- Auth Window Functions (Dependent on Firebase) ---
+
+        window.handleGoogleLogin = async function() {
+            if (!isFirebaseInitialized) { window.showToast("Error: Firebase config missing!"); return; }
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                console.error(error);
+                window.showToast("Google Sign-In Failed: " + error.message);
             }
         };
 
@@ -584,6 +569,22 @@
                 window.showToast("Error signing out");
             }
         };
+
+        // --- Constants & State ---
+        const PRICING = {
+            1: { price: 80, profit: 20, supplier: 60 },
+            2: { price: 150, profit: 40, supplier: 110 },
+            3: { price: 220, profit: 60, supplier: 160 },
+            4: { price: 280, profit: 80, supplier: 200 }
+        };
+        const SUPPLIER_COST_PER_ITEM = 60; 
+
+        let appData = { stock: 0, currentTransactions: [], history: [] };
+        let currentUser = null;
+        let unsubscribeSnapshot = null;
+        let unsubscribeProfile = null; 
+        let chartInstance = null;
+        let hourlyChartInstance = null;
 
         // --- Core App Actions ---
 
@@ -879,4 +880,4 @@
         };
     </script>
 </body>
-</html>		 
+</html> 
