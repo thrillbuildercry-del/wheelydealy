@@ -10,6 +10,38 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Expose to window for app logic
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.doc = doc;
+        window.onSnapshot = onSnapshot;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.collection = collection;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.updateProfile = updateProfile;
+    </script>
+
     <style>
         /* Custom styles for mobile app feel */
         body {
@@ -46,7 +78,7 @@
             border-radius: 8px;
             padding: 12px;
             position: fixed;
-            z-index: 50;
+            z-index: 60;
             left: 50%;
             bottom: 80px;
             transform: translateX(-50%);
@@ -66,9 +98,25 @@
         @keyframes slideOut {
             to { transform: translateX(100%); opacity: 0; height: 0; margin: 0; padding: 0; }
         }
+
+        /* Login Modal Overlay */
+        #login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .hidden { display: none !important; }
     </style>
     <script>
-        // Check theme before render to prevent flashing
+        // Check theme before render
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
@@ -76,16 +124,83 @@
 </head>
 <body class="text-gray-800 dark:text-gray-100 dark:bg-gray-900 pb-24 transition-colors duration-200">
 
+    <!-- Auth Modal -->
+    <div id="login-modal">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm overflow-y-auto max-h-[90vh]">
+            <div class="text-center mb-6">
+                <div class="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="truck" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white" id="auth-title">Driver Login</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1" id="auth-subtitle">Sign in to access your route data.</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Email</label>
+                    <input type="email" id="login-email" placeholder="driver@example.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
+                </div>
+                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
+                    <span>Sign In</span>
+                </button>
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">New Driver?</p>
+                    <button onclick="toggleAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Create Account</button>
+                </div>
+            </div>
+
+            <!-- Register Form (Hidden by default) -->
+            <div id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Full Name</label>
+                    <input type="text" id="reg-name" placeholder="John Doe" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Email</label>
+                    <input type="email" id="reg-email" placeholder="driver@example.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
+                    <input type="password" id="reg-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
+                </div>
+                <button onclick="handleRegister()" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
+                    <span>Create Account</span>
+                </button>
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Have an account?</p>
+                    <button onclick="toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Back to Login</button>
+                </div>
+            </div>
+
+            <p class="text-xs text-center text-gray-400 mt-6">
+                <i data-lucide="lock" class="w-3 h-3 inline mr-1"></i> Secure Cloud Sync
+            </p>
+        </div>
+    </div>
+
     <!-- App Container -->
     <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen shadow-xl relative transition-colors duration-200">
         
         <!-- Header -->
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md transition-colors duration-200">
-            <h1 class="text-xl font-bold text-center">Sales Tracker</h1>
-            <p id="current-date-header" class="text-center text-sm text-blue-200 dark:text-gray-400"></p>
-            <button onclick="toggleTheme()" class="absolute right-4 top-4 p-1 rounded-full hover:bg-white/20 transition">
-                <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
-            </button>
+            <div class="flex justify-between items-start">
+                <div class="w-8"></div>
+                <div class="text-center">
+                    <h1 class="text-xl font-bold">Sales Tracker</h1>
+                    <div class="flex items-center justify-center space-x-2 mt-1">
+                        <span id="current-user-display" class="text-xs bg-blue-700 dark:bg-gray-700 px-2 py-0.5 rounded-full text-blue-100 opacity-0 transition-opacity">Driver</span>
+                        <div id="sync-status" class="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Online"></div>
+                    </div>
+                </div>
+                <button onclick="toggleTheme()" class="p-1 rounded-full hover:bg-white/20 transition">
+                    <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Main Content Area -->
@@ -106,7 +221,7 @@
                     <!-- Stock Display Mode -->
                     <div id="stock-display-mode">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-3xl font-bold dark:text-white" id="display-stock">0</span>
+                            <span class="text-3xl font-bold dark:text-white" id="display-stock">--</span>
                             <span class="text-sm text-gray-500 dark:text-gray-400">Items in Stock</span>
                         </div>
                         <div class="flex space-x-2">
@@ -242,37 +357,27 @@
             <div id="tab-settings" class="tab-content">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
                     <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 flex items-center">
-                        <i data-lucide="database" class="w-5 h-5 mr-2"></i> Data Management
+                        <i data-lucide="user" class="w-5 h-5 mr-2"></i> Account & Data
                     </h2>
                     
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Save a backup of all your sales data to your device.</p>
-                            <button onclick="exportData()" class="w-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 py-3 rounded-lg font-medium active:bg-blue-100 dark:active:bg-blue-900/50 transition flex justify-center items-center">
-                                <i data-lucide="download" class="w-5 h-5 mr-2"></i> Export Data (JSON)
-                            </button>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50 mb-4">
+                        <div class="flex items-center mb-2">
+                             <div class="w-10 h-10 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold mr-3" id="profile-initial">
+                                 ?
+                             </div>
+                             <div>
+                                 <h3 class="font-bold text-gray-800 dark:text-white text-sm" id="profile-name">Guest</h3>
+                                 <p class="text-xs text-blue-600 dark:text-blue-300 capitalize" id="profile-role">Driver</p>
+                             </div>
                         </div>
-                        
-                        <hr class="border-gray-100 dark:border-gray-700">
-                        
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Restore data from a previously exported file.</p>
-                            <label class="w-full bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 py-3 rounded-lg font-medium active:bg-gray-100 dark:active:bg-gray-600 transition flex justify-center items-center cursor-pointer">
-                                <i data-lucide="upload" class="w-5 h-5 mr-2"></i> Import Data
-                                <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
-                            </label>
-                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Email: <span id="profile-email">...</span></p>
                     </div>
-                </div>
 
-                <div class="bg-red-50 dark:bg-red-900/20 rounded-xl shadow-sm p-4 border border-red-100 dark:border-red-900/50 mt-8 transition-colors">
-                    <h2 class="font-semibold text-red-700 dark:text-red-500 mb-2 flex items-center">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> Danger Zone
-                    </h2>
-                    <p class="text-xs text-red-600 dark:text-red-400 mb-3">This will permanently delete all stock and sales history. Export your data first!</p>
-                    <button onclick="resetApp()" class="w-full bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-bold shadow-sm active:bg-red-700 transition">
-                        Factory Reset App
-                    </button>
+                    <div class="space-y-4">
+                        <button onclick="logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 py-3 rounded-lg font-medium active:bg-gray-300 dark:active:bg-gray-600 transition flex justify-center items-center">
+                            <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Sign Out
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -299,64 +404,225 @@
 
     </div>
 
-    <script>
-        // Initialize Icons
+    <script type="module">
+        // Import Auth functions 
+        const { 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged,
+            updateProfile
+        } = window;
+        const { doc, getDoc, setDoc, onSnapshot, collection } = window;
+
+        // --- Core App Logic ---
         lucide.createIcons();
 
-        // Constants & Pricing Model
+        // Constants
         const PRICING = {
             1: { price: 80, profit: 20, supplier: 60 },
             2: { price: 150, profit: 40, supplier: 110 },
             3: { price: 220, profit: 60, supplier: 160 },
             4: { price: 280, profit: 80, supplier: 200 }
         };
-        const SUPPLIER_COST_PER_ITEM = 60; // Base cost
+        const SUPPLIER_COST_PER_ITEM = 60; 
 
-        // State Management
+        // State
         let appData = {
             stock: 0,
-            currentTransactions: [], // New array to track today's specific sales
+            currentTransactions: [], 
             history: [] 
         };
-
+        
+        let currentUser = null;
+        let unsubscribeSnapshot = null;
         let chartInstance = null;
         let hourlyChartInstance = null;
 
-        // Initialize App
-        function initApp() {
-            const savedData = localStorage.getItem('salesAppData');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                appData = parsed;
-                
-                // MIGRATION: If old data structure (no currentTransactions), init it
-                if (!appData.currentTransactions) {
-                    appData.currentTransactions = [];
+        // --- Auth Logic ---
+
+        window.initAuthListener = function() {
+            onAuthStateChanged(window.auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    // User is signed in, sync data
+                    document.getElementById('login-modal').classList.add('hidden');
+                    
+                    // Update Profile UI
+                    document.getElementById('profile-email').innerText = user.email;
+                    document.getElementById('profile-name').innerText = user.displayName || 'Driver';
+                    document.getElementById('profile-initial').innerText = (user.displayName || 'D').charAt(0).toUpperCase();
+                    document.getElementById('current-user-display').innerText = user.displayName || 'Driver';
+                    document.getElementById('current-user-display').classList.remove('opacity-0');
+
+                    // Start Listening to Data
+                    startSync(user.uid);
+                    
+                    // Fetch role (for future admin features)
+                    checkUserRole(user.uid);
+
+                } else {
+                    // No user is signed in
+                    currentUser = null;
+                    document.getElementById('login-modal').classList.remove('hidden');
+                    if (unsubscribeSnapshot) unsubscribeSnapshot();
+                    
+                    // Clear UI
+                    appData = { stock: 0, currentTransactions: [], history: [] };
+                    updateUI();
                 }
+            });
+        }
+
+        async function checkUserRole(uid) {
+            try {
+                const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', uid, 'settings', 'profile');
+                const snap = await window.getDoc(docRef);
+                if (snap.exists()) {
+                    const role = snap.data().role || 'driver';
+                    document.getElementById('profile-role').innerText = role;
+                    // If role === 'admin', we can redirect later
+                }
+            } catch (e) {
+                console.error("Role check failed", e);
             }
+        }
+
+        window.toggleAuthMode = function(mode) {
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('register-form');
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+
+            if (mode === 'register') {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                title.innerText = "Create Account";
+                subtitle.innerText = "Join the fleet and start tracking.";
+            } else {
+                regForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                title.innerText = "Driver Login";
+                subtitle.innerText = "Sign in to access your route data.";
+            }
+        }
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+
+            if (!email || !password) {
+                showToast("Please fill in all fields");
+                return;
+            }
+
+            try {
+                btn.innerHTML = `<span class="animate-spin mr-2">⟳</span> Signing In...`;
+                await signInWithEmailAndPassword(window.auth, email, password);
+                // Auth listener handles the rest
+            } catch (error) {
+                console.error(error);
+                showToast(error.message.replace("Firebase: ", ""));
+                btn.innerHTML = `<span>Sign In</span>`;
+            }
+        }
+
+        window.handleRegister = async function() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const btn = document.getElementById('btn-register');
+
+            if (!email || !password || !name) {
+                showToast("Please fill in all fields");
+                return;
+            }
+
+            try {
+                btn.innerHTML = `<span class="animate-spin mr-2">⟳</span> Creating...`;
+                const userCredential = await createUserWithEmailAndPassword(window.auth, email, password);
+                const user = userCredential.user;
+
+                // Update Display Name
+                await updateProfile(user, { displayName: name });
+
+                // Create User Profile in Firestore with Role
+                const profileRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'profile');
+                await window.setDoc(profileRef, {
+                    name: name,
+                    email: email,
+                    role: 'driver', // Default role
+                    createdAt: Date.now()
+                });
+
+                showToast("Account created successfully!");
+                // Auth listener will handle login state
+            } catch (error) {
+                console.error(error);
+                showToast(error.message.replace("Firebase: ", ""));
+                btn.innerHTML = `<span>Create Account</span>`;
+            }
+        }
+
+        window.logout = async function() {
+            try {
+                await signOut(window.auth);
+                showToast("Signed out successfully");
+            } catch (error) {
+                showToast("Error signing out");
+            }
+        }
+
+        // --- Data Sync ---
+
+        function startSync(uid) {
+            // Path: users/{uid}/data/app_state
+            const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', uid, 'data', 'app_state');
+
+            unsubscribeSnapshot = window.onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.appData) {
+                        appData = JSON.parse(data.appData);
+                        // Migration
+                        if (!appData.currentTransactions) appData.currentTransactions = [];
+                        
+                        updateUI();
+                        document.getElementById('sync-status').classList.remove('bg-red-500');
+                        document.getElementById('sync-status').classList.add('bg-green-400');
+                    }
+                } else {
+                    // New Data Doc -> Create empty
+                    saveDataToCloud(); 
+                }
+            }, (error) => {
+                console.error("Sync Error:", error);
+                document.getElementById('sync-status').classList.remove('bg-green-400');
+                document.getElementById('sync-status').classList.add('bg-red-500');
+            });
             
-            // Set Header Date
-            const options = { weekday: 'long', month: 'short', day: 'numeric' };
-            document.getElementById('current-date-header').innerText = new Date().toLocaleDateString('en-US', options);
+            showToast("Data Synced");
+        }
 
-            // Set correct theme icon
-            const isDark = document.documentElement.classList.contains('dark');
-            const themeIcon = document.getElementById('theme-icon');
-            if(themeIcon) {
-                themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-                lucide.createIcons();
+        async function saveDataToCloud() {
+            if (!currentUser) return;
+
+            const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', currentUser.uid, 'data', 'app_state');
+            
+            try {
+                await window.setDoc(docRef, {
+                    lastUpdated: Date.now(),
+                    appData: JSON.stringify(appData)
+                });
+            } catch (e) {
+                console.error("Save failed", e);
+                showToast("Error saving to cloud");
             }
-
-            updateUI();
         }
 
-        // Save State
-        function saveData() {
-            localStorage.setItem('salesAppData', JSON.stringify(appData));
-            updateUI();
-        }
+        // --- Core Functions ---
 
-        // Calculate Totals from Transaction Array
         function getTodayTotals() {
             return appData.currentTransactions.reduce((acc, t) => {
                 acc.gross += t.price;
@@ -367,7 +633,6 @@
             }, { gross: 0, profit: 0, supplier: 0, itemsSold: 0 });
         }
 
-        // Update UI Elements
         function updateUI() {
             const totals = getTodayTotals();
 
@@ -384,6 +649,13 @@
             renderTransactionList();
             calculatePredictions(totals);
             renderHistoryList();
+            
+            if (document.getElementById('tab-reports').classList.contains('active')) {
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
+                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn);
+                updateHourlyChart();
+            }
         }
 
         // --- Transaction Management ---
@@ -397,7 +669,6 @@
                 return;
             }
 
-            // Show newest on top
             const reversedTxns = [...appData.currentTransactions].reverse();
 
             reversedTxns.forEach(t => {
@@ -428,21 +699,17 @@
             lucide.createIcons();
         }
 
-        function deleteTransaction(id) {
+        window.deleteTransaction = function(id) {
             const index = appData.currentTransactions.findIndex(t => t.id === id);
             if (index > -1) {
                 const t = appData.currentTransactions[index];
-                
-                // Animate removal
                 const el = document.getElementById(`txn-${id}`);
                 if (el) el.classList.add('slide-out');
 
                 setTimeout(() => {
-                    // Restore Stock
                     appData.stock += t.qty;
-                    // Remove Transaction
                     appData.currentTransactions.splice(index, 1);
-                    saveData();
+                    saveDataToCloud();
                     showToast("Sale deleted. Stock restored.");
                 }, 300);
             }
@@ -450,7 +717,7 @@
 
         // --- Actions ---
 
-        function toggleStockEdit() {
+        window.toggleStockEdit = function() {
             const displayMode = document.getElementById('stock-display-mode');
             const editMode = document.getElementById('stock-edit-mode');
             const input = document.getElementById('stock-set-input');
@@ -466,7 +733,7 @@
             }
         }
 
-        function saveStockEdit() {
+        window.saveStockEdit = function() {
             const input = document.getElementById('stock-set-input');
             const qty = parseInt(input.value);
             if (isNaN(qty) || qty < 0) {
@@ -474,12 +741,12 @@
                 return;
             }
             appData.stock = qty;
-            saveData();
+            saveDataToCloud();
             toggleStockEdit();
             showToast("Stock updated manually.");
         }
 
-        function addStock() {
+        window.addStock = function() {
             const input = document.getElementById('stock-add-input');
             const qty = parseInt(input.value);
             if (isNaN(qty) || qty <= 0) {
@@ -488,11 +755,11 @@
             }
             appData.stock += qty;
             input.value = '';
-            saveData();
+            saveDataToCloud();
             showToast(`Added ${qty} items to stock.`);
         }
 
-        function sellItem(qty) {
+        window.sellItem = function(qty) {
             if (appData.stock < qty) {
                 showToast(`Not enough stock! You only have ${appData.stock} left.`);
                 return;
@@ -502,11 +769,10 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             
-            // Create Transaction Record
             const transaction = {
                 id: Date.now(),
                 timestamp: now.getTime(),
-                hour: now.getHours(), // 0-23 for analysis
+                hour: now.getHours(),
                 time: timeStr,
                 qty: qty,
                 price: tier.price,
@@ -514,43 +780,37 @@
                 supplier: tier.supplier
             };
 
-            // Update State
             appData.stock -= qty;
             appData.currentTransactions.push(transaction);
 
-            saveData();
+            saveDataToCloud();
             showToast(`Sold ${qty} item(s) for $${tier.price}`);
         }
 
-        function endDay() {
+        window.endDay = function() {
             const totals = getTodayTotals();
             if (appData.currentTransactions.length === 0) {
                 showToast("No sales to save today.");
                 return;
             }
 
-            const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const todayDate = new Date().toISOString().split('T')[0]; 
             
-            // Calculate Hourly Distribution for today
             const hourlyDist = {};
             appData.currentTransactions.forEach(t => {
                 const h = t.hour || new Date(t.timestamp).getHours();
                 hourlyDist[h] = (hourlyDist[h] || 0) + t.qty;
             });
 
-            // Check if we already saved today
             const existingRecordIndex = appData.history.findIndex(h => h.date === todayDate);
             
             if (existingRecordIndex >= 0) {
-                // Merge logic (complex, simpler to just overwrite if saving "Day")
-                // For safety, let's just add to it
                 const rec = appData.history[existingRecordIndex];
                 rec.gross += totals.gross;
                 rec.profit += totals.profit;
                 rec.supplier += totals.supplier;
                 rec.itemsSold += totals.itemsSold;
                 
-                // Merge hourly
                 for (const [hour, count] of Object.entries(hourlyDist)) {
                     rec.hourlyDistribution = rec.hourlyDistribution || {};
                     rec.hourlyDistribution[hour] = (rec.hourlyDistribution[hour] || 0) + count;
@@ -563,10 +823,8 @@
                 });
             }
 
-            // Reset Today
             appData.currentTransactions = [];
-            
-            saveData();
+            saveDataToCloud();
             showToast("Shift saved successfully!");
             
             if (document.getElementById('tab-reports').classList.contains('active')) {
@@ -575,7 +833,7 @@
             }
         }
 
-        // --- Reports & Predictions ---
+        // --- Reports & Charts ---
 
         function getStartOfWeek(date) {
             const d = new Date(date);
@@ -585,34 +843,26 @@
         }
 
         function calculatePredictions(currentTotals) {
-            // Include current unsaved profit in prediction logic
             const totalProfitToday = currentTotals.profit;
-            
             if (appData.history.length === 0 && totalProfitToday === 0) {
                 document.getElementById('predicted-earnings').innerText = "$0";
                 return;
             }
-
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
             const startOfWeek = getStartOfWeek(today);
 
             let profitThisWeek = 0;
-            
             appData.history.forEach(record => {
                 if (record.date >= startOfWeek && record.date <= todayStr) {
                     profitThisWeek += record.profit;
                 }
             });
-
             profitThisWeek += totalProfitToday;
-
             let daysElapsed = today.getDay() || 7; 
             daysElapsed = Math.max(1, daysElapsed);
-
             const dailyAverage = profitThisWeek / daysElapsed;
             const predictedWeekly = Math.round(dailyAverage * 7);
-
             document.getElementById('predicted-earnings').innerText = `$${predictedWeekly.toLocaleString()}`;
             document.getElementById('prediction-context').innerText = `Based on $${Math.round(dailyAverage)}/day average this week`;
         }
@@ -620,20 +870,15 @@
         function renderHistoryList() {
             const list = document.getElementById('history-list');
             list.innerHTML = '';
-            
             if (appData.history.length === 0) {
                 list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>';
                 return;
             }
-
             const sortedHistory = [...appData.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
             sortedHistory.slice(0, 10).forEach(record => {
                 const dateObj = new Date(record.date);
                 dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
-                
                 const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors';
                 div.innerHTML = `
@@ -650,16 +895,10 @@
             });
         }
 
-        // --- Charts ---
-
-        function updateHourlyChart() {
+        window.updateHourlyChart = function() {
             const ctx = document.getElementById('hourlyChart').getContext('2d');
             if (hourlyChartInstance) hourlyChartInstance.destroy();
-
-            // Aggregate all hourly data from history + current transactions
             const hourlyTotals = new Array(24).fill(0);
-
-            // History
             appData.history.forEach(rec => {
                 if (rec.hourlyDistribution) {
                     for (const [hour, count] of Object.entries(rec.hourlyDistribution)) {
@@ -667,31 +906,19 @@
                     }
                 }
             });
-
-            // Current Today
             appData.currentTransactions.forEach(t => {
                 const h = t.hour || new Date(t.timestamp).getHours();
                 hourlyTotals[h] += t.qty;
             });
-
-            // Format Labels (12 AM, 1 AM...)
             const labels = hourlyTotals.map((_, i) => {
                 const d = new Date(); d.setHours(i);
                 return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
             });
-            
-            // Filter to only show range from first sale to last sale hour for cleaner look? 
-            // Or just show active hours. Let's show all for context or 8am-10pm? 
-            // Let's show strictly the hours that have data + 1 buffer, or just simplified.
-            // Simplified: All hours.
-
             const isDark = document.documentElement.classList.contains('dark');
             const gridColor = isDark ? '#374151' : '#f3f4f6';
             const textColor = isDark ? '#9ca3af' : '#6b7280';
-
-            // Gradient
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); 
             gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
             hourlyChartInstance = new Chart(ctx, {
@@ -720,8 +947,7 @@
             });
         }
 
-        function updateChart(viewMode) {
-            // Update Toggle Buttons UI
+        window.updateChart = function(viewMode) {
             ['daily', 'weekly', 'monthly'].forEach(mode => {
                 const btn = document.getElementById(`btn-chart-${mode}`);
                 if (mode === viewMode) {
@@ -730,251 +956,104 @@
                     btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition';
                 }
             });
-
             const ctx = document.getElementById('salesChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-
-            let labels = [];
-            let profitData = [];
-            let grossData = [];
-            
+            let labels = [], profitData = [], grossData = [];
             const todayTotals = getTodayTotals();
-
             if (viewMode === 'daily') {
                 const last7Days = [];
                 for (let i = 6; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    last7Days.push(d.toISOString().split('T')[0]);
+                    const d = new Date(); d.setDate(d.getDate() - i); last7Days.push(d.toISOString().split('T')[0]);
                 }
-
-                labels = last7Days.map(d => {
-                    let date = new Date(d);
-                    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-                    return date.toLocaleDateString('en-US', { weekday: 'short' });
-                });
-
+                labels = last7Days.map(d => { let date = new Date(d); date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); return date.toLocaleDateString('en-US', { weekday: 'short' }); });
                 last7Days.forEach(dateStr => {
                     const record = appData.history.find(h => h.date === dateStr);
-                    let profit = record ? record.profit : 0;
-                    let gross = record ? record.gross : 0;
-                    
+                    let profit = record ? record.profit : 0; let gross = record ? record.gross : 0;
                     const todayStr = new Date().toISOString().split('T')[0];
-                    if (dateStr === todayStr) {
-                        profit += todayTotals.profit;
-                        gross += todayTotals.gross;
-                    }
-
-                    profitData.push(profit);
-                    grossData.push(gross);
+                    if (dateStr === todayStr) { profit += todayTotals.profit; gross += todayTotals.gross; }
+                    profitData.push(profit); grossData.push(gross);
                 });
-
             } else if (viewMode === 'weekly') {
-                labels = ['Week -3', 'Week -2', 'Last Week', 'This Week'];
-                profitData = [0, 0, 0, 0];
-                grossData = [0, 0, 0, 0];
-
+                labels = ['Week -3', 'Week -2', 'Last Week', 'This Week']; profitData = [0, 0, 0, 0]; grossData = [0, 0, 0, 0];
                 const today = new Date();
-                
                 const allData = [...appData.history];
-                if (todayTotals.gross > 0) {
-                    allData.push({ date: today.toISOString().split('T')[0], ...todayTotals });
-                }
-
+                if (todayTotals.gross > 0) allData.push({ date: today.toISOString().split('T')[0], ...todayTotals });
                 allData.forEach(record => {
                     const rDate = new Date(record.date);
-                    const diffTime = Math.abs(today - rDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays <= 7) {
-                        profitData[3] += record.profit; grossData[3] += record.gross;
-                    } else if (diffDays <= 14) {
-                        profitData[2] += record.profit; grossData[2] += record.gross;
-                    } else if (diffDays <= 21) {
-                        profitData[1] += record.profit; grossData[1] += record.gross;
-                    } else if (diffDays <= 28) {
-                        profitData[0] += record.profit; grossData[0] += record.gross;
-                    }
+                    const diffTime = Math.abs(today - rDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 7) { profitData[3] += record.profit; grossData[3] += record.gross; }
+                    else if (diffDays <= 14) { profitData[2] += record.profit; grossData[2] += record.gross; }
+                    else if (diffDays <= 21) { profitData[1] += record.profit; grossData[1] += record.gross; }
+                    else if (diffDays <= 28) { profitData[0] += record.profit; grossData[0] += record.gross; }
                 });
             } else if (viewMode === 'monthly') {
-                labels = [];
-                profitData = [0, 0, 0, 0, 0, 0];
-                grossData = [0, 0, 0, 0, 0, 0];
-
-                for (let i = 5; i >= 0; i--) {
-                    const d = new Date();
-                    d.setMonth(d.getMonth() - i);
-                    labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
-                }
-
-                const currentMonth = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
-
+                labels = []; profitData = [0, 0, 0, 0, 0, 0]; grossData = [0, 0, 0, 0, 0, 0];
+                for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); }
+                const currentMonth = new Date().getMonth(); const currentYear = new Date().getFullYear();
                 const allData = [...appData.history];
-                if (todayTotals.gross > 0) {
-                    allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals });
-                }
-
+                if (todayTotals.gross > 0) allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals });
                 allData.forEach(record => {
-                    const rDate = new Date(record.date);
-                    rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset());
-                    
+                    const rDate = new Date(record.date); rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset());
                     const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth());
-                    
-                    if (monthDiff >= 0 && monthDiff <= 5) {
-                        const index = 5 - monthDiff;
-                        profitData[index] += record.profit;
-                        grossData[index] += record.gross;
-                    }
+                    if (monthDiff >= 0 && monthDiff <= 5) { const index = 5 - monthDiff; profitData[index] += record.profit; grossData[index] += record.gross; }
                 });
             }
-
             const isDark = document.documentElement.classList.contains('dark');
             const gridColor = isDark ? '#374151' : '#f3f4f6';
             const textColor = isDark ? '#9ca3af' : '#6b7280';
-
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [
-                        {
-                            label: 'Profit',
-                            data: profitData,
-                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                            borderRadius: 4,
-                            order: 1
-                        },
-                        {
-                            label: 'Gross',
-                            data: grossData,
-                            backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)',
-                            borderRadius: 4,
-                            order: 2
-                        }
-                    ]
+                    datasets: [{ label: 'Profit', data: profitData, backgroundColor: 'rgba(34, 197, 94, 0.8)', borderRadius: 4, order: 1 }, { label: 'Gross', data: grossData, backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)', borderRadius: 4, order: 2 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } } }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
             });
         }
 
-        // --- Utilities ---
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => { tab.classList.remove('active'); });
             document.getElementById(`tab-${tabName}`).classList.add('active');
-
             const navIds = ['sales', 'reports', 'settings'];
             navIds.forEach(id => {
                 const el = document.getElementById(`nav-${id}`);
-                if (id === tabName) {
-                    el.classList.remove('text-gray-400', 'dark:text-gray-500');
-                    el.classList.add('text-blue-600', 'dark:text-blue-400');
-                } else {
-                    el.classList.remove('text-blue-600', 'dark:text-blue-400');
-                    el.classList.add('text-gray-400', 'dark:text-gray-500');
-                }
+                if (id === tabName) { el.classList.remove('text-gray-400', 'dark:text-gray-500'); el.classList.add('text-blue-600', 'dark:text-blue-400'); }
+                else { el.classList.remove('text-blue-600', 'dark:text-blue-400'); el.classList.add('text-gray-400', 'dark:text-gray-500'); }
             });
-
             if (tabName === 'reports') {
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
-                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
-                updateChart(activeBtn);
-                updateHourlyChart();
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn); updateHourlyChart();
             }
         }
 
-        function toggleTheme() {
+        window.toggleTheme = function() {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            
             const icon = document.getElementById('theme-icon');
-            if(icon) {
-                icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-                lucide.createIcons();
-            }
-
+            if(icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
             if (document.getElementById('tab-reports').classList.contains('active')) {
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
-                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
-                updateChart(activeBtn);
-                updateHourlyChart();
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn); updateHourlyChart();
             }
         }
 
-        function showToast(message) {
+        window.showToast = function(message) {
             const toast = document.getElementById("toast");
-            toast.innerText = message;
-            toast.className = "show";
+            toast.innerText = message; toast.className = "show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // --- Data Management ---
-
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `Sales_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            showToast("Data exported successfully.");
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    // Basic validation
-                    if (importedData.stock !== undefined) {
-                        appData = importedData;
-                        // Migration fix
-                        if (!appData.currentTransactions) appData.currentTransactions = [];
-                        
-                        saveData();
-                        showToast("Data imported successfully!");
-                        updateUI();
-                    } else {
-                        showToast("Invalid data format.");
-                    }
-                } catch (err) {
-                    showToast("Error reading file.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        function resetApp() {
-            if (confirm("Are you sure? This cannot be undone unless you have exported a backup!")) {
-                localStorage.removeItem('salesAppData');
-                appData = { stock: 0, currentTransactions: [], history: [] };
-                updateUI();
-                showToast("App data has been reset.");
-            }
-        }
-
-        // Boot the app
-        window.onload = initApp;
-
+        // Boot
+        window.onload = function() {
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('current-date-header').innerText = new Date().toLocaleDateString('en-US', options);
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeIcon = document.getElementById('theme-icon');
+            if(themeIcon) { themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
+            
+            initAuthListener();
+        };
     </script>
 </body>
 </html>
