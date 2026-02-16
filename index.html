@@ -14,23 +14,24 @@
     <!-- Firebase Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
 		const firebaseConfig = {
-  apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
-  authDomain: "salesonwheels-f6eec.firebaseapp.com",
-  projectId: "salesonwheels-f6eec",
-  storageBucket: "salesonwheels-f6eec.firebasestorage.app",
-  messagingSenderId: "432785821226",
-  appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
-};
+			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
+			authDomain: "salesonwheels-f6eec.firebaseapp.com",
+			projectId: "salesonwheels-f6eec",
+			storageBucket: "salesonwheels-f6eec.firebasestorage.app",
+            messagingSenderId: "432785821226",
+            appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
+			};
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
 
         // Expose to window for app logic
         window.db = db;
@@ -46,6 +47,8 @@
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
         window.updateProfile = updateProfile;
+        window.googleProvider = googleProvider;
+        window.signInWithPopup = signInWithPopup;
     </script>
 
     <style>
@@ -105,8 +108,8 @@
             to { transform: translateX(100%); opacity: 0; height: 0; margin: 0; padding: 0; }
         }
 
-        /* Login Modal Overlay */
-        #login-modal {
+        /* Modals */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -131,7 +134,7 @@
 <body class="text-gray-800 dark:text-gray-100 dark:bg-gray-900 pb-24 transition-colors duration-200">
 
     <!-- Auth Modal -->
-    <div id="login-modal">
+    <div id="login-modal" class="modal-overlay">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm overflow-y-auto max-h-[90vh]">
             <div class="text-center mb-6">
                 <div class="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -143,6 +146,23 @@
             
             <!-- Login Form -->
             <div id="login-form" class="space-y-4">
+                <!-- Google Button -->
+                <button onclick="handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition flex justify-center items-center">
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/>
+                        <path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase">Or use email</span>
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Email</label>
                     <input type="email" id="login-email" placeholder="driver@example.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
@@ -182,10 +202,26 @@
                     <button onclick="toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Back to Login</button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <p class="text-xs text-center text-gray-400 mt-6">
-                <i data-lucide="lock" class="w-3 h-3 inline mr-1"></i> Secure Cloud Sync
+    <!-- Approval Pending Modal -->
+    <div id="approval-modal" class="modal-overlay hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
+            <div class="bg-yellow-100 dark:bg-yellow-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="clock" class="w-8 h-8 text-yellow-600 dark:text-yellow-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Approval Pending</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">
+                Your account has been created but requires Admin approval before you can access the system.
             </p>
+            <div class="animate-pulse flex justify-center items-center text-xs text-blue-500 mb-6">
+                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                Waiting for admin...
+            </div>
+            <button onclick="logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold py-3 rounded-lg">
+                Sign Out
+            </button>
         </div>
     </div>
 
@@ -417,7 +453,9 @@
             createUserWithEmailAndPassword, 
             signOut, 
             onAuthStateChanged,
-            updateProfile
+            updateProfile,
+            GoogleAuthProvider,
+            signInWithPopup
         } = window;
         const { doc, getDoc, setDoc, onSnapshot, collection } = window;
 
@@ -442,6 +480,7 @@
         
         let currentUser = null;
         let unsubscribeSnapshot = null;
+        let unsubscribeProfile = null; // New: Listen for approval status
         let chartInstance = null;
         let hourlyChartInstance = null;
 
@@ -451,46 +490,75 @@
             onAuthStateChanged(window.auth, async (user) => {
                 if (user) {
                     currentUser = user;
-                    // User is signed in, sync data
-                    document.getElementById('login-modal').classList.add('hidden');
                     
-                    // Update Profile UI
+                    // Update User Info UI
+                    const name = user.displayName || user.email.split('@')[0];
                     document.getElementById('profile-email').innerText = user.email;
-                    document.getElementById('profile-name').innerText = user.displayName || 'Driver';
-                    document.getElementById('profile-initial').innerText = (user.displayName || 'D').charAt(0).toUpperCase();
-                    document.getElementById('current-user-display').innerText = user.displayName || 'Driver';
-                    document.getElementById('current-user-display').classList.remove('opacity-0');
+                    document.getElementById('profile-name').innerText = name;
+                    document.getElementById('profile-initial').innerText = name.charAt(0).toUpperCase();
+                    document.getElementById('current-user-display').innerText = name;
 
-                    // Start Listening to Data
-                    startSync(user.uid);
+                    // 1. Check/Create User Profile (for approval status)
+                    const profileRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'profile');
                     
-                    // Fetch role (for future admin features)
-                    checkUserRole(user.uid);
+                    // Listen to profile changes real-time (Autoswitch when approved)
+                    if (unsubscribeProfile) unsubscribeProfile();
+                    unsubscribeProfile = window.onSnapshot(profileRef, async (snap) => {
+                        let status = 'pending';
+                        
+                        if (!snap.exists()) {
+                            // Create default profile if missing
+                            try {
+                                await window.setDoc(profileRef, {
+                                    name: name,
+                                    email: user.email,
+                                    role: 'driver',
+                                    status: 'pending', // BLOCKED BY DEFAULT
+                                    createdAt: Date.now()
+                                });
+                            } catch (e) { console.error("Profile create failed", e); }
+                        } else {
+                            status = snap.data().status || 'pending';
+                            const role = snap.data().role || 'driver';
+                            document.getElementById('profile-role').innerText = role;
+                        }
+
+                        // 2. Logic: Approved vs Pending
+                        if (status === 'approved') {
+                            document.getElementById('login-modal').classList.add('hidden');
+                            document.getElementById('approval-modal').classList.add('hidden');
+                            document.getElementById('current-user-display').classList.remove('opacity-0');
+                            
+                            // Start Data Sync if not already started
+                            if (!unsubscribeSnapshot) startSync(user.uid);
+                        } else {
+                            // Block Access
+                            document.getElementById('login-modal').classList.add('hidden');
+                            document.getElementById('approval-modal').classList.remove('hidden');
+                        }
+                    });
 
                 } else {
-                    // No user is signed in
+                    // No user
                     currentUser = null;
                     document.getElementById('login-modal').classList.remove('hidden');
+                    document.getElementById('approval-modal').classList.add('hidden');
                     if (unsubscribeSnapshot) unsubscribeSnapshot();
+                    if (unsubscribeProfile) unsubscribeProfile();
                     
-                    // Clear UI
                     appData = { stock: 0, currentTransactions: [], history: [] };
                     updateUI();
                 }
             });
         }
 
-        async function checkUserRole(uid) {
+        window.handleGoogleLogin = async function() {
             try {
-                const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', uid, 'settings', 'profile');
-                const snap = await window.getDoc(docRef);
-                if (snap.exists()) {
-                    const role = snap.data().role || 'driver';
-                    document.getElementById('profile-role').innerText = role;
-                    // If role === 'admin', we can redirect later
-                }
-            } catch (e) {
-                console.error("Role check failed", e);
+                await window.signInWithPopup(window.auth, window.googleProvider);
+                // Auth listener handles the rest
+            } catch (error) {
+                console.error(error);
+                showToast("Google Sign-In Failed: " + error.message);
             }
         }
 
@@ -526,7 +594,6 @@
             try {
                 btn.innerHTML = `<span class="animate-spin mr-2">⟳</span> Signing In...`;
                 await signInWithEmailAndPassword(window.auth, email, password);
-                // Auth listener handles the rest
             } catch (error) {
                 console.error(error);
                 showToast(error.message.replace("Firebase: ", ""));
@@ -550,20 +617,10 @@
                 const userCredential = await createUserWithEmailAndPassword(window.auth, email, password);
                 const user = userCredential.user;
 
-                // Update Display Name
                 await updateProfile(user, { displayName: name });
+                // Note: The auth listener will detect the login and create the firestore profile with 'pending' status
 
-                // Create User Profile in Firestore with Role
-                const profileRef = window.doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'profile');
-                await window.setDoc(profileRef, {
-                    name: name,
-                    email: email,
-                    role: 'driver', // Default role
-                    createdAt: Date.now()
-                });
-
-                showToast("Account created successfully!");
-                // Auth listener will handle login state
+                showToast("Account created! Waiting for approval.");
             } catch (error) {
                 console.error(error);
                 showToast(error.message.replace("Firebase: ", ""));
@@ -583,7 +640,6 @@
         // --- Data Sync ---
 
         function startSync(uid) {
-            // Path: users/{uid}/data/app_state
             const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', uid, 'data', 'app_state');
 
             unsubscribeSnapshot = window.onSnapshot(docRef, (docSnap) => {
@@ -591,15 +647,12 @@
                     const data = docSnap.data();
                     if (data.appData) {
                         appData = JSON.parse(data.appData);
-                        // Migration
                         if (!appData.currentTransactions) appData.currentTransactions = [];
-                        
                         updateUI();
                         document.getElementById('sync-status').classList.remove('bg-red-500');
                         document.getElementById('sync-status').classList.add('bg-green-400');
                     }
                 } else {
-                    // New Data Doc -> Create empty
                     saveDataToCloud(); 
                 }
             }, (error) => {
@@ -607,15 +660,12 @@
                 document.getElementById('sync-status').classList.remove('bg-green-400');
                 document.getElementById('sync-status').classList.add('bg-red-500');
             });
-            
             showToast("Data Synced");
         }
 
         async function saveDataToCloud() {
             if (!currentUser) return;
-
             const docRef = window.doc(window.db, 'artifacts', window.appId, 'users', currentUser.uid, 'data', 'app_state');
-            
             try {
                 await window.setDoc(docRef, {
                     lastUpdated: Date.now(),
@@ -641,12 +691,8 @@
 
         function updateUI() {
             const totals = getTodayTotals();
-
-            // Stock
             document.getElementById('display-stock').innerText = appData.stock;
             document.getElementById('display-stock-value').innerText = `$${(appData.stock * SUPPLIER_COST_PER_ITEM).toLocaleString()}`;
-            
-            // Today's Shift Stats
             document.getElementById('today-gross').innerText = `$${totals.gross.toLocaleString()}`;
             document.getElementById('today-profit').innerText = `$${totals.profit.toLocaleString()}`;
             document.getElementById('today-supplier').innerText = `$${totals.supplier.toLocaleString()}`;
@@ -669,14 +715,11 @@
         function renderTransactionList() {
             const list = document.getElementById('current-transactions-list');
             list.innerHTML = '';
-
             if (appData.currentTransactions.length === 0) {
                 list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 text-sm py-4">No sales yet today.</div>';
                 return;
             }
-
             const reversedTxns = [...appData.currentTransactions].reverse();
-
             reversedTxns.forEach(t => {
                 const item = document.createElement('div');
                 item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700';
@@ -711,7 +754,6 @@
                 const t = appData.currentTransactions[index];
                 const el = document.getElementById(`txn-${id}`);
                 if (el) el.classList.add('slide-out');
-
                 setTimeout(() => {
                     appData.stock += t.qty;
                     appData.currentTransactions.splice(index, 1);
@@ -727,7 +769,6 @@
             const displayMode = document.getElementById('stock-display-mode');
             const editMode = document.getElementById('stock-edit-mode');
             const input = document.getElementById('stock-set-input');
-
             if (editMode.classList.contains('hidden')) {
                 displayMode.classList.add('hidden');
                 editMode.classList.remove('hidden');
@@ -742,10 +783,7 @@
         window.saveStockEdit = function() {
             const input = document.getElementById('stock-set-input');
             const qty = parseInt(input.value);
-            if (isNaN(qty) || qty < 0) {
-                showToast("Please enter a valid stock number.");
-                return;
-            }
+            if (isNaN(qty) || qty < 0) { showToast("Please enter a valid stock number."); return; }
             appData.stock = qty;
             saveDataToCloud();
             toggleStockEdit();
@@ -755,10 +793,7 @@
         window.addStock = function() {
             const input = document.getElementById('stock-add-input');
             const qty = parseInt(input.value);
-            if (isNaN(qty) || qty <= 0) {
-                showToast("Please enter a valid quantity.");
-                return;
-            }
+            if (isNaN(qty) || qty <= 0) { showToast("Please enter a valid quantity."); return; }
             appData.stock += qty;
             input.value = '';
             saveDataToCloud();
@@ -766,77 +801,41 @@
         }
 
         window.sellItem = function(qty) {
-            if (appData.stock < qty) {
-                showToast(`Not enough stock! You only have ${appData.stock} left.`);
-                return;
-            }
-
+            if (appData.stock < qty) { showToast(`Not enough stock! You only have ${appData.stock} left.`); return; }
             const tier = PRICING[qty];
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            
-            const transaction = {
-                id: Date.now(),
-                timestamp: now.getTime(),
-                hour: now.getHours(),
-                time: timeStr,
-                qty: qty,
-                price: tier.price,
-                profit: tier.profit,
-                supplier: tier.supplier
-            };
-
+            const transaction = { id: Date.now(), timestamp: now.getTime(), hour: now.getHours(), time: timeStr, qty: qty, price: tier.price, profit: tier.profit, supplier: tier.supplier };
             appData.stock -= qty;
             appData.currentTransactions.push(transaction);
-
             saveDataToCloud();
             showToast(`Sold ${qty} item(s) for $${tier.price}`);
         }
 
         window.endDay = function() {
             const totals = getTodayTotals();
-            if (appData.currentTransactions.length === 0) {
-                showToast("No sales to save today.");
-                return;
-            }
-
+            if (appData.currentTransactions.length === 0) { showToast("No sales to save today."); return; }
             const todayDate = new Date().toISOString().split('T')[0]; 
-            
             const hourlyDist = {};
             appData.currentTransactions.forEach(t => {
                 const h = t.hour || new Date(t.timestamp).getHours();
                 hourlyDist[h] = (hourlyDist[h] || 0) + t.qty;
             });
-
             const existingRecordIndex = appData.history.findIndex(h => h.date === todayDate);
-            
             if (existingRecordIndex >= 0) {
                 const rec = appData.history[existingRecordIndex];
-                rec.gross += totals.gross;
-                rec.profit += totals.profit;
-                rec.supplier += totals.supplier;
-                rec.itemsSold += totals.itemsSold;
-                
+                rec.gross += totals.gross; rec.profit += totals.profit; rec.supplier += totals.supplier; rec.itemsSold += totals.itemsSold;
                 for (const [hour, count] of Object.entries(hourlyDist)) {
                     rec.hourlyDistribution = rec.hourlyDistribution || {};
                     rec.hourlyDistribution[hour] = (rec.hourlyDistribution[hour] || 0) + count;
                 }
             } else {
-                appData.history.push({
-                    date: todayDate,
-                    ...totals,
-                    hourlyDistribution: hourlyDist
-                });
+                appData.history.push({ date: todayDate, ...totals, hourlyDistribution: hourlyDist });
             }
-
             appData.currentTransactions = [];
             saveDataToCloud();
             showToast("Shift saved successfully!");
-            
-            if (document.getElementById('tab-reports').classList.contains('active')) {
-                updateChart('daily');
-                updateHourlyChart();
-            }
+            if (document.getElementById('tab-reports').classList.contains('active')) { updateChart('daily'); updateHourlyChart(); }
         }
 
         // --- Reports & Charts ---
@@ -851,22 +850,17 @@
         function calculatePredictions(currentTotals) {
             const totalProfitToday = currentTotals.profit;
             if (appData.history.length === 0 && totalProfitToday === 0) {
-                document.getElementById('predicted-earnings').innerText = "$0";
-                return;
+                document.getElementById('predicted-earnings').innerText = "$0"; return;
             }
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
             const startOfWeek = getStartOfWeek(today);
-
             let profitThisWeek = 0;
             appData.history.forEach(record => {
-                if (record.date >= startOfWeek && record.date <= todayStr) {
-                    profitThisWeek += record.profit;
-                }
+                if (record.date >= startOfWeek && record.date <= todayStr) { profitThisWeek += record.profit; }
             });
             profitThisWeek += totalProfitToday;
-            let daysElapsed = today.getDay() || 7; 
-            daysElapsed = Math.max(1, daysElapsed);
+            let daysElapsed = today.getDay() || 7; daysElapsed = Math.max(1, daysElapsed);
             const dailyAverage = profitThisWeek / daysElapsed;
             const predictedWeekly = Math.round(dailyAverage * 7);
             document.getElementById('predicted-earnings').innerText = `$${predictedWeekly.toLocaleString()}`;
@@ -874,29 +868,15 @@
         }
 
         function renderHistoryList() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            if (appData.history.length === 0) {
-                list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>';
-                return;
-            }
+            const list = document.getElementById('history-list'); list.innerHTML = '';
+            if (appData.history.length === 0) { list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>'; return; }
             const sortedHistory = [...appData.history].sort((a, b) => new Date(b.date) - new Date(a.date));
             sortedHistory.slice(0, 10).forEach(record => {
-                const dateObj = new Date(record.date);
-                dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+                const dateObj = new Date(record.date); dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
                 const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors';
-                div.innerHTML = `
-                    <div>
-                        <div class="font-medium text-gray-800 dark:text-gray-200 text-sm">${dateStr}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">${record.itemsSold} items sold</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold text-green-600 dark:text-green-400 text-sm">+$${record.profit}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Gross: $${record.gross}</div>
-                    </div>
-                `;
+                div.innerHTML = `<div><div class="font-medium text-gray-800 dark:text-gray-200 text-sm">${dateStr}</div><div class="text-xs text-gray-500 dark:text-gray-400">${record.itemsSold} items sold</div></div><div class="text-right"><div class="font-bold text-green-600 dark:text-green-400 text-sm">+$${record.profit}</div><div class="text-xs text-gray-500 dark:text-gray-400">Gross: $${record.gross}</div></div>`;
                 list.appendChild(div);
             });
         }
@@ -905,150 +885,40 @@
             const ctx = document.getElementById('hourlyChart').getContext('2d');
             if (hourlyChartInstance) hourlyChartInstance.destroy();
             const hourlyTotals = new Array(24).fill(0);
-            appData.history.forEach(rec => {
-                if (rec.hourlyDistribution) {
-                    for (const [hour, count] of Object.entries(rec.hourlyDistribution)) {
-                        hourlyTotals[parseInt(hour)] += count;
-                    }
-                }
-            });
-            appData.currentTransactions.forEach(t => {
-                const h = t.hour || new Date(t.timestamp).getHours();
-                hourlyTotals[h] += t.qty;
-            });
-            const labels = hourlyTotals.map((_, i) => {
-                const d = new Date(); d.setHours(i);
-                return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
-            });
+            appData.history.forEach(rec => { if (rec.hourlyDistribution) { for (const [hour, count] of Object.entries(rec.hourlyDistribution)) { hourlyTotals[parseInt(hour)] += count; } } });
+            appData.currentTransactions.forEach(t => { const h = t.hour || new Date(t.timestamp).getHours(); hourlyTotals[h] += t.qty; });
+            const labels = hourlyTotals.map((_, i) => { const d = new Date(); d.setHours(i); return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }); });
             const isDark = document.documentElement.classList.contains('dark');
-            const gridColor = isDark ? '#374151' : '#f3f4f6';
-            const textColor = isDark ? '#9ca3af' : '#6b7280';
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); 
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-            hourlyChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Items Sold',
-                        data: hourlyTotals,
-                        borderColor: '#3b82f6',
-                        backgroundColor: gradient,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 8 } }
-                    }
-                }
-            });
+            const gridColor = isDark ? '#374151' : '#f3f4f6'; const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400); gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+            hourlyChartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Total Items Sold', data: hourlyTotals, borderColor: '#3b82f6', backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 8 } } } } });
         }
 
         window.updateChart = function(viewMode) {
-            ['daily', 'weekly', 'monthly'].forEach(mode => {
-                const btn = document.getElementById(`btn-chart-${mode}`);
-                if (mode === viewMode) {
-                    btn.className = 'flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition';
-                } else {
-                    btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition';
-                }
-            });
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            let labels = [], profitData = [], grossData = [];
-            const todayTotals = getTodayTotals();
-            if (viewMode === 'daily') {
-                const last7Days = [];
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date(); d.setDate(d.getDate() - i); last7Days.push(d.toISOString().split('T')[0]);
-                }
-                labels = last7Days.map(d => { let date = new Date(d); date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); return date.toLocaleDateString('en-US', { weekday: 'short' }); });
-                last7Days.forEach(dateStr => {
-                    const record = appData.history.find(h => h.date === dateStr);
-                    let profit = record ? record.profit : 0; let gross = record ? record.gross : 0;
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    if (dateStr === todayStr) { profit += todayTotals.profit; gross += todayTotals.gross; }
-                    profitData.push(profit); grossData.push(gross);
-                });
-            } else if (viewMode === 'weekly') {
-                labels = ['Week -3', 'Week -2', 'Last Week', 'This Week']; profitData = [0, 0, 0, 0]; grossData = [0, 0, 0, 0];
-                const today = new Date();
-                const allData = [...appData.history];
-                if (todayTotals.gross > 0) allData.push({ date: today.toISOString().split('T')[0], ...todayTotals });
-                allData.forEach(record => {
-                    const rDate = new Date(record.date);
-                    const diffTime = Math.abs(today - rDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 7) { profitData[3] += record.profit; grossData[3] += record.gross; }
-                    else if (diffDays <= 14) { profitData[2] += record.profit; grossData[2] += record.gross; }
-                    else if (diffDays <= 21) { profitData[1] += record.profit; grossData[1] += record.gross; }
-                    else if (diffDays <= 28) { profitData[0] += record.profit; grossData[0] += record.gross; }
-                });
-            } else if (viewMode === 'monthly') {
-                labels = []; profitData = [0, 0, 0, 0, 0, 0]; grossData = [0, 0, 0, 0, 0, 0];
-                for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); }
-                const currentMonth = new Date().getMonth(); const currentYear = new Date().getFullYear();
-                const allData = [...appData.history];
-                if (todayTotals.gross > 0) allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals });
-                allData.forEach(record => {
-                    const rDate = new Date(record.date); rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset());
-                    const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth());
-                    if (monthDiff >= 0 && monthDiff <= 5) { const index = 5 - monthDiff; profitData[index] += record.profit; grossData[index] += record.gross; }
-                });
-            }
-            const isDark = document.documentElement.classList.contains('dark');
-            const gridColor = isDark ? '#374151' : '#f3f4f6';
-            const textColor = isDark ? '#9ca3af' : '#6b7280';
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Profit', data: profitData, backgroundColor: 'rgba(34, 197, 94, 0.8)', borderRadius: 4, order: 1 }, { label: 'Gross', data: grossData, backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)', borderRadius: 4, order: 2 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } } }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
-            });
+            ['daily', 'weekly', 'monthly'].forEach(mode => { const btn = document.getElementById(`btn-chart-${mode}`); if (mode === viewMode) { btn.className = 'flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition'; } else { btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition'; } });
+            const ctx = document.getElementById('salesChart').getContext('2d'); if (chartInstance) chartInstance.destroy();
+            let labels = [], profitData = [], grossData = []; const todayTotals = getTodayTotals();
+            if (viewMode === 'daily') { const last7Days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); last7Days.push(d.toISOString().split('T')[0]); } labels = last7Days.map(d => { let date = new Date(d); date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); return date.toLocaleDateString('en-US', { weekday: 'short' }); }); last7Days.forEach(dateStr => { const record = appData.history.find(h => h.date === dateStr); let profit = record ? record.profit : 0; let gross = record ? record.gross : 0; const todayStr = new Date().toISOString().split('T')[0]; if (dateStr === todayStr) { profit += todayTotals.profit; gross += todayTotals.gross; } profitData.push(profit); grossData.push(gross); }); } 
+            else if (viewMode === 'weekly') { labels = ['Week -3', 'Week -2', 'Last Week', 'This Week']; profitData = [0, 0, 0, 0]; grossData = [0, 0, 0, 0]; const today = new Date(); const allData = [...appData.history]; if (todayTotals.gross > 0) allData.push({ date: today.toISOString().split('T')[0], ...todayTotals }); allData.forEach(record => { const rDate = new Date(record.date); const diffTime = Math.abs(today - rDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays <= 7) { profitData[3] += record.profit; grossData[3] += record.gross; } else if (diffDays <= 14) { profitData[2] += record.profit; grossData[2] += record.gross; } else if (diffDays <= 21) { profitData[1] += record.profit; grossData[1] += record.gross; } else if (diffDays <= 28) { profitData[0] += record.profit; grossData[0] += record.gross; } }); } 
+            else if (viewMode === 'monthly') { labels = []; profitData = [0, 0, 0, 0, 0, 0]; grossData = [0, 0, 0, 0, 0, 0]; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); } const currentMonth = new Date().getMonth(); const currentYear = new Date().getFullYear(); const allData = [...appData.history]; if (todayTotals.gross > 0) allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals }); allData.forEach(record => { const rDate = new Date(record.date); rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset()); const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth()); if (monthDiff >= 0 && monthDiff <= 5) { const index = 5 - monthDiff; profitData[index] += record.profit; grossData[index] += record.gross; } }); }
+            const isDark = document.documentElement.classList.contains('dark'); const gridColor = isDark ? '#374151' : '#f3f4f6'; const textColor = isDark ? '#9ca3af' : '#6b7280';
+            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Profit', data: profitData, backgroundColor: 'rgba(34, 197, 94, 0.8)', borderRadius: 4, order: 1 }, { label: 'Gross', data: grossData, backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)', borderRadius: 4, order: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } } }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } } });
         }
 
         window.switchTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => { tab.classList.remove('active'); });
             document.getElementById(`tab-${tabName}`).classList.add('active');
             const navIds = ['sales', 'reports', 'settings'];
-            navIds.forEach(id => {
-                const el = document.getElementById(`nav-${id}`);
-                if (id === tabName) { el.classList.remove('text-gray-400', 'dark:text-gray-500'); el.classList.add('text-blue-600', 'dark:text-blue-400'); }
-                else { el.classList.remove('text-blue-600', 'dark:text-blue-400'); el.classList.add('text-gray-400', 'dark:text-gray-500'); }
-            });
-            if (tabName === 'reports') {
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
-                updateChart(activeBtn); updateHourlyChart();
-            }
+            navIds.forEach(id => { const el = document.getElementById(`nav-${id}`); if (id === tabName) { el.classList.remove('text-gray-400', 'dark:text-gray-500'); el.classList.add('text-blue-600', 'dark:text-blue-400'); } else { el.classList.remove('text-blue-600', 'dark:text-blue-400'); el.classList.add('text-gray-400', 'dark:text-gray-500'); } });
+            if (tabName === 'reports') { const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly'; updateChart(activeBtn); updateHourlyChart(); }
         }
 
         window.toggleTheme = function() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            const icon = document.getElementById('theme-icon');
-            if(icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
-            if (document.getElementById('tab-reports').classList.contains('active')) {
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
-                updateChart(activeBtn); updateHourlyChart();
-            }
+            document.documentElement.classList.toggle('dark'); const isDark = document.documentElement.classList.contains('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); const icon = document.getElementById('theme-icon'); if(icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
+            if (document.getElementById('tab-reports').classList.contains('active')) { const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly'; updateChart(activeBtn); updateHourlyChart(); }
         }
 
-        window.showToast = function(message) {
-            const toast = document.getElementById("toast");
-            toast.innerText = message; toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-        }
+        window.showToast = function(message) { const toast = document.getElementById("toast"); toast.innerText = message; toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); }
 
         // Boot
         window.onload = function() {
@@ -1057,7 +927,6 @@
             const isDark = document.documentElement.classList.contains('dark');
             const themeIcon = document.getElementById('theme-icon');
             if(themeIcon) { themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
-            
             initAuthListener();
         };
     </script>
