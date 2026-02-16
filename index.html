@@ -18,8 +18,14 @@
         import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+		const firebaseConfig = {
+  apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
+  authDomain: "salesonwheels-f6eec.firebaseapp.com",
+  projectId: "salesonwheels-f6eec",
+  storageBucket: "salesonwheels-f6eec.firebasestorage.app",
+  messagingSenderId: "432785821226",
+  appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
+};
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
