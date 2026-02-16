@@ -80,6 +80,20 @@
                 <h2 class="text-xl font-bold dark:text-white">Options</h2>
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
+            
+            <!-- Quick Stats in Settings -->
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Snapshot</h3>
+                <div class="flex justify-between text-sm">
+                    <span>Total Sales (Lifetime)</span>
+                    <span class="font-bold" id="setting-stat-total">0</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span>Current Debt</span>
+                    <span class="font-bold text-red-500" id="setting-stat-debt">$0</span>
+                </div>
+            </div>
+
             <div class="space-y-3">
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <span class="font-medium dark:text-white">Dark Mode</span>
@@ -159,10 +173,11 @@
                         <span class="text-4xl font-bold dark:text-white" id="display-stock">0</span>
                     </div>
                     <div class="text-right">
-                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">Owed</h2>
-                        <span class="text-2xl font-bold text-red-500" id="display-stock-value">$0</span>
+                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">Total Debt Owed</h2>
+                        <span class="text-2xl font-bold text-red-500" id="display-debt">$0</span>
                     </div>
                 </div>
+                <div class="mt-2 text-xs text-gray-400 text-right">To Boss</div>
             </div>
 
             <!-- Quick Sell -->
@@ -215,7 +230,7 @@
             <!-- Admin Navigation -->
             <div class="flex space-x-1 mb-6 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm">
                 <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition bg-gray-100 dark:bg-gray-700 text-blue-600">Team Sales</button>
-                <button onclick="window.switchAdminTab('inventory')" id="adm-tab-inventory" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Inventory</button>
+                <button onclick="window.switchAdminTab('transfer')" id="adm-tab-transfer" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Transfers</button>
                 <button onclick="window.switchAdminTab('reports')" id="adm-tab-reports" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
             </div>
 
@@ -233,7 +248,7 @@
                 </div>
 
                 <div class="flex justify-between items-center mb-3 ml-1">
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300">Driver Status</h3>
+                    <h3 class="font-bold text-gray-700 dark:text-gray-300">Driver Status & Debt</h3>
                     <div class="text-xs text-gray-400">Green = Active</div>
                 </div>
                 <div id="admin-driver-list" class="space-y-3">
@@ -241,8 +256,8 @@
                 </div>
             </div>
 
-            <!-- TAB: INVENTORY -->
-            <div id="admin-view-inventory" class="admin-tab-content hidden">
+            <!-- TAB: TRANSFERS (INVENTORY & DEBT) -->
+            <div id="admin-view-transfer" class="admin-tab-content hidden">
                 <!-- Master Stock Card -->
                 <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6 text-white mb-6 shadow-lg">
                     <div class="flex justify-between items-start">
@@ -257,29 +272,55 @@
                     </div>
                 </div>
 
-                <!-- Distribute Panel -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <!-- Warehouse Distribute -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                        <i data-lucide="truck" class="w-5 h-5 mr-2 text-blue-600"></i> Distribute Stock
+                        <i data-lucide="truck" class="w-5 h-5 mr-2 text-blue-600"></i> Warehouse Distribution
                     </h3>
-                    
                     <div class="space-y-3">
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">Select Driver</label>
-                            <select id="distribute-select-driver" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-medium text-gray-800 dark:text-white">
-                                <option value="">Loading drivers...</option>
+                            <label class="text-xs font-bold text-gray-500 uppercase">To Driver</label>
+                            <select id="distribute-select-driver" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-medium text-gray-800 dark:text-white admin-driver-select">
+                                <option value="">Loading...</option>
                             </select>
                         </div>
-                        
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">Quantity to Send</label>
-                            <div class="flex space-x-2 mt-1">
-                                <input type="number" id="distribute-qty" placeholder="0" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold text-lg text-gray-800 dark:text-white">
-                                <button onclick="window.adminDistributeStock()" class="bg-blue-600 text-white font-bold px-6 rounded-lg shadow-md hover:bg-blue-700 active:scale-95 transition">
-                                    SEND
-                                </button>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="number" id="distribute-qty" placeholder="Qty" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold text-lg text-gray-800 dark:text-white">
+                            <button onclick="window.adminDistributeStock()" class="bg-blue-600 text-white font-bold px-6 rounded-lg shadow-md hover:bg-blue-700 active:scale-95 transition">SEND</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Peer Transfer (Stock & Debt) -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                        <i data-lucide="arrow-right-left" class="w-5 h-5 mr-2 text-purple-600"></i> Driver Transfer
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex space-x-2 items-center">
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase">From</label>
+                                <select id="transfer-from" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
+                            </div>
+                            <div class="pt-5 text-gray-400"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase">To</label>
+                                <select id="transfer-to" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
                             </div>
                         </div>
+
+                        <!-- Tabs for type -->
+                        <div class="flex space-x-2 border-b dark:border-gray-700">
+                            <button onclick="window.setTransferType('stock')" id="btn-tr-stock" class="pb-2 text-sm font-bold border-b-2 border-purple-600 text-purple-600">Stock</button>
+                            <button onclick="window.setTransferType('debt')" id="btn-tr-debt" class="pb-2 text-sm font-bold text-gray-400 hover:text-gray-600">Money (Debt)</button>
+                        </div>
+
+                        <div class="flex space-x-2 mt-1">
+                            <input type="number" id="transfer-amount" placeholder="Qty" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold text-lg text-gray-800 dark:text-white">
+                            <button onclick="window.adminTransfer()" class="bg-purple-600 text-white font-bold px-6 rounded-lg shadow-md hover:bg-purple-700 active:scale-95 transition">MOVE</button>
+                        </div>
+                        <p class="text-xs text-gray-400 italic" id="transfer-hint">Moving inventory from one driver to another.</p>
                     </div>
                 </div>
             </div>
@@ -295,13 +336,13 @@
 
                 <div class="grid grid-cols-2 gap-4">
                      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase mb-1">Last 7 Days Sales</div>
-                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-qty">0</div>
+                        <div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (7d)</div>
+                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-gross">$0</div>
                         <div class="text-sm text-green-600 font-bold" id="adm-report-week-profit">$0 Profit</div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase mb-1">This Month Sales</div>
-                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-qty">0</div>
+                        <div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (Mo)</div>
+                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-gross">$0</div>
                         <div class="text-sm text-blue-600 font-bold" id="adm-report-month-profit">$0 Profit</div>
                     </div>
                 </div>
@@ -309,7 +350,7 @@
 
             <!-- VIEW: USER DETAIL -->
             <div id="admin-user-detail" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 overflow-y-auto hidden">
-                <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between">
+                <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between z-10">
                     <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                         <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     </button>
@@ -317,9 +358,21 @@
                     <div class="w-8"></div>
                 </div>
                 <div class="p-4 max-w-2xl mx-auto space-y-4">
+                    <!-- Collect Payment Card -->
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 p-4 rounded-xl">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-xs font-bold text-red-500 uppercase">Owed to Boss</div>
+                            <div class="text-2xl font-bold text-red-600 dark:text-red-400" id="detail-debt">$0</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="number" id="collect-amount" placeholder="Amount ($)" class="flex-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold">
+                            <button onclick="window.adminCollectPayment()" class="bg-red-600 text-white font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-red-700">Collect</button>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div class="text-xs text-gray-500 uppercase">Stock on Hand</div>
+                            <div class="text-xs text-gray-500 uppercase">Stock</div>
                             <div class="text-xl font-bold dark:text-white" id="detail-stock">0</div>
                         </div>
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -327,9 +380,12 @@
                             <div class="text-xl font-bold text-green-600" id="detail-profit">0</div>
                         </div>
                     </div>
+
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Activity</h3>
-                        <div class="text-xs text-gray-400 italic">Detailed transaction logs are private to the driver. Only summary data is shown here to comply with security rules.</div>
+                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Transactions</h3>
+                        <div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto">
+                            <!-- Populated via JS from Public Roster -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -358,7 +414,6 @@
         };
         const appId = "sales-tracker-v1"; 
 
-        // Init Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -367,7 +422,9 @@
         // --- GLOBAL STATE ---
         let currentUser = null;
         let userRole = 'driver'; 
-        let appData = { stock: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
+        let appData = { stock: 0, debt: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
+        let transferType = 'stock';
+        let currentDetailUid = null; // Admin view focus
         
         let driverChartInstance = null;
         let adminChartInstance = null;
@@ -428,7 +485,7 @@
                             status = data.status || 'pending';
                         }
 
-                        // Sync presence to roster
+                        // Initial Roster Sync
                         try {
                             const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
                             await setDoc(rosterRef, {
@@ -476,6 +533,7 @@
                     
                     // Init Defaults
                     appData.stock = appData.stock || 0;
+                    appData.debt = appData.debt || 0; // NEW: Amount Owed
                     appData.status = appData.status || 'inactive';
                     appData.stockLogs = appData.stockLogs || []; 
                     appData.currentTransactions = appData.currentTransactions || [];
@@ -503,19 +561,23 @@
                 hdr.className = "bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300";
             }
 
-            // Stock
+            // Stock & Debt
             document.getElementById('display-stock').innerText = appData.stock;
-            document.getElementById('display-stock-value').innerText = `$${(appData.stock * 60).toLocaleString()}`; 
+            document.getElementById('display-debt').innerText = `$${appData.debt.toLocaleString()}`;
+            document.getElementById('setting-stat-debt').innerText = `$${appData.debt.toLocaleString()}`;
             
+            // Total Lifetime Sales (for settings)
+            const totalSales = appData.history.reduce((a,b) => a + (b.sold || 0), 0) + appData.currentTransactions.reduce((a,b) => a + b.qty, 0);
+            document.getElementById('setting-stat-total').innerText = totalSales;
+
             // Today's Stats
-            const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit, gross: acc.gross + t.price }), {profit:0, gross:0});
+            const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit }), {profit:0});
             document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
             // Render Transaction List with DELETE button
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
             
-            // Clone and reverse to show newest first, but keep track of original index for deletion
             const displayList = appData.currentTransactions.map((t, i) => ({...t, originalIndex: i})).reverse();
             
             displayList.forEach(t => {
@@ -545,22 +607,37 @@
             const dataRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state');
             await setDoc(dataRef, { json: JSON.stringify(appData), lastUpdated: Date.now() });
 
-            // 2. Save Public Summary + History for Reports
+            // 2. Save Public Summary + RECENT LOGS for Admin Visibility
             let todaySold = 0;
             let todayProfit = 0;
-            appData.currentTransactions.forEach(t => { todaySold += t.qty; todayProfit += t.profit; });
+            let todayGross = 0;
+            appData.currentTransactions.forEach(t => { 
+                todaySold += t.qty; 
+                todayProfit += t.profit;
+                todayGross += t.price; 
+            });
             
-            // Prepare last 7 days history for Admin charts
-            const historySlice = appData.history.slice(-7);
+            // Publicly visible recent logs (Last 20)
+            // Combine history (simplified) and current transactions for a log view
+            // Actually, we just want the Admin to see specific transaction details.
+            // We will push the last 20 `currentTransactions` and maybe some recent history? 
+            // Let's just push `currentTransactions` + last few history summaries.
+            
+            const recentLogs = appData.currentTransactions.slice(-20).reverse();
+
+            const historySlice = appData.history.slice(-14); // 2 weeks for graphs
             
             try {
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid);
                 await setDoc(rosterRef, {
                     stock: appData.stock,
+                    debt: appData.debt,
                     status: appData.status,
                     todaySold: todaySold,
                     todayProfit: todayProfit,
-                    history: historySlice, // Sync history for graphs
+                    todayGross: todayGross,
+                    recentLogs: recentLogs, // PRIVACY FIX: Sync logs to public doc
+                    history: historySlice, 
                     lastSync: Date.now()
                 }, { merge: true });
             } catch(e) { console.log("Public sync failed", e); }
@@ -568,7 +645,7 @@
 
         window.toggleDriverStatus = async () => {
             appData.status = appData.status === 'active' ? 'inactive' : 'active';
-            renderDriverUI(); // optimistically update UI
+            renderDriverUI(); 
             await saveDriverData();
             window.showToast(`You are now ${appData.status === 'active' ? 'Online' : 'Offline'}`);
         };
@@ -577,14 +654,25 @@
             if(appData.stock < qty) { window.showToast("Not enough stock!"); return; }
             if(appData.status !== 'active') { 
                 if(!confirm("You are currently Offline. Sell anyway?")) return;
-                window.toggleDriverStatus(); // Auto switch to active
+                window.toggleDriverStatus(); 
             }
             
             const pricing = { 1:{p:80, prof:20}, 2:{p:150, prof:40}, 3:{p:220, prof:60}, 4:{p:280, prof:80} };
             const tier = pricing[qty];
             
+            const owedToBoss = tier.p - tier.prof;
+
             appData.stock -= qty;
-            appData.currentTransactions.push({ date: Date.now(), qty: qty, price: tier.p, profit: tier.prof, time: new Date().toLocaleTimeString() });
+            appData.debt += owedToBoss; // DEBT INCREASES
+            
+            appData.currentTransactions.push({ 
+                date: Date.now(), 
+                qty: qty, 
+                price: tier.p, 
+                profit: tier.prof, 
+                owed: owedToBoss,
+                time: new Date().toLocaleTimeString() 
+            });
             
             await saveDriverData();
             window.showToast(`Sold ${qty} for $${tier.p}`);
@@ -594,8 +682,9 @@
             if(!confirm("Undo this sale? Stock will be returned.")) return;
             
             const t = appData.currentTransactions[originalIndex];
-            appData.stock += t.qty; // Refund
-            appData.currentTransactions.splice(originalIndex, 1); // Remove
+            appData.stock += t.qty; 
+            appData.debt -= t.owed; // DEBT DECREASES
+            appData.currentTransactions.splice(originalIndex, 1); 
             
             await saveDriverData();
             window.showToast("Sale undone. Stock returned.");
@@ -603,10 +692,9 @@
 
         window.endDay = async () => {
             if(appData.currentTransactions.length === 0) { window.showToast("No sales to save."); return; }
-            // Move today to history
+            
             const todayStats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty, revenue: acc.gross+t.price }), {profit:0, sold:0, revenue:0});
             
-            // Check if entry for today already exists in history (prevent dupes if multiple 'end day' clicks)
             const dateStr = new Date().toISOString().split('T')[0];
             const existingIdx = appData.history.findIndex(h => h.date === dateStr);
             
@@ -619,7 +707,8 @@
             }
 
             appData.currentTransactions = [];
-            appData.status = 'inactive'; // Auto offline
+            // Debt persists!
+            appData.status = 'inactive'; 
             await saveDriverData();
             window.showToast("Day saved & Reset!");
         };
@@ -631,17 +720,14 @@
         };
 
         function renderDriverCharts() {
-            // Calc stats
             const now = new Date();
             const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
             const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
             
             let weekProfit = 0, monthProfit = 0;
-            // Include today's current profit in calculations
             const todayProfit = appData.currentTransactions.reduce((a, b) => a + b.profit, 0);
             const todayDate = new Date().toISOString().split('T')[0];
 
-            // Combine history + today for calculation
             const allData = [...appData.history];
             if(todayProfit > 0) allData.push({ date: todayDate, profit: todayProfit });
 
@@ -654,17 +740,15 @@
             document.getElementById('drv-stat-week').innerText = `$${weekProfit}`;
             document.getElementById('drv-stat-month').innerText = `$${monthProfit}`;
 
-            // Render Chart
             const ctx = document.getElementById('driverProfitChart').getContext('2d');
             if(driverChartInstance) driverChartInstance.destroy();
 
-            // Last 7 entries for chart
             const chartData = appData.history.slice(-7);
             
             driverChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: chartData.map(d => d.date.slice(5)), // MM-DD
+                    labels: chartData.map(d => d.date.slice(5)), 
                     datasets: [{
                         label: 'Profit ($)',
                         data: chartData.map(d => d.profit),
@@ -680,7 +764,6 @@
                 }
             });
             
-            // List Breakdown (Reverse chrono)
             const list = document.getElementById('drv-stat-list');
             list.innerHTML = '';
             [...appData.history].reverse().slice(0, 10).forEach(h => {
@@ -700,9 +783,10 @@
             const rosterRef = collection(db, 'artifacts', appId, 'public', 'data', 'roster');
             unsubRoster = onSnapshot(rosterRef, (snap) => {
                 const listEl = document.getElementById('admin-driver-list');
-                const selectEl = document.getElementById('distribute-select-driver');
+                const selects = document.querySelectorAll('.admin-driver-select');
+                
                 listEl.innerHTML = '';
-                selectEl.innerHTML = '<option value="">Select Driver...</option>';
+                selects.forEach(s => s.innerHTML = '<option value="">Select Driver...</option>');
                 
                 if (snap.empty) {
                     listEl.innerHTML = '<div class="text-center py-8 text-gray-400">No active drivers found.</div>';
@@ -716,23 +800,30 @@
                 snap.forEach(docSnap => {
                     const driver = docSnap.data();
                     const dStock = driver.stock || 0;
+                    const dDebt = driver.debt || 0;
                     const dSold = driver.todaySold || 0;
                     const dProfit = driver.todayProfit || 0;
                     const dStatus = driver.status || 'inactive';
                     
-                    rosterData.push(driver); // Store for reports
+                    // Attach ID for easier access
+                    driver.id = docSnap.id;
+                    rosterData.push(driver); 
 
                     totalSoldToday += dSold;
                     totalProfitToday += dProfit;
 
-                    // Status Indicator Color
                     const statusColor = dStatus === 'active' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600';
                     const statusBorder = dStatus === 'active' ? 'border-green-500' : 'border-gray-300 dark:border-gray-600';
+
+                    // Update currently viewed detail if open
+                    if (currentDetailUid === driver.id) {
+                         updateDetailView(driver);
+                    }
 
                     // Render Card
                     const card = document.createElement('div');
                     card.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition";
-                    card.onclick = () => window.viewDriverDetails(docSnap.id, driver.name, dStock, dProfit);
+                    card.onclick = () => window.viewDriverDetails(driver);
                     card.innerHTML = `
                         <div class="flex items-center">
                             <div class="relative mr-3">
@@ -744,7 +835,7 @@
                                     ${driver.name || 'Unknown'} 
                                     ${dStatus === 'active' ? '<span class="ml-2 text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Online</span>' : ''}
                                 </div>
-                                <div class="text-xs text-gray-500">Stock: ${dStock} • Sold: ${dSold}</div>
+                                <div class="text-xs text-gray-500">Stock: ${dStock} • Debt: <span class="text-red-500 font-bold">$${dDebt}</span></div>
                             </div>
                         </div>
                         <div class="text-right">
@@ -753,20 +844,20 @@
                     `;
                     listEl.appendChild(card);
 
+                    // Add to dropdowns
                     const option = document.createElement('option');
                     option.value = driver.uid || docSnap.id;
                     option.innerText = driver.name || 'Unknown';
-                    selectEl.appendChild(option);
+                    // Need to clone for multiple selects
+                    selects.forEach(s => s.appendChild(option.cloneNode(true)));
                 });
 
                 document.getElementById('admin-total-profit').innerText = `$${totalProfitToday}`;
                 document.getElementById('admin-total-sold').innerText = totalSoldToday;
                 
-                // Update Reports whenever roster changes
                 updateAdminReports(rosterData);
             });
 
-            // Master Inventory Listener
             const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
             unsubMasterStock = onSnapshot(masterRef, (snap) => {
                 const val = snap.exists() ? (snap.data().qty || 0) : 0;
@@ -774,49 +865,110 @@
             });
         }
 
+        window.setTransferType = (type) => {
+            transferType = type;
+            document.getElementById('btn-tr-stock').className = type === 'stock' ? "pb-2 text-sm font-bold border-b-2 border-purple-600 text-purple-600" : "pb-2 text-sm font-bold text-gray-400 hover:text-gray-600";
+            document.getElementById('btn-tr-debt').className = type === 'debt' ? "pb-2 text-sm font-bold border-b-2 border-purple-600 text-purple-600" : "pb-2 text-sm font-bold text-gray-400 hover:text-gray-600";
+            document.getElementById('transfer-amount').placeholder = type === 'stock' ? "Qty items" : "Amount ($)";
+            document.getElementById('transfer-hint').innerText = type === 'stock' ? "Move inventory from one driver to another." : "Move cash debt. Use this if a driver hands cash to another driver instead of you.";
+        };
+
+        window.adminTransfer = async () => {
+            const fromUid = document.getElementById('transfer-from').value;
+            const toUid = document.getElementById('transfer-to').value;
+            const val = parseInt(document.getElementById('transfer-amount').value);
+
+            if(!fromUid || !toUid || !val || val <= 0) { window.showToast("Invalid Transfer"); return; }
+            if(fromUid === toUid) { window.showToast("Cannot transfer to self"); return; }
+
+            // We need to update two drivers. Doing this safely via public roster update first for UI, then private docs.
+            try {
+                // FROM DRIVER
+                const fromRef = doc(db, 'artifacts', appId, 'users', fromUid, 'data', 'app_state');
+                const fromSnap = await getDoc(fromRef);
+                if(!fromSnap.exists()) throw new Error("Source driver not initialized");
+                
+                let fromData = JSON.parse(fromSnap.data().json);
+                
+                // TO DRIVER
+                const toRef = doc(db, 'artifacts', appId, 'users', toUid, 'data', 'app_state');
+                const toSnap = await getDoc(toRef);
+                
+                // Setup 'To' data if missing
+                let toData = toSnap.exists() ? JSON.parse(toSnap.data().json) : { stock:0, debt:0, stockLogs:[] };
+
+                if(transferType === 'stock') {
+                    if(fromData.stock < val) { window.showToast("Source has insufficient stock"); return; }
+                    fromData.stock -= val;
+                    toData.stock = (toData.stock || 0) + val;
+                    fromData.stockLogs.push({ date: Date.now(), type: 'transfer_out', qty: val, to: toUid });
+                    // Usually receiving driver gets a log too, but skipping for brevity
+                } else {
+                    // Debt Transfer
+                    // Reduces FROM debt (they passed the buck)
+                    // Increases TO debt (they now hold the buck)
+                    fromData.debt -= val;
+                    toData.debt = (toData.debt || 0) + val;
+                }
+
+                // Save Both
+                await setDoc(fromRef, { json: JSON.stringify(fromData), lastUpdated: Date.now() });
+                await setDoc(toRef, { json: JSON.stringify(toData), lastUpdated: Date.now() });
+
+                // Update Public Roster for immediate UI feedback
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', fromUid), { stock: fromData.stock, debt: fromData.debt }, { merge: true });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', toUid), { stock: toData.stock, debt: toData.debt }, { merge: true });
+
+                window.showToast("Transfer Complete");
+                document.getElementById('transfer-amount').value = '';
+
+            } catch(e) {
+                console.error(e);
+                window.showToast("Transfer Failed. Permissions?");
+            }
+        };
+
         function updateAdminReports(rosterData) {
-            // Aggregate History
-            // We need to merge histories from all drivers by date
             let dateMap = {};
-            let weekQty = 0, monthQty = 0;
+            let weekGross = 0, monthGross = 0;
             let weekProf = 0, monthProf = 0;
             
             const now = new Date();
-            const startOfWeek = new Date(now.setDate(now.getDate() - 7)); // Rolling 7 days
+            const startOfWeek = new Date(now.setDate(now.getDate() - 7)); 
             const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
             rosterData.forEach(d => {
+                // Process History
                 if(d.history && Array.isArray(d.history)) {
                     d.history.forEach(h => {
-                        if(!dateMap[h.date]) dateMap[h.date] = { profit: 0, sold: 0 };
+                        if(!dateMap[h.date]) dateMap[h.date] = { profit: 0, revenue: 0 };
                         dateMap[h.date].profit += (h.profit || 0);
-                        dateMap[h.date].sold += (h.sold || 0);
+                        dateMap[h.date].revenue += (h.revenue || 0); // Need revenue in history
 
                         const dObj = new Date(h.date);
-                        if(dObj >= startOfWeek) { weekQty += h.sold; weekProf += h.profit; }
-                        if(dObj >= startOfMonth) { monthQty += h.sold; monthProf += h.profit; }
+                        if(dObj >= startOfWeek) { weekGross += (h.revenue || 0); weekProf += h.profit; }
+                        if(dObj >= startOfMonth) { monthGross += (h.revenue || 0); monthProf += h.profit; }
                     });
                 }
-                // Add Today's live stats
+                // Process Today
                 if(d.todaySold > 0) {
-                     weekQty += d.todaySold; weekProf += d.todayProfit;
-                     monthQty += d.todaySold; monthProf += d.todayProfit;
-                     // Add to chart (current date)
+                     weekGross += (d.todayGross || 0); weekProf += d.todayProfit;
+                     monthGross += (d.todayGross || 0); monthProf += d.todayProfit;
+                     
                      const today = new Date().toISOString().split('T')[0];
-                     if(!dateMap[today]) dateMap[today] = { profit: 0, sold: 0 };
+                     if(!dateMap[today]) dateMap[today] = { profit: 0, revenue: 0 };
                      dateMap[today].profit += d.todayProfit;
-                     dateMap[today].sold += d.todaySold;
+                     dateMap[today].revenue += (d.todayGross || 0);
                 }
             });
 
-            document.getElementById('adm-report-week-qty').innerText = weekQty;
+            document.getElementById('adm-report-week-gross').innerText = `$${weekGross}`;
             document.getElementById('adm-report-week-profit').innerText = `$${weekProf} Profit`;
-            document.getElementById('adm-report-month-qty').innerText = monthQty;
+            document.getElementById('adm-report-month-gross').innerText = `$${monthGross}`;
             document.getElementById('adm-report-month-profit').innerText = `$${monthProf} Profit`;
 
             // Chart
-            const sortedDates = Object.keys(dateMap).sort().slice(-7); // Last 7 recorded days
-            const chartData = sortedDates.map(date => dateMap[date].profit);
+            const sortedDates = Object.keys(dateMap).sort().slice(-7); 
             
             const ctx = document.getElementById('adminTeamChart').getContext('2d');
             if(adminChartInstance) adminChartInstance.destroy();
@@ -825,14 +977,24 @@
                 type: 'line',
                 data: {
                     labels: sortedDates.map(d => d.slice(5)),
-                    datasets: [{
-                        label: 'Total Team Profit',
-                        data: chartData,
-                        borderColor: '#10B981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
+                    datasets: [
+                        {
+                            label: 'Gross Revenue',
+                            data: sortedDates.map(d => dateMap[d].revenue),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Net Profit',
+                            data: sortedDates.map(d => dateMap[d].profit),
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -843,11 +1005,14 @@
         }
 
         window.switchAdminTab = (tab) => {
-            ['team', 'inventory', 'reports'].forEach(t => {
-                document.getElementById(`admin-view-${t}`).classList.add('hidden');
+            ['team', 'transfer', 'inventory', 'reports'].forEach(t => {
+                const view = document.getElementById(`admin-view-${t}`);
+                if(view) view.classList.add('hidden');
                 const btn = document.getElementById(`adm-tab-${t}`);
-                btn.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-blue-600');
-                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+                if(btn) {
+                    btn.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-blue-600');
+                    btn.classList.add('text-gray-500', 'dark:text-gray-400');
+                }
             });
             
             document.getElementById(`admin-view-${tab}`).classList.remove('hidden');
@@ -875,7 +1040,7 @@
             await setDoc(masterRef, { qty: increment(-qty) }, { merge: true });
 
             try {
-                // Direct Write
+                // Direct Write to Driver State
                 const driverRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
                 const snap = await getDoc(driverRef);
                 
@@ -886,11 +1051,12 @@
                     dData.stockLogs = dData.stockLogs || [];
                     dData.stockLogs.push({ date: Date.now(), type: 'receive', qty: qty, by: 'admin' });
                 } else {
-                    dData = { stock: qty, currentTransactions: [], history: [], stockLogs: [{ date: Date.now(), type: 'receive', qty: qty, by: 'admin' }] };
+                    dData = { stock: qty, debt: 0, currentTransactions: [], history: [], stockLogs: [{ date: Date.now(), type: 'receive', qty: qty, by: 'admin' }] };
                 }
                 
                 await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
                 
+                // Update Public Roster
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid);
                 await setDoc(rosterRef, { stock: dData.stock }, { merge: true });
 
@@ -903,12 +1069,68 @@
             }
         };
 
-        window.viewDriverDetails = (uid, name, stock, profit) => {
-            document.getElementById('admin-user-detail').classList.remove('hidden');
-            document.getElementById('detail-user-name').innerText = name;
-            document.getElementById('detail-stock').innerText = stock;
-            document.getElementById('detail-profit').innerText = `$${profit}`;
+        // ADMIN COLLECT PAYMENT
+        window.adminCollectPayment = async () => {
+            if(!currentDetailUid) return;
+            const amtStr = document.getElementById('collect-amount').value;
+            if(!amtStr) return;
+            const amount = parseFloat(amtStr);
+            if(amount <= 0) return;
+
+            try {
+                const driverRef = doc(db, 'artifacts', appId, 'users', currentDetailUid, 'data', 'app_state');
+                const snap = await getDoc(driverRef);
+                if(snap.exists()) {
+                    let dData = JSON.parse(snap.data().json);
+                    dData.debt = (dData.debt || 0) - amount;
+                    if(dData.debt < 0) dData.debt = 0; // Prevent negative debt?
+                    
+                    await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
+                    
+                    // Public Sync
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), { debt: dData.debt }, { merge: true });
+                    
+                    window.showToast(`Collected $${amount}`);
+                    document.getElementById('collect-amount').value = '';
+                }
+            } catch(e) { console.error(e); window.showToast("Payment Error"); }
         };
+
+        window.viewDriverDetails = (driver) => {
+            currentDetailUid = driver.id; // Set focus
+            updateDetailView(driver);
+            document.getElementById('admin-user-detail').classList.remove('hidden');
+        };
+
+        function updateDetailView(driver) {
+            document.getElementById('detail-user-name').innerText = driver.name || 'Unknown';
+            document.getElementById('detail-stock').innerText = driver.stock || 0;
+            document.getElementById('detail-debt').innerText = `$${driver.debt || 0}`;
+            document.getElementById('detail-profit').innerText = `$${driver.todayProfit || 0}`;
+            
+            // Populate Log List from Public Roster Data
+            const list = document.getElementById('detail-log-list');
+            list.innerHTML = '';
+            
+            if(driver.recentLogs && driver.recentLogs.length > 0) {
+                driver.recentLogs.forEach(log => {
+                    list.innerHTML += `
+                        <div class="flex justify-between border-b dark:border-gray-700 pb-2 mb-2 last:border-0">
+                            <div>
+                                <div class="text-xs text-gray-400">${new Date(log.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                                <div class="dark:text-white font-bold">Sold ${log.qty} items</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-600 font-bold">+$${log.profit}</div>
+                                <div class="text-xs text-red-400">Debt: +$${log.owed}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<div class="text-center text-gray-400 italic py-4">No recent activity synced.</div>';
+            }
+        }
     </script>
 </body>
 </html>
