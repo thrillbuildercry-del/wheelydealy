@@ -23,9 +23,10 @@
         #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .hidden { display: none !important; }
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
     </style>
     <script>
-        // Force Dark Mode Default on Load
         if (localStorage.theme === 'light') {
             document.documentElement.classList.remove('dark');
         } else {
@@ -35,7 +36,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen">
 
-    <!-- Loading Overlay (Initial State: Visible, but hidden by logic if auth fails) -->
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="modal-overlay z-[150]">
         <div class="text-white flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
@@ -43,9 +44,9 @@
         </div>
     </div>
 
-    <!-- Auth Modal (Initial State: HIDDEN to prevent flash) -->
+    <!-- Auth Modal -->
     <div id="login-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm overflow-y-auto max-h-[90vh]">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
             <div class="text-center mb-6">
                 <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
@@ -53,28 +54,22 @@
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Portal Login</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Drivers & Admins</p>
             </div>
-            
-            <div class="space-y-4">
-                <button onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/><path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    Sign in with Google
-                </button>
-            </div>
+            <button onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/><path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+            </button>
         </div>
     </div>
 
-    <!-- Approval Pending / Error Modal -->
+    <!-- Approval Pending -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
             <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
                 <i data-lucide="clock" class="w-8 h-8"></i>
             </div>
             <h2 class="text-2xl font-bold dark:text-white">Status Check</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">
-                Your account is waiting for approval, or we couldn't load your profile.
-            </p>
-            <div class="animate-pulse text-xs text-blue-500 mb-6">If you are stuck, try signing out.</div>
-            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out / Reset</button>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Waiting for approval or loading profile...</p>
+            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
 
@@ -85,15 +80,12 @@
                 <h2 class="text-xl font-bold dark:text-white">Options</h2>
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            
             <div class="space-y-3">
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <span class="font-medium dark:text-white">Dark Mode</span>
                     <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-                
                 <hr class="border-gray-200 dark:border-gray-700 my-2">
-                
                 <button onclick="window.logout()" class="w-full flex justify-center items-center p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-bold">
                     <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Log Out
                 </button>
@@ -101,20 +93,61 @@
         </div>
     </div>
 
-    <!-- DRIVER UI -->
-    <div id="driver-app" class="hidden pb-20">
-        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold">Driver Portal</h1>
-                <div class="flex items-center text-xs text-blue-200 mt-1">
-                    <span id="driver-name-display">Guest</span>
-                    <span class="mx-2">•</span>
-                    <div id="driver-sync-status" class="w-2 h-2 rounded-full bg-green-400"></div>
+    <!-- DRIVER REPORTS MODAL -->
+    <div id="driver-stats-modal" class="modal-overlay hidden">
+        <div class="bg-white dark:bg-gray-800 p-0 rounded-2xl shadow-2xl w-11/12 max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 bg-blue-600 dark:bg-gray-700 text-white flex justify-between items-center">
+                <h2 class="text-lg font-bold">My Performance</h2>
+                <button onclick="document.getElementById('driver-stats-modal').classList.add('hidden')" class="p-1 hover:bg-blue-700 rounded"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">This Week</div>
+                        <div class="text-xl font-bold text-green-600" id="drv-stat-week">$0</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">This Month</div>
+                        <div class="text-xl font-bold text-blue-600" id="drv-stat-month">$0</div>
+                    </div>
+                </div>
+                <!-- Chart -->
+                <div class="h-64 bg-white dark:bg-gray-900 rounded-lg p-2 border border-gray-100 dark:border-gray-700 mb-4">
+                    <canvas id="driverProfitChart"></canvas>
+                </div>
+                <!-- Detailed Breakdown -->
+                <h3 class="font-bold text-sm mb-2 dark:text-white">Breakdown</h3>
+                <div class="space-y-2 text-sm" id="drv-stat-list">
+                    <!-- Populated by JS -->
                 </div>
             </div>
-            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-            </button>
+        </div>
+    </div>
+
+    <!-- DRIVER UI -->
+    <div id="driver-app" class="hidden pb-24">
+        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300" id="driver-header">
+            <div>
+                <h1 class="text-lg font-bold">Driver Portal</h1>
+                <div class="flex items-center text-xs text-blue-200 mt-1 space-x-2">
+                    <span id="driver-name-display">Guest</span>
+                    <span>•</span>
+                    <!-- Status Toggle -->
+                    <button onclick="window.toggleDriverStatus()" id="status-badge" class="flex items-center bg-black/20 px-2 py-0.5 rounded-full hover:bg-black/30 transition">
+                        <div id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></div>
+                        <span id="status-text">Offline</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="window.openDriverStats()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                </button>
+                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
         </header>
 
         <main class="p-4 max-w-md mx-auto">
@@ -130,7 +163,6 @@
                         <span class="text-2xl font-bold text-red-500" id="display-stock-value">$0</span>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-400 italic text-center">Stock is managed by Admin</div>
             </div>
 
             <!-- Quick Sell -->
@@ -158,7 +190,7 @@
                     <h2 class="text-gray-500 text-xs uppercase tracking-wide">Today's Shift</h2>
                     <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold" id="today-profit-badge">$0 Profit</span>
                 </div>
-                <div id="transaction-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm">
+                <div id="transaction-list" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar text-sm">
                     <div class="text-center text-gray-400 py-2">No sales yet today</div>
                 </div>
                 <button onclick="window.endDay()" class="mt-4 w-full bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition">End Shift & Save</button>
@@ -181,9 +213,10 @@
         <main class="p-4 max-w-2xl mx-auto">
             
             <!-- Admin Navigation -->
-            <div class="flex space-x-2 mb-6">
-                <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 bg-white dark:bg-gray-800 py-2 rounded-lg font-bold text-sm shadow-sm border-b-4 border-blue-600 text-blue-600 transition">Team Sales</button>
-                <button onclick="window.switchAdminTab('inventory')" id="adm-tab-inventory" class="flex-1 bg-white dark:bg-gray-800 py-2 rounded-lg font-bold text-sm shadow-sm text-gray-500 dark:text-gray-400 transition">Inventory</button>
+            <div class="flex space-x-1 mb-6 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm">
+                <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition bg-gray-100 dark:bg-gray-700 text-blue-600">Team Sales</button>
+                <button onclick="window.switchAdminTab('inventory')" id="adm-tab-inventory" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Inventory</button>
+                <button onclick="window.switchAdminTab('reports')" id="adm-tab-reports" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
             </div>
 
             <!-- TAB: TEAM OVERVIEW -->
@@ -199,7 +232,10 @@
                     </div>
                 </div>
 
-                <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1">Active Drivers</h3>
+                <div class="flex justify-between items-center mb-3 ml-1">
+                    <h3 class="font-bold text-gray-700 dark:text-gray-300">Driver Status</h3>
+                    <div class="text-xs text-gray-400">Green = Active</div>
+                </div>
                 <div id="admin-driver-list" class="space-y-3">
                     <div class="text-center py-8 text-gray-400 animate-pulse">Loading team data...</div>
                 </div>
@@ -248,7 +284,30 @@
                 </div>
             </div>
 
-            <!-- VIEW: USER DETAIL (Hidden modal-like) -->
+            <!-- TAB: REPORTS -->
+            <div id="admin-view-reports" class="admin-tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4">Team Performance (Last 7 Days)</h3>
+                    <div class="h-64">
+                        <canvas id="adminTeamChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="text-gray-500 text-xs uppercase mb-1">Last 7 Days Sales</div>
+                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-qty">0</div>
+                        <div class="text-sm text-green-600 font-bold" id="adm-report-week-profit">$0 Profit</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="text-gray-500 text-xs uppercase mb-1">This Month Sales</div>
+                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-qty">0</div>
+                        <div class="text-sm text-blue-600 font-bold" id="adm-report-month-profit">$0 Profit</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: USER DETAIL -->
             <div id="admin-user-detail" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 overflow-y-auto hidden">
                 <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between">
                     <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition">
@@ -258,7 +317,6 @@
                     <div class="w-8"></div>
                 </div>
                 <div class="p-4 max-w-2xl mx-auto space-y-4">
-                    <!-- Detailed Stats -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div class="text-xs text-gray-500 uppercase">Stock on Hand</div>
@@ -269,14 +327,12 @@
                             <div class="text-xl font-bold text-green-600" id="detail-profit">0</div>
                         </div>
                     </div>
-                    
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Activity</h3>
                         <div class="text-xs text-gray-400 italic">Detailed transaction logs are private to the driver. Only summary data is shown here to comply with security rules.</div>
                     </div>
                 </div>
             </div>
-
         </main>
     </div>
 
@@ -311,8 +367,11 @@
         // --- GLOBAL STATE ---
         let currentUser = null;
         let userRole = 'driver'; 
-        let appData = { stock: 0, currentTransactions: [], history: [], stockLogs: [] };
+        let appData = { stock: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
         
+        let driverChartInstance = null;
+        let adminChartInstance = null;
+
         // Listeners
         let unsubUserData = null;
         let unsubProfile = null;
@@ -345,12 +404,9 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                // Show Loading Overlay
                 document.getElementById('login-modal').classList.add('hidden');
                 document.getElementById('loading-overlay').classList.remove('hidden');
                 
-                // 1. Get/Create Profile & Check Role
-                // NOTE: Use a safe path for profile
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
                 
                 unsubProfile = onSnapshot(profileRef, async (snap) => {
@@ -359,7 +415,6 @@
                         let status = 'pending';
                         
                         if (!snap.exists()) {
-                            // Create New Profile
                             await setDoc(profileRef, {
                                 name: user.displayName || user.email, 
                                 email: user.email, 
@@ -373,8 +428,7 @@
                             status = data.status || 'pending';
                         }
 
-                        // *** CRITICAL FIX: Safe Update to Public Roster ***
-                        // Wrapped in try/catch to prevent blocking the app loading if permissions fail
+                        // Sync presence to roster
                         try {
                             const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
                             await setDoc(rosterRef, {
@@ -383,13 +437,9 @@
                                 uid: user.uid,
                                 lastLogin: Date.now()
                             }, { merge: true });
-                        } catch (rosterError) {
-                            console.warn("Roster update skipped due to permission/offline:", rosterError);
-                        }
+                        } catch (e) {}
 
                         userRole = role;
-                        
-                        // Hide loading once we have determined path
                         document.getElementById('loading-overlay').classList.add('hidden');
 
                         if (status === 'approved' || role === 'admin') {
@@ -400,18 +450,10 @@
                             document.getElementById('approval-modal').classList.remove('hidden');
                         }
                     } catch (err) {
-                        console.error("Profile Logic Error:", err);
-                        // Ensure we don't hang on loading
                         document.getElementById('loading-overlay').classList.add('hidden');
-                        document.getElementById('approval-modal').classList.remove('hidden');
                     }
-                }, (error) => {
-                    console.error("Auth Listener Error:", error);
-                    document.getElementById('loading-overlay').classList.add('hidden');
-                    document.getElementById('approval-modal').classList.remove('hidden');
                 });
             } else {
-                // Show Login, Hide everything else
                 document.getElementById('login-modal').classList.remove('hidden');
                 document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('driver-app').classList.add('hidden');
@@ -432,41 +474,68 @@
                     const data = snap.data();
                     if(data.json) appData = JSON.parse(data.json);
                     
-                    // Validation
+                    // Init Defaults
                     appData.stock = appData.stock || 0;
+                    appData.status = appData.status || 'inactive';
                     appData.stockLogs = appData.stockLogs || []; 
                     appData.currentTransactions = appData.currentTransactions || [];
+                    appData.history = appData.history || [];
                     
                     renderDriverUI();
-                    
-                    // Sync summary to public roster for Admin visibility (Wait for UI to render first)
-                    // We do this check to avoid infinite loops - only update roster if necessary or periodically?
-                    // For simplicity, we trigger it on significant changes via logic functions, not here.
                 } else {
-                    saveDriverData(); // Create empty
+                    saveDriverData(); 
                 }
             });
         }
 
         function renderDriverUI() {
-            // Calculate Stock
+            // Status UI
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+            const hdr = document.getElementById('driver-header');
+            if(appData.status === 'active') {
+                dot.className = "w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse";
+                txt.innerText = "Online";
+                hdr.className = "bg-green-600 dark:bg-green-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-gray-400 mr-1.5";
+                txt.innerText = "Offline";
+                hdr.className = "bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300";
+            }
+
+            // Stock
             document.getElementById('display-stock').innerText = appData.stock;
             document.getElementById('display-stock-value').innerText = `$${(appData.stock * 60).toLocaleString()}`; 
             
-            // Calculate Today's Stats
+            // Today's Stats
             const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit, gross: acc.gross + t.price }), {profit:0, gross:0});
             document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
-            // Render List
+            // Render Transaction List with DELETE button
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
-            [...appData.currentTransactions].reverse().forEach(t => {
-                list.innerHTML += `<div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                    <span class="dark:text-gray-200">Sold ${t.qty} item(s)</span>
-                    <span class="font-bold text-green-600">+$${t.profit}</span>
+            
+            // Clone and reverse to show newest first, but keep track of original index for deletion
+            const displayList = appData.currentTransactions.map((t, i) => ({...t, originalIndex: i})).reverse();
+            
+            displayList.forEach(t => {
+                list.innerHTML += `
+                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded group">
+                    <div>
+                        <div class="text-sm dark:text-gray-200"><span class="font-bold">${t.qty}</span> items sold</div>
+                        <div class="text-xs text-gray-400">${t.time}</div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-green-600">+$${t.profit}</span>
+                        <button onclick="window.deleteSale(${t.originalIndex})" class="text-gray-400 hover:text-red-500 transition p-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>`;
             });
+            
             if(appData.currentTransactions.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-2">No sales yet today</div>';
+            lucide.createIcons();
         }
 
         async function saveDriverData() {
@@ -476,25 +545,40 @@
             const dataRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state');
             await setDoc(dataRef, { json: JSON.stringify(appData), lastUpdated: Date.now() });
 
-            // 2. Save Public Summary (So Admin can see it without breaking permissions)
-            // Calculate summary stats
+            // 2. Save Public Summary + History for Reports
             let todaySold = 0;
             let todayProfit = 0;
             appData.currentTransactions.forEach(t => { todaySold += t.qty; todayProfit += t.profit; });
+            
+            // Prepare last 7 days history for Admin charts
+            const historySlice = appData.history.slice(-7);
             
             try {
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid);
                 await setDoc(rosterRef, {
                     stock: appData.stock,
+                    status: appData.status,
                     todaySold: todaySold,
                     todayProfit: todayProfit,
+                    history: historySlice, // Sync history for graphs
                     lastSync: Date.now()
                 }, { merge: true });
             } catch(e) { console.log("Public sync failed", e); }
         }
 
+        window.toggleDriverStatus = async () => {
+            appData.status = appData.status === 'active' ? 'inactive' : 'active';
+            renderDriverUI(); // optimistically update UI
+            await saveDriverData();
+            window.showToast(`You are now ${appData.status === 'active' ? 'Online' : 'Offline'}`);
+        };
+
         window.sellItem = async (qty) => {
             if(appData.stock < qty) { window.showToast("Not enough stock!"); return; }
+            if(appData.status !== 'active') { 
+                if(!confirm("You are currently Offline. Sell anyway?")) return;
+                window.toggleDriverStatus(); // Auto switch to active
+            }
             
             const pricing = { 1:{p:80, prof:20}, 2:{p:150, prof:40}, 3:{p:220, prof:60}, 4:{p:280, prof:80} };
             const tier = pricing[qty];
@@ -506,23 +590,113 @@
             window.showToast(`Sold ${qty} for $${tier.p}`);
         };
 
+        window.deleteSale = async (originalIndex) => {
+            if(!confirm("Undo this sale? Stock will be returned.")) return;
+            
+            const t = appData.currentTransactions[originalIndex];
+            appData.stock += t.qty; // Refund
+            appData.currentTransactions.splice(originalIndex, 1); // Remove
+            
+            await saveDriverData();
+            window.showToast("Sale undone. Stock returned.");
+        };
+
         window.endDay = async () => {
             if(appData.currentTransactions.length === 0) { window.showToast("No sales to save."); return; }
             // Move today to history
-            const todayStats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty }), {profit:0, sold:0});
-            appData.history.push({ date: new Date().toISOString().split('T')[0], ...todayStats });
+            const todayStats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty, revenue: acc.gross+t.price }), {profit:0, sold:0, revenue:0});
+            
+            // Check if entry for today already exists in history (prevent dupes if multiple 'end day' clicks)
+            const dateStr = new Date().toISOString().split('T')[0];
+            const existingIdx = appData.history.findIndex(h => h.date === dateStr);
+            
+            if(existingIdx >= 0) {
+                appData.history[existingIdx].profit += todayStats.profit;
+                appData.history[existingIdx].sold += todayStats.sold;
+                appData.history[existingIdx].revenue += todayStats.revenue;
+            } else {
+                appData.history.push({ date: dateStr, ...todayStats });
+            }
+
             appData.currentTransactions = [];
+            appData.status = 'inactive'; // Auto offline
             await saveDriverData();
-            window.showToast("Day saved!");
+            window.showToast("Day saved & Reset!");
         };
+
+        // --- DRIVER STATS & CHARTS ---
+        window.openDriverStats = () => {
+            document.getElementById('driver-stats-modal').classList.remove('hidden');
+            renderDriverCharts();
+        };
+
+        function renderDriverCharts() {
+            // Calc stats
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            
+            let weekProfit = 0, monthProfit = 0;
+            // Include today's current profit in calculations
+            const todayProfit = appData.currentTransactions.reduce((a, b) => a + b.profit, 0);
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            // Combine history + today for calculation
+            const allData = [...appData.history];
+            if(todayProfit > 0) allData.push({ date: todayDate, profit: todayProfit });
+
+            allData.forEach(h => {
+                const d = new Date(h.date);
+                if(d >= startOfWeek) weekProfit += h.profit;
+                if(d >= startOfMonth) monthProfit += h.profit;
+            });
+
+            document.getElementById('drv-stat-week').innerText = `$${weekProfit}`;
+            document.getElementById('drv-stat-month').innerText = `$${monthProfit}`;
+
+            // Render Chart
+            const ctx = document.getElementById('driverProfitChart').getContext('2d');
+            if(driverChartInstance) driverChartInstance.destroy();
+
+            // Last 7 entries for chart
+            const chartData = appData.history.slice(-7);
+            
+            driverChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(d => d.date.slice(5)), // MM-DD
+                    datasets: [{
+                        label: 'Profit ($)',
+                        data: chartData.map(d => d.profit),
+                        backgroundColor: '#3B82F6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display: false} },
+                    scales: { y: { beginAtZero: true, grid: { color: '#374151' } }, x: { grid: { display: false } } }
+                }
+            });
+            
+            // List Breakdown (Reverse chrono)
+            const list = document.getElementById('drv-stat-list');
+            list.innerHTML = '';
+            [...appData.history].reverse().slice(0, 10).forEach(h => {
+                list.innerHTML += `<div class="flex justify-between border-b dark:border-gray-700 pb-1">
+                    <span class="text-gray-500">${h.date}</span>
+                    <span class="dark:text-gray-300">${h.sold} sold</span>
+                    <span class="font-bold text-green-600">+$${h.profit}</span>
+                </div>`;
+            });
+        }
 
         // --- ADMIN LOGIC ---
         function initAdminDashboard() {
             document.getElementById('admin-app').classList.remove('hidden');
             document.getElementById('admin-date-display').innerText = new Date().toDateString();
             
-            // 1. Subscribe to PUBLIC Roster (Safe Read)
-            // Note: Fixed path to 'public/data/roster'
             const rosterRef = collection(db, 'artifacts', appId, 'public', 'data', 'roster');
             unsubRoster = onSnapshot(rosterRef, (snap) => {
                 const listEl = document.getElementById('admin-driver-list');
@@ -537,16 +711,23 @@
                 
                 let totalSoldToday = 0;
                 let totalProfitToday = 0;
+                let rosterData = [];
 
                 snap.forEach(docSnap => {
                     const driver = docSnap.data();
-                    // We now read stats directly from the public roster summary
                     const dStock = driver.stock || 0;
                     const dSold = driver.todaySold || 0;
                     const dProfit = driver.todayProfit || 0;
+                    const dStatus = driver.status || 'inactive';
+                    
+                    rosterData.push(driver); // Store for reports
 
                     totalSoldToday += dSold;
                     totalProfitToday += dProfit;
+
+                    // Status Indicator Color
+                    const statusColor = dStatus === 'active' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600';
+                    const statusBorder = dStatus === 'active' ? 'border-green-500' : 'border-gray-300 dark:border-gray-600';
 
                     // Render Card
                     const card = document.createElement('div');
@@ -554,20 +735,24 @@
                     card.onclick = () => window.viewDriverDetails(docSnap.id, driver.name, dStock, dProfit);
                     card.innerHTML = `
                         <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">${driver.name ? driver.name[0].toUpperCase() : 'U'}</div>
+                            <div class="relative mr-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold border-2 ${statusBorder}">${driver.name ? driver.name[0].toUpperCase() : 'U'}</div>
+                                <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full ${statusColor} border-2 border-white dark:border-gray-800"></div>
+                            </div>
                             <div>
-                                <div class="font-bold text-gray-800 dark:text-white">${driver.name || 'Unknown User'}</div>
-                                <div class="text-xs text-gray-500">Stock: ${dStock} • Sold Today: ${dSold}</div>
+                                <div class="font-bold text-gray-800 dark:text-white flex items-center">
+                                    ${driver.name || 'Unknown'} 
+                                    ${dStatus === 'active' ? '<span class="ml-2 text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Online</span>' : ''}
+                                </div>
+                                <div class="text-xs text-gray-500">Stock: ${dStock} • Sold: ${dSold}</div>
                             </div>
                         </div>
                         <div class="text-right">
                             <div class="font-bold text-green-600">+$${dProfit}</div>
-                            <div class="text-xs text-gray-400">Profit</div>
                         </div>
                     `;
                     listEl.appendChild(card);
 
-                    // Add to Select Dropdown
                     const option = document.createElement('option');
                     option.value = driver.uid || docSnap.id;
                     option.innerText = driver.name || 'Unknown';
@@ -576,9 +761,12 @@
 
                 document.getElementById('admin-total-profit').innerText = `$${totalProfitToday}`;
                 document.getElementById('admin-total-sold').innerText = totalSoldToday;
+                
+                // Update Reports whenever roster changes
+                updateAdminReports(rosterData);
             });
 
-            // 2. Subscribe to Master Inventory
+            // Master Inventory Listener
             const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
             unsubMasterStock = onSnapshot(masterRef, (snap) => {
                 const val = snap.exists() ? (snap.data().qty || 0) : 0;
@@ -586,14 +774,86 @@
             });
         }
 
+        function updateAdminReports(rosterData) {
+            // Aggregate History
+            // We need to merge histories from all drivers by date
+            let dateMap = {};
+            let weekQty = 0, monthQty = 0;
+            let weekProf = 0, monthProf = 0;
+            
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - 7)); // Rolling 7 days
+            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+            rosterData.forEach(d => {
+                if(d.history && Array.isArray(d.history)) {
+                    d.history.forEach(h => {
+                        if(!dateMap[h.date]) dateMap[h.date] = { profit: 0, sold: 0 };
+                        dateMap[h.date].profit += (h.profit || 0);
+                        dateMap[h.date].sold += (h.sold || 0);
+
+                        const dObj = new Date(h.date);
+                        if(dObj >= startOfWeek) { weekQty += h.sold; weekProf += h.profit; }
+                        if(dObj >= startOfMonth) { monthQty += h.sold; monthProf += h.profit; }
+                    });
+                }
+                // Add Today's live stats
+                if(d.todaySold > 0) {
+                     weekQty += d.todaySold; weekProf += d.todayProfit;
+                     monthQty += d.todaySold; monthProf += d.todayProfit;
+                     // Add to chart (current date)
+                     const today = new Date().toISOString().split('T')[0];
+                     if(!dateMap[today]) dateMap[today] = { profit: 0, sold: 0 };
+                     dateMap[today].profit += d.todayProfit;
+                     dateMap[today].sold += d.todaySold;
+                }
+            });
+
+            document.getElementById('adm-report-week-qty').innerText = weekQty;
+            document.getElementById('adm-report-week-profit').innerText = `$${weekProf} Profit`;
+            document.getElementById('adm-report-month-qty').innerText = monthQty;
+            document.getElementById('adm-report-month-profit').innerText = `$${monthProf} Profit`;
+
+            // Chart
+            const sortedDates = Object.keys(dateMap).sort().slice(-7); // Last 7 recorded days
+            const chartData = sortedDates.map(date => dateMap[date].profit);
+            
+            const ctx = document.getElementById('adminTeamChart').getContext('2d');
+            if(adminChartInstance) adminChartInstance.destroy();
+
+            adminChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates.map(d => d.slice(5)),
+                    datasets: [{
+                        label: 'Total Team Profit',
+                        data: chartData,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: '#374151' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
         window.switchAdminTab = (tab) => {
-            document.getElementById('admin-view-team').classList.add('hidden');
-            document.getElementById('admin-view-inventory').classList.add('hidden');
-            document.getElementById('adm-tab-team').classList.remove('border-b-4', 'border-blue-600', 'text-blue-600');
-            document.getElementById('adm-tab-inventory').classList.remove('border-b-4', 'border-blue-600', 'text-blue-600');
+            ['team', 'inventory', 'reports'].forEach(t => {
+                document.getElementById(`admin-view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`adm-tab-${t}`);
+                btn.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-blue-600');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+            });
             
             document.getElementById(`admin-view-${tab}`).classList.remove('hidden');
-            document.getElementById(`adm-tab-${tab}`).classList.add('border-b-4', 'border-blue-600', 'text-blue-600');
+            const activeBtn = document.getElementById(`adm-tab-${tab}`);
+            activeBtn.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-blue-600');
+            activeBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
         };
 
         window.adminAddMasterStock = async () => {
@@ -611,18 +871,11 @@
             
             if(!uid || !qty || qty <= 0) { window.showToast("Select driver and enter valid qty"); return; }
 
-            // 1. Decrease Master
             const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
             await setDoc(masterRef, { qty: increment(-qty) }, { merge: true });
 
-            // 2. Increase Driver (Private Data) - requires Admin to have write permission to user docs?
-            // Actually, we can update the PUBLIC Roster summary immediately, but the driver needs the private data.
-            // **WORKAROUND**: Since we can't write to `users/{otherID}` securely in this environment usually,
-            // we will write a "Transfer Request" to a public collection that the driver's app listens to.
-            // BUT, for simplicity in this generated code, we will TRY to write directly. If it fails, we warn.
-            
             try {
-                // Try direct write (Works if rules allow Admin write)
+                // Direct Write
                 const driverRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
                 const snap = await getDoc(driverRef);
                 
@@ -638,7 +891,6 @@
                 
                 await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
                 
-                // ALSO Update public summary so Admin UI reflects it immediately
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid);
                 await setDoc(rosterRef, { stock: dData.stock }, { merge: true });
 
@@ -647,7 +899,7 @@
                 
             } catch (e) {
                 console.error("Distribution Error:", e);
-                window.showToast("Error: Admin cannot write to driver directly. (Rule Restriction)");
+                window.showToast("Error: Admin cannot write to driver directly.");
             }
         };
 
@@ -656,7 +908,6 @@
             document.getElementById('detail-user-name').innerText = name;
             document.getElementById('detail-stock').innerText = stock;
             document.getElementById('detail-profit').innerText = `$${profit}`;
-            // Note: We cannot show detailed logs because we can't read the private user doc.
         };
     </script>
 </body>
