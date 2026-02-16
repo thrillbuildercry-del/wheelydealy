@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sales & Inventory Tracker (Cloud)</title>
+    <title>Sales & Inventory Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' };
@@ -12,155 +12,37 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* Custom styles for mobile app feel */
-        body {
-            -webkit-tap-highlight-color: transparent;
-            background-color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Toast Notification */
-        #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 8px;
-            padding: 12px;
-            position: fixed;
-            z-index: 200; /* High priority to show over modals */
-            left: 50%;
-            bottom: 80px;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
-        }
-        #toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 90px;
-        }
-
-        /* Slide to delete animation */
-        .slide-out {
-            animation: slideOut 0.3s forwards;
-        }
-        @keyframes slideOut {
-            to { transform: translateX(100%); opacity: 0; height: 0; margin: 0; padding: 0; }
-        }
-
-        /* Modals */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 200; left: 50%; bottom: 80px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .hidden { display: none !important; }
     </style>
-    <script>
-        // Check theme before render
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
 </head>
-<body class="text-gray-800 dark:text-gray-100 dark:bg-gray-900 pb-24 transition-colors duration-200">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200">
 
     <!-- Auth Modal -->
     <div id="login-modal" class="modal-overlay">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm overflow-y-auto max-h-[90vh]">
             <div class="text-center mb-6">
-                <div class="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="truck" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white" id="auth-title">Driver Login</h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1" id="auth-subtitle">Sign in to access your route data.</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Portal Login</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Drivers & Admins</p>
             </div>
             
-            <!-- Login Form -->
-            <div id="login-form" class="space-y-4">
-                <!-- Google Button -->
-                <button type="button" onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition flex justify-center items-center">
-                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/>
-                        <path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Continue with Google
+            <div class="space-y-4">
+                <button onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/><path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Sign in with Google
                 </button>
-
-                <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                    <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase">Or use email</span>
-                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Email</label>
-                    <input type="email" id="login-email" placeholder="driver@example.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
-                    <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
-                </div>
-                <button type="button" onclick="window.handleLogin()" id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
-                    <span>Sign In</span>
-                </button>
-                <div class="text-center mt-4">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">New Driver?</p>
-                    <button type="button" onclick="window.toggleAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Create Account</button>
-                </div>
-            </div>
-
-            <!-- Register Form (Hidden by default) -->
-            <div id="register-form" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Full Name</label>
-                    <input type="text" id="reg-name" placeholder="John Doe" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Email</label>
-                    <input type="email" id="reg-email" placeholder="driver@example.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
-                    <input type="password" id="reg-password" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition">
-                </div>
-                <button type="button" onclick="window.handleRegister()" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
-                    <span>Create Account</span>
-                </button>
-                <div class="text-center mt-4">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Have an account?</p>
-                    <button type="button" onclick="window.toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">Back to Login</button>
-                </div>
             </div>
         </div>
     </div>
@@ -168,715 +50,571 @@
     <!-- Approval Pending Modal -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
-            <div class="bg-yellow-100 dark:bg-yellow-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="clock" class="w-8 h-8 text-yellow-600 dark:text-yellow-400"></i>
+            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
+                <i data-lucide="clock" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Approval Pending</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">
-                Your account has been created but requires Admin approval before you can access the system.
-            </p>
-            <div class="animate-pulse flex justify-center items-center text-xs text-blue-500 mb-6">
-                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Waiting for admin...
-            </div>
-            <button type="button" onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold py-3 rounded-lg">
-                Sign Out
-            </button>
+            <h2 class="text-2xl font-bold dark:text-white">Approval Pending</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Contact the Boss to approve your account.</p>
+            <div class="animate-pulse text-xs text-blue-500 mb-6">Waiting for authorization...</div>
+            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
 
-    <!-- App Container -->
-    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen shadow-xl relative transition-colors duration-200">
-        
-        <!-- Header -->
-        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md transition-colors duration-200">
-            <div class="flex justify-between items-start">
-                <div class="w-8"></div>
-                <div class="text-center">
-                    <h1 class="text-xl font-bold">Sales Tracker</h1>
-                    <div class="flex items-center justify-center space-x-2 mt-1">
-                        <span id="current-user-display" class="text-xs bg-blue-700 dark:bg-gray-700 px-2 py-0.5 rounded-full text-blue-100 opacity-0 transition-opacity">Driver</span>
-                        <div id="sync-status" class="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Online"></div>
-                    </div>
-                    <!-- Restored Date Header -->
-                    <p id="current-date-header" class="text-xs text-blue-200 dark:text-gray-400 mt-1"></p>
+    <!-- DRIVER UI -->
+    <div id="driver-app" class="hidden pb-20">
+        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold">Driver Portal</h1>
+                <div class="flex items-center text-xs text-blue-200 mt-1">
+                    <span id="driver-name-display">Guest</span>
+                    <span class="mx-2">•</span>
+                    <div id="driver-sync-status" class="w-2 h-2 rounded-full bg-green-400"></div>
                 </div>
-                <button onclick="window.toggleTheme()" class="p-1 rounded-full hover:bg-white/20 transition">
-                    <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
-                </button>
             </div>
+            <button onclick="window.logout()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full"><i data-lucide="log-out" class="w-4 h-4"></i></button>
         </header>
 
-        <!-- Main Content Area -->
-        <main class="p-4">
-            
-            <!-- TAB 1: SALES & TERMINAL -->
-            <div id="tab-sales" class="tab-content active">
-                
-                <!-- Stock Management Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center justify-between">
-                        <div class="flex items-center"><i data-lucide="package" class="w-5 h-5 mr-2"></i> Inventory</div>
-                        <button onclick="window.toggleStockEdit()" class="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded text-gray-600 dark:text-gray-300 transition flex items-center">
-                            <i data-lucide="edit-2" class="w-3 h-3 mr-1"></i> Edit
-                        </button>
-                    </h2>
-                    
-                    <!-- Stock Display Mode -->
-                    <div id="stock-display-mode">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-3xl font-bold dark:text-white" id="display-stock">--</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">Items in Stock</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <input type="number" id="stock-add-input" placeholder="Qty to add" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" min="1">
-                            <button onclick="window.addStock()" class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium active:bg-blue-700 transition">Add</button>
-                        </div>
+        <main class="p-4 max-w-md mx-auto">
+            <!-- Stock Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">My Stock</h2>
+                        <span class="text-3xl font-bold dark:text-white" id="display-stock">0</span>
                     </div>
-
-                    <!-- Stock Edit Mode (Hidden by default) -->
-                    <div id="stock-edit-mode" class="hidden">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Set exact stock count:</p>
-                        <div class="flex space-x-2">
-                            <input type="number" id="stock-set-input" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500">
-                            <button onclick="window.saveStockEdit()" class="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg font-medium active:bg-green-700 transition">Set</button>
-                            <button onclick="window.toggleStockEdit()" class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg font-medium">Cancel</button>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded flex justify-between">
-                        <span>Value of Unsold Stock:</span>
-                        <span id="display-stock-value" class="font-semibold text-gray-700 dark:text-gray-200">$0</span>
+                    <div class="text-right">
+                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">Owed</h2>
+                        <span class="text-xl font-bold text-red-500" id="display-stock-value">$0</span>
                     </div>
                 </div>
-
-                <!-- Sell Terminal Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center">
-                        <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Quick Sell
-                    </h2>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button onclick="window.sellItem(1)" class="border-2 border-blue-100 dark:border-blue-900/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center active:bg-blue-200 dark:active:bg-blue-900/40 transition">
-                            <div class="font-bold text-lg text-blue-800 dark:text-blue-400">1 Item</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">$80</div>
-                        </button>
-                        <button onclick="window.sellItem(2)" class="border-2 border-green-100 dark:border-green-900/50 hover:border-green-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center active:bg-green-200 dark:active:bg-green-900/40 transition">
-                            <div class="font-bold text-lg text-green-800 dark:text-green-400">2 Items</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">$150</div>
-                        </button>
-                        <button onclick="window.sellItem(3)" class="border-2 border-purple-100 dark:border-purple-900/50 hover:border-purple-500 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center active:bg-purple-200 dark:active:bg-purple-900/40 transition">
-                            <div class="font-bold text-lg text-purple-800 dark:text-purple-400">3 Items</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">$220</div>
-                        </button>
-                        <button onclick="window.sellItem(4)" class="border-2 border-orange-100 dark:border-orange-900/50 hover:border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center active:bg-orange-200 dark:active:bg-orange-900/40 transition">
-                            <div class="font-bold text-lg text-orange-800 dark:text-orange-400">4 Items</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">$280</div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Today's Transactions (Editable) -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center justify-between">
-                        <div class="flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Today's Sales</div>
-                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded-full" id="txn-count-badge">0 sales</span>
-                    </h2>
-                    
-                    <!-- Stats Summary Mini -->
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-100 dark:border-green-900/30 text-center">
-                             <div class="text-xs text-green-600 dark:text-green-400 uppercase">Profit</div>
-                             <div class="font-bold text-green-700 dark:text-green-300" id="today-profit">$0</div>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-100 dark:border-gray-600 text-center">
-                             <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Gross</div>
-                             <div class="font-bold text-gray-700 dark:text-white" id="today-gross">$0</div>
-                        </div>
-                    </div>
-
-                    <!-- Transaction List -->
-                    <div id="current-transactions-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar mb-4">
-                        <!-- Items injected here -->
-                        <div class="text-center text-gray-400 text-sm py-4">No sales yet today.</div>
-                    </div>
-
-                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex justify-between items-center mb-4">
-                        <div class="text-xs text-red-600 dark:text-red-400 uppercase tracking-wide">Supplier Funds</div>
-                        <div class="text-xl font-bold text-red-700 dark:text-red-400" id="today-supplier">$0</div>
-                    </div>
-
-                    <button onclick="window.endDay()" class="w-full bg-gray-800 dark:bg-gray-700 text-white py-3 rounded-lg font-bold shadow-md active:bg-gray-900 dark:active:bg-gray-600 transition flex justify-center items-center">
-                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Save Day & Reset Shift
+                <div class="flex space-x-2">
+                    <button onclick="window.openAddStockModal()" class="flex-1 bg-gray-100 dark:bg-gray-700 py-2 rounded-lg text-sm font-medium flex justify-center items-center">
+                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Stock
                     </button>
                 </div>
             </div>
 
-            <!-- TAB 2: REPORTS & ANALYTICS -->
-            <div id="tab-reports" class="tab-content">
-                
-                <!-- Predictions Card -->
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-sm p-5 mb-4 text-white">
-                    <h2 class="font-semibold text-blue-100 dark:text-blue-200 mb-1 flex items-center text-sm uppercase tracking-wider">
-                        <i data-lucide="trending-up" class="w-4 h-4 mr-2"></i> Predicted Weekly Profit
-                    </h2>
-                    <div class="text-3xl font-bold mb-1" id="predicted-earnings">$0</div>
-                    <p class="text-xs text-blue-200 dark:text-blue-300" id="prediction-context">Based on average sales this week</p>
+            <!-- Quick Sell -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-3">New Sale</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="window.sellItem(1)" class="p-3 rounded-lg border-2 border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/20 text-center active:scale-95 transition">
+                        <div class="text-lg font-bold text-blue-700 dark:text-blue-400">1 ($80)</div>
+                    </button>
+                    <button onclick="window.sellItem(2)" class="p-3 rounded-lg border-2 border-green-100 dark:border-green-900 bg-green-50 dark:bg-green-900/20 text-center active:scale-95 transition">
+                        <div class="text-lg font-bold text-green-700 dark:text-green-400">2 ($150)</div>
+                    </button>
+                    <button onclick="window.sellItem(3)" class="p-3 rounded-lg border-2 border-purple-100 dark:border-purple-900 bg-purple-50 dark:bg-purple-900/20 text-center active:scale-95 transition">
+                        <div class="text-lg font-bold text-purple-700 dark:text-purple-400">3 ($220)</div>
+                    </button>
+                    <button onclick="window.sellItem(4)" class="p-3 rounded-lg border-2 border-orange-100 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/20 text-center active:scale-95 transition">
+                        <div class="text-lg font-bold text-orange-700 dark:text-orange-400">4 ($280)</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Today's Stats -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-gray-500 text-xs uppercase tracking-wide">Today's Shift</h2>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold" id="today-profit-badge">$0 Profit</span>
+                </div>
+                <div id="transaction-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm">
+                    <div class="text-center text-gray-400 py-2">No sales yet today</div>
+                </div>
+                <button onclick="window.endDay()" class="mt-4 w-full bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-lg font-bold">End Shift & Save</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ADMIN UI -->
+    <div id="admin-app" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+        <header class="bg-gray-900 text-white p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
+                <p class="text-xs text-gray-400" id="admin-date-display"></p>
+            </div>
+            <button onclick="window.logout()" class="text-gray-400 hover:text-white"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+        </header>
+
+        <main class="p-4 max-w-2xl mx-auto">
+            
+            <!-- Admin Navigation -->
+            <div class="flex space-x-2 mb-6">
+                <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 bg-white dark:bg-gray-800 py-2 rounded-lg font-bold text-sm shadow-sm border-b-4 border-blue-600 text-blue-600">Team Sales</button>
+                <button onclick="window.switchAdminTab('inventory')" id="adm-tab-inventory" class="flex-1 bg-white dark:bg-gray-800 py-2 rounded-lg font-bold text-sm shadow-sm text-gray-500 dark:text-gray-400">Inventory</button>
+            </div>
+
+            <!-- TAB: TEAM OVERVIEW -->
+            <div id="admin-view-team" class="admin-tab-content">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="text-gray-500 text-xs uppercase">Total Team Profit</div>
+                        <div class="text-2xl font-bold text-green-600" id="admin-total-profit">$0</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="text-gray-500 text-xs uppercase">Items Sold Today</div>
+                        <div class="text-2xl font-bold text-blue-600" id="admin-total-sold">0</div>
+                    </div>
                 </div>
 
-                <!-- Financial Charts Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 text-sm uppercase">Financial Performance</h3>
-                    <div class="flex space-x-2 mb-4 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                        <button onclick="window.updateChart('daily')" id="btn-chart-daily" class="flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition">Daily</button>
-                        <button onclick="window.updateChart('weekly')" id="btn-chart-weekly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Weekly</button>
-                        <button onclick="window.updateChart('monthly')" id="btn-chart-monthly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Monthly</button>
+                <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1">Active Drivers</h3>
+                <div id="admin-driver-list" class="space-y-3">
+                    <!-- Driver cards injected here -->
+                    <div class="text-center py-8 text-gray-400">Loading team data...</div>
+                </div>
+            </div>
+
+            <!-- TAB: INVENTORY -->
+            <div id="admin-view-inventory" class="admin-tab-content hidden">
+                <!-- Master Stock Card -->
+                <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6 text-white mb-6 shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Warehouse Master Stock</h2>
+                            <div class="text-4xl font-bold mb-2" id="admin-master-stock">--</div>
+                            <p class="text-xs text-gray-500">Items available to distribute</p>
+                        </div>
+                        <button onclick="window.adminAddMasterStock()" class="bg-gray-700 hover:bg-gray-600 p-2 rounded-lg text-white text-xs font-bold border border-gray-600">
+                            + Restock
+                        </button>
                     </div>
+                </div>
+
+                <!-- Distribute Panel -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                        <i data-lucide="truck" class="w-5 h-5 mr-2 text-blue-600"></i> Distribute Stock
+                    </h3>
                     
-                    <div class="relative h-56 w-full">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Hourly Analysis Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                     <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-sm uppercase flex items-center">
-                         <i data-lucide="clock" class="w-4 h-4 mr-2"></i> Busiest Times (Hourly)
-                     </h3>
-                     <p class="text-xs text-gray-400 mb-4">Total items sold by hour of day</p>
-                     <div class="relative h-48 w-full">
-                        <canvas id="hourlyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- History List -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3">Recent Days</h2>
-                    <div id="history-list" class="space-y-3 max-h-60 overflow-y-auto hide-scrollbar">
-                        <!-- History items injected here -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Select Driver</label>
+                            <select id="distribute-select-driver" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-medium">
+                                <option value="">Loading drivers...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Quantity to Send</label>
+                            <div class="flex space-x-2 mt-1">
+                                <input type="number" id="distribute-qty" placeholder="0" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold text-lg">
+                                <button onclick="window.adminDistributeStock()" class="bg-blue-600 text-white font-bold px-6 rounded-lg shadow-md hover:bg-blue-700 active:scale-95 transition">
+                                    SEND
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: SETTINGS -->
-            <div id="tab-settings" class="tab-content">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
-                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 flex items-center">
-                        <i data-lucide="user" class="w-5 h-5 mr-2"></i> Account & Data
-                    </h2>
-                    
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50 mb-4">
-                        <div class="flex items-center mb-2">
-                             <div class="w-10 h-10 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold mr-3" id="profile-initial">
-                                 ?
-                             </div>
-                             <div>
-                                 <h3 class="font-bold text-gray-800 dark:text-white text-sm" id="profile-name">Guest</h3>
-                                 <p class="text-xs text-blue-600 dark:text-blue-300 capitalize" id="profile-role">Driver</p>
-                             </div>
+            <!-- VIEW: USER DETAIL (Hidden modal-like) -->
+            <div id="admin-user-detail" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 overflow-y-auto hidden">
+                <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between">
+                    <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                    <h2 class="font-bold text-lg" id="detail-user-name">Driver Stats</h2>
+                    <div class="w-8"></div>
+                </div>
+                <div class="p-4 max-w-2xl mx-auto space-y-4">
+                    <!-- Detailed Stats -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="text-xs text-gray-500 uppercase">Stock on Hand</div>
+                            <div class="text-xl font-bold" id="detail-stock">0</div>
                         </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Email: <span id="profile-email">...</span></p>
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="text-xs text-gray-500 uppercase">Start of Day</div>
+                            <div class="text-xl font-bold" id="detail-start-stock">0</div>
+                        </div>
                     </div>
-
-                    <div class="space-y-4">
-                        <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 py-3 rounded-lg font-medium active:bg-gray-300 dark:active:bg-gray-600 transition flex justify-center items-center">
-                            <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Sign Out
-                        </button>
+                    
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700">Today's Activity Log</h3>
+                        <div id="detail-log-list" class="space-y-2 text-sm"></div>
                     </div>
                 </div>
             </div>
 
         </main>
-
-        <!-- Bottom Navigation -->
-        <nav class="fixed bottom-0 w-full max-w-md bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around pb-safe pt-2 px-2 z-50 transition-colors">
-            <button onclick="window.switchTab('sales')" id="nav-sales" class="flex flex-col items-center p-2 text-blue-600 dark:text-blue-400 w-1/3">
-                <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-medium">Sales</span>
-            </button>
-            <button onclick="window.switchTab('reports')" id="nav-reports" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/3 transition">
-                <i data-lucide="pie-chart" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-medium">Reports</span>
-            </button>
-            <button onclick="window.switchTab('settings')" id="nav-settings" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/3 transition">
-                <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-medium">Settings</span>
-            </button>
-        </nav>
-        
-        <!-- Toast Element -->
-        <div id="toast">Message here</div>
-
     </div>
 
-    <!-- Combined Logic Script -->
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <!-- MAIN LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Initialize Icons
         lucide.createIcons();
 
-        // 1. Define Window Functions FIRST (so buttons don't break if init fails)
-        window.showToast = function(message) { 
-            const toast = document.getElementById("toast"); 
-            toast.innerText = message; 
-            toast.className = "show"; 
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
-        };
-
-        window.toggleTheme = function() {
-            document.documentElement.classList.toggle('dark'); 
-            const isDark = document.documentElement.classList.contains('dark'); 
-            localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
-            const icon = document.getElementById('theme-icon'); 
-            if(icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
-            if (document.getElementById('tab-reports').classList.contains('active')) { 
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly'; 
-                window.updateChart(activeBtn); 
-                window.updateHourlyChart(); 
-            }
-        };
-
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => { tab.classList.remove('active'); });
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            const navIds = ['sales', 'reports', 'settings'];
-            navIds.forEach(id => { 
-                const el = document.getElementById(`nav-${id}`); 
-                if (id === tabName) { el.classList.remove('text-gray-400', 'dark:text-gray-500'); el.classList.add('text-blue-600', 'dark:text-blue-400'); } 
-                else { el.classList.remove('text-blue-600', 'dark:text-blue-400'); el.classList.add('text-gray-400', 'dark:text-gray-500'); } 
-            });
-            if (tabName === 'reports') { 
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly'; 
-                window.updateChart(activeBtn); 
-                window.updateHourlyChart(); 
-            }
-        };
-
-        window.toggleAuthMode = function(mode) {
-            const loginForm = document.getElementById('login-form');
-            const regForm = document.getElementById('register-form');
-            const title = document.getElementById('auth-title');
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (mode === 'register') {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                title.innerText = "Create Account";
-                subtitle.innerText = "Join the fleet and start tracking.";
-            } else {
-                regForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                title.innerText = "Driver Login";
-                subtitle.innerText = "Sign in to access your route data.";
-            }
-        };
-
-        // --- CONFIGURATION START ---
-        // PASTE YOUR FIREBASE CONFIG HERE
-
+        // --- CONFIGURATION ---
         const firebaseConfig = {
-			apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
-			authDomain: "salesonwheels-f6eec.firebaseapp.com",
-			projectId: "salesonwheels-f6eec",
-			storageBucket: "salesonwheels-f6eec.firebasestorage.app",
+            apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
+            authDomain: "salesonwheels-f6eec.firebaseapp.com",
+            projectId: "salesonwheels-f6eec",
+            storageBucket: "salesonwheels-f6eec.firebasestorage.app",
             messagingSenderId: "432785821226",
             appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
         };
-		const appId = "sales-tracker-v1";
+        const appId = "sales-tracker-v1"; // DB Namespace
+
+        // Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // --- GLOBAL STATE ---
+        let currentUser = null;
+        let userRole = 'driver'; // 'driver' or 'admin'
+        let appData = { stock: 0, currentTransactions: [], history: [], stockLogs: [] };
         
-        // --- CONFIGURATION END ---
+        // Listeners
+        let unsubUserData = null;
+        let unsubProfile = null;
+        let unsubRoster = null; // Admin only
+        let unsubMasterStock = null; // Admin only
 
-        let app, auth, db, googleProvider;
-        let isFirebaseInitialized = false;
+        // --- AUTH & ROUTING ---
+        window.handleGoogleLogin = async () => {
+            try { await signInWithPopup(auth, googleProvider); } 
+            catch (e) { window.showToast("Login Failed: " + e.message); }
+        };
 
-        // --- Initialize Firebase Safely ---
-        try {
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.warn("Firebase Config is empty. Please configure it in the code.");
-                throw new Error("Missing Firebase Configuration");
+        window.logout = async () => {
+            if(unsubUserData) unsubUserData();
+            if(unsubProfile) unsubProfile();
+            if(unsubRoster) unsubRoster();
+            await signOut(auth);
+            window.location.reload();
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-modal').classList.add('hidden');
+                
+                // 1. Get/Create Profile & Check Role
+                const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
+                unsubProfile = onSnapshot(profileRef, async (snap) => {
+                    let role = 'driver';
+                    let status = 'pending';
+                    
+                    if (!snap.exists()) {
+                        // Create New Profile
+                        await setDoc(profileRef, {
+                            name: user.displayName, email: user.email, role: 'driver', status: 'pending', createdAt: Date.now()
+                        });
+                        // Add to public roster so Admin can see them
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'roster', user.uid), {
+                            name: user.displayName, email: user.email, uid: user.uid
+                        });
+                    } else {
+                        const data = snap.data();
+                        role = data.role || 'driver';
+                        status = data.status || 'pending';
+                    }
+
+                    userRole = role;
+
+                    if (status === 'approved' || role === 'admin') {
+                        document.getElementById('approval-modal').classList.add('hidden');
+                        if (role === 'admin') initAdminDashboard();
+                        else initDriverApp(user);
+                    } else {
+                        document.getElementById('approval-modal').classList.remove('hidden');
+                    }
+                });
+            } else {
+                document.getElementById('login-modal').classList.remove('hidden');
+                document.getElementById('driver-app').classList.add('hidden');
+                document.getElementById('admin-app').classList.add('hidden');
             }
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            googleProvider = new GoogleAuthProvider();
-            isFirebaseInitialized = true;
-        } catch (e) {
-            console.error("Firebase Initialization Failed:", e);
-            // Wait for window load to show toast if init fails immediately
+        });
+
+        // --- DRIVER LOGIC ---
+        function initDriverApp(user) {
+            document.getElementById('driver-app').classList.remove('hidden');
+            document.getElementById('driver-name-display').innerText = user.displayName.split(' ')[0];
+            
+            // Sync Data
+            const dataRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
+            unsubUserData = onSnapshot(dataRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if(data.json) appData = JSON.parse(data.json);
+                    // Ensure arrays exist
+                    appData.stockLogs = appData.stockLogs || []; 
+                    appData.currentTransactions = appData.currentTransactions || [];
+                    renderDriverUI();
+                } else {
+                    saveDriverData(); // Create empty
+                }
+            });
         }
 
-        // --- Auth Window Functions (Dependent on Firebase) ---
+        function renderDriverUI() {
+            // Calculate Stock
+            document.getElementById('display-stock').innerText = appData.stock;
+            document.getElementById('display-stock-value').innerText = `$${(appData.stock * 60).toLocaleString()}`; // Owed to supplier
+            
+            // Calculate Today's Stats
+            const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit, gross: acc.gross + t.price }), {profit:0, gross:0});
+            document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
-        window.handleGoogleLogin = async function() {
-            if (!isFirebaseInitialized) { window.showToast("Error: Firebase config missing!"); return; }
-            try {
-                await signInWithPopup(auth, googleProvider);
-            } catch (error) {
-                console.error(error);
-                window.showToast("Google Sign-In Failed: " + error.message);
-            }
-        };
+            // Render List
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '';
+            [...appData.currentTransactions].reverse().forEach(t => {
+                list.innerHTML += `<div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                    <span>Sold ${t.qty} item(s)</span>
+                    <span class="font-bold text-green-600">+$${t.profit}</span>
+                </div>`;
+            });
+            if(appData.currentTransactions.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-2">No sales yet today</div>';
+        }
 
-        window.handleLogin = async function() {
-            if (!isFirebaseInitialized) { window.showToast("Error: Firebase config missing!"); return; }
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const btn = document.getElementById('btn-login');
+        async function saveDriverData() {
+            if(!currentUser) return;
+            const dataRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state');
+            await setDoc(dataRef, { json: JSON.stringify(appData), lastUpdated: Date.now() });
+        }
 
-            if (!email || !password) { window.showToast("Please fill in all fields"); return; }
-
-            try {
-                btn.innerHTML = `<span class="animate-spin mr-2">⟳</span> Signing In...`;
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error(error);
-                window.showToast(error.message.replace("Firebase: ", ""));
-                btn.innerHTML = `<span>Sign In</span>`;
-            }
-        };
-
-        window.handleRegister = async function() {
-            if (!isFirebaseInitialized) { window.showToast("Error: Firebase config missing!"); return; }
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            const btn = document.getElementById('btn-register');
-
-            if (!email || !password || !name) { window.showToast("Please fill in all fields"); return; }
-
-            try {
-                btn.innerHTML = `<span class="animate-spin mr-2">⟳</span> Creating...`;
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                await updateProfile(user, { displayName: name });
-                window.showToast("Account created! Waiting for approval.");
-            } catch (error) {
-                console.error(error);
-                window.showToast(error.message.replace("Firebase: ", ""));
-                btn.innerHTML = `<span>Create Account</span>`;
-            }
-        };
-
-        window.logout = async function() {
-            if (!isFirebaseInitialized) return;
-            try {
-                await signOut(auth);
-                window.showToast("Signed out successfully");
-            } catch (error) {
-                window.showToast("Error signing out");
-            }
-        };
-
-        // --- Constants & State ---
-        const PRICING = {
-            1: { price: 80, profit: 20, supplier: 60 },
-            2: { price: 150, profit: 40, supplier: 110 },
-            3: { price: 220, profit: 60, supplier: 160 },
-            4: { price: 280, profit: 80, supplier: 200 }
-        };
-        const SUPPLIER_COST_PER_ITEM = 60; 
-
-        let appData = { stock: 0, currentTransactions: [], history: [] };
-        let currentUser = null;
-        let unsubscribeSnapshot = null;
-        let unsubscribeProfile = null; 
-        let chartInstance = null;
-        let hourlyChartInstance = null;
-
-        // --- Core App Actions ---
-
-        window.toggleStockEdit = function() {
-            const displayMode = document.getElementById('stock-display-mode');
-            const editMode = document.getElementById('stock-edit-mode');
-            const input = document.getElementById('stock-set-input');
-            if (editMode.classList.contains('hidden')) {
-                displayMode.classList.add('hidden'); editMode.classList.remove('hidden'); input.value = appData.stock; input.focus();
-            } else {
-                displayMode.classList.remove('hidden'); editMode.classList.add('hidden');
-            }
-        };
-
-        window.saveStockEdit = function() {
-            const input = document.getElementById('stock-set-input');
-            const qty = parseInt(input.value);
-            if (isNaN(qty) || qty < 0) { window.showToast("Please enter a valid stock number."); return; }
-            appData.stock = qty;
-            saveDataToCloud();
-            window.toggleStockEdit();
-            window.showToast("Stock updated manually.");
-        };
-
-        window.addStock = function() {
+        // Driver Actions exposed to window
+        window.addStock = async () => {
             const input = document.getElementById('stock-add-input');
             const qty = parseInt(input.value);
-            if (isNaN(qty) || qty <= 0) { window.showToast("Please enter a valid quantity."); return; }
+            if(!qty || qty <= 0) return;
+            
             appData.stock += qty;
+            appData.stockLogs.push({ date: Date.now(), type: 'add', qty: qty, by: 'driver' });
             input.value = '';
-            saveDataToCloud();
-            window.showToast(`Added ${qty} items to stock.`);
+            await saveDriverData();
+            window.showToast(`Added ${qty} items`);
         };
 
-        window.sellItem = function(qty) {
-            if (appData.stock < qty) { window.showToast(`Not enough stock! You only have ${appData.stock} left.`); return; }
-            const tier = PRICING[qty];
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const transaction = { id: Date.now(), timestamp: now.getTime(), hour: now.getHours(), time: timeStr, qty: qty, price: tier.price, profit: tier.profit, supplier: tier.supplier };
+        window.sellItem = async (qty) => {
+            if(appData.stock < qty) { window.showToast("Not enough stock!"); return; }
+            
+            const pricing = { 1:{p:80, prof:20}, 2:{p:150, prof:40}, 3:{p:220, prof:60}, 4:{p:280, prof:80} };
+            const tier = pricing[qty];
+            
             appData.stock -= qty;
-            appData.currentTransactions.push(transaction);
-            saveDataToCloud();
-            window.showToast(`Sold ${qty} item(s) for $${tier.price}`);
+            appData.currentTransactions.push({ date: Date.now(), qty: qty, price: tier.p, profit: tier.prof, time: new Date().toLocaleTimeString() });
+            
+            await saveDriverData();
+            window.showToast(`Sold ${qty} for $${tier.p}`);
         };
 
-        window.endDay = function() {
-            const totals = getTodayTotals();
-            if (appData.currentTransactions.length === 0) { window.showToast("No sales to save today."); return; }
-            const todayDate = new Date().toISOString().split('T')[0]; 
-            const hourlyDist = {};
-            appData.currentTransactions.forEach(t => {
-                const h = t.hour || new Date(t.timestamp).getHours();
-                hourlyDist[h] = (hourlyDist[h] || 0) + t.qty;
-            });
-            const existingRecordIndex = appData.history.findIndex(h => h.date === todayDate);
-            if (existingRecordIndex >= 0) {
-                const rec = appData.history[existingRecordIndex];
-                rec.gross += totals.gross; rec.profit += totals.profit; rec.supplier += totals.supplier; rec.itemsSold += totals.itemsSold;
-                for (const [hour, count] of Object.entries(hourlyDist)) {
-                    rec.hourlyDistribution = rec.hourlyDistribution || {};
-                    rec.hourlyDistribution[hour] = (rec.hourlyDistribution[hour] || 0) + count;
-                }
-            } else {
-                appData.history.push({ date: todayDate, ...totals, hourlyDistribution: hourlyDist });
-            }
+        window.endDay = async () => {
+            if(appData.currentTransactions.length === 0) { window.showToast("No sales to save."); return; }
+            // Move today to history
+            const todayStats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty }), {profit:0, sold:0});
+            appData.history.push({ date: new Date().toISOString().split('T')[0], ...todayStats });
             appData.currentTransactions = [];
-            saveDataToCloud();
-            window.showToast("Shift saved successfully!");
-            if (document.getElementById('tab-reports').classList.contains('active')) { window.updateChart('daily'); window.updateHourlyChart(); }
+            await saveDriverData();
+            window.showToast("Day saved!");
         };
 
-        window.deleteTransaction = function(id) {
-            const index = appData.currentTransactions.findIndex(t => t.id === id);
-            if (index > -1) {
-                const t = appData.currentTransactions[index];
-                const el = document.getElementById(`txn-${id}`);
-                if (el) el.classList.add('slide-out');
-                setTimeout(() => {
-                    appData.stock += t.qty;
-                    appData.currentTransactions.splice(index, 1);
-                    saveDataToCloud();
-                    window.showToast("Sale deleted. Stock restored.");
-                }, 300);
+        window.openAddStockModal = () => {
+            const qty = prompt("Enter quantity to add to your stock:");
+            if(qty && parseInt(qty) > 0) {
+                document.getElementById('stock-add-input').value = qty;
+                window.addStock();
             }
         };
 
-        // --- Internal Functions ---
+        // --- ADMIN LOGIC ---
+        function initAdminDashboard() {
+            document.getElementById('admin-app').classList.remove('hidden');
+            document.getElementById('admin-date-display').innerText = new Date().toDateString();
+            
+            // 1. Subscribe to Roster (List of Drivers)
+            const rosterRef = collection(db, 'artifacts', appId, 'public', 'roster');
+            unsubRoster = onSnapshot(rosterRef, async (snap) => {
+                const listEl = document.getElementById('admin-driver-list');
+                const selectEl = document.getElementById('distribute-select-driver');
+                listEl.innerHTML = '';
+                selectEl.innerHTML = '<option value="">Select Driver...</option>';
+                
+                let totalSoldToday = 0;
+                let totalProfitToday = 0;
 
-        function initAuthListener() {
-            if (!isFirebaseInitialized) return;
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUser = user;
+                // For each driver, fetch their latest data (One-off fetch for performance, or we could listen to all)
+                // For simplicity, we iterate and render. Ideally we'd listen to each, but let's just fetch once on load/refresh for now to save reads
+                // OR better: Create a render function that we can call
+                
+                for (const docSnap of snap.docs) {
+                    const driver = docSnap.data();
+                    // Fetch that driver's live state
+                    const stateRef = doc(db, 'artifacts', appId, 'users', driver.uid, 'data', 'app_state');
+                    const stateSnap = await getDoc(stateRef);
                     
-                    document.getElementById('login-modal').classList.add('hidden');
-                    document.getElementById('approval-modal').classList.remove('hidden');
+                    let dStock = 0;
+                    let dSold = 0;
+                    let dProfit = 0;
 
-                    const name = user.displayName || user.email.split('@')[0];
-                    document.getElementById('profile-email').innerText = user.email;
-                    document.getElementById('profile-name').innerText = name;
-                    document.getElementById('profile-initial').innerText = name.charAt(0).toUpperCase();
-                    document.getElementById('current-user-display').innerText = name;
-
-                    const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
-                    
-                    if (unsubscribeProfile) unsubscribeProfile();
-                    unsubscribeProfile = onSnapshot(profileRef, async (snap) => {
-                        let status = 'pending';
-                        if (!snap.exists()) {
-                            try {
-                                await setDoc(profileRef, {
-                                    name: name, email: user.email, role: 'driver', status: 'pending', createdAt: Date.now()
-                                });
-                            } catch (e) { console.error("Profile create failed", e); }
-                        } else {
-                            status = snap.data().status || 'pending';
-                            const role = snap.data().role || 'driver';
-                            document.getElementById('profile-role').innerText = role;
-                        }
-
-                        if (status === 'approved') {
-                            document.getElementById('login-modal').classList.add('hidden');
-                            document.getElementById('approval-modal').classList.add('hidden');
-                            document.getElementById('current-user-display').classList.remove('opacity-0');
-                            if (!unsubscribeSnapshot) startSync(user.uid);
-                        } else {
-                            document.getElementById('login-modal').classList.add('hidden');
-                            document.getElementById('approval-modal').classList.remove('hidden');
-                        }
-                    });
-                } else {
-                    currentUser = null;
-                    document.getElementById('login-modal').classList.remove('hidden');
-                    document.getElementById('approval-modal').classList.add('hidden');
-                    if (unsubscribeSnapshot) unsubscribeSnapshot();
-                    if (unsubscribeProfile) unsubscribeProfile();
-                    appData = { stock: 0, currentTransactions: [], history: [] };
-                    updateUI();
-                }
-            });
-        }
-
-        function startSync(uid) {
-            const docRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
-            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.appData) {
-                        appData = JSON.parse(data.appData);
-                        if (!appData.currentTransactions) appData.currentTransactions = [];
-                        updateUI();
-                        document.getElementById('sync-status').classList.remove('bg-red-500');
-                        document.getElementById('sync-status').classList.add('bg-green-400');
+                    if(stateSnap.exists()) {
+                        const dData = JSON.parse(stateSnap.data().json);
+                        dStock = dData.stock || 0;
+                        dData.currentTransactions?.forEach(t => {
+                            dSold += t.qty;
+                            dProfit += t.profit;
+                        });
                     }
-                } else { saveDataToCloud(); }
-            }, (error) => {
-                console.error("Sync Error:", error);
-                document.getElementById('sync-status').classList.remove('bg-green-400');
-                document.getElementById('sync-status').classList.add('bg-red-500');
+
+                    totalSoldToday += dSold;
+                    totalProfitToday += dProfit;
+
+                    // Render Card
+                    const card = document.createElement('div');
+                    card.className = "bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+                    card.onclick = () => window.viewDriverDetails(driver.uid, driver.name);
+                    card.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">${driver.name[0]}</div>
+                            <div>
+                                <div class="font-bold text-gray-800 dark:text-white">${driver.name}</div>
+                                <div class="text-xs text-gray-500">Stock: ${dStock} • Sold Today: ${dSold}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-green-600">+$${dProfit}</div>
+                            <div class="text-xs text-gray-400">Profit</div>
+                        </div>
+                    `;
+                    listEl.appendChild(card);
+
+                    // Add to Select Dropdown
+                    const option = document.createElement('option');
+                    option.value = driver.uid;
+                    option.innerText = driver.name;
+                    selectEl.appendChild(option);
+                }
+
+                document.getElementById('admin-total-profit').innerText = `$${totalProfitToday}`;
+                document.getElementById('admin-total-sold').innerText = totalSoldToday;
             });
-            window.showToast("Data Synced");
-        }
 
-        async function saveDataToCloud() {
-            if (!currentUser) return;
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state');
-            try {
-                await setDoc(docRef, { lastUpdated: Date.now(), appData: JSON.stringify(appData) });
-            } catch (e) { console.error("Save failed", e); window.showToast("Error saving to cloud"); }
-        }
-
-        function getTodayTotals() {
-            return appData.currentTransactions.reduce((acc, t) => {
-                acc.gross += t.price; acc.profit += t.profit; acc.supplier += t.supplier; acc.itemsSold += t.qty; return acc;
-            }, { gross: 0, profit: 0, supplier: 0, itemsSold: 0 });
-        }
-
-        function updateUI() {
-            const totals = getTodayTotals();
-            document.getElementById('display-stock').innerText = appData.stock;
-            document.getElementById('display-stock-value').innerText = `$${(appData.stock * SUPPLIER_COST_PER_ITEM).toLocaleString()}`;
-            document.getElementById('today-gross').innerText = `$${totals.gross.toLocaleString()}`;
-            document.getElementById('today-profit').innerText = `$${totals.profit.toLocaleString()}`;
-            document.getElementById('today-supplier').innerText = `$${totals.supplier.toLocaleString()}`;
-            document.getElementById('txn-count-badge').innerText = `${appData.currentTransactions.length} sales`;
-            renderTransactionList(); calculatePredictions(totals); renderHistoryList();
-            if (document.getElementById('tab-reports').classList.contains('active')) { 
-                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
-                window.updateChart(activeBtn); window.updateHourlyChart(); 
-            }
-        }
-
-        function renderTransactionList() {
-            const list = document.getElementById('current-transactions-list'); list.innerHTML = '';
-            if (appData.currentTransactions.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 text-sm py-4">No sales yet today.</div>'; return; }
-            const reversedTxns = [...appData.currentTransactions].reverse();
-            reversedTxns.forEach(t => {
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700';
-                item.id = `txn-${t.id}`;
-                item.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 p-2 rounded-lg mr-3">
-                            <span class="font-bold text-lg">${t.qty}</span>
-                        </div>
-                        <div>
-                            <div class="font-medium dark:text-gray-200">Sale at ${t.time}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Profit: +$${t.profit}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <div class="text-right mr-3">
-                            <div class="font-bold text-gray-800 dark:text-gray-100">$${t.price}</div>
-                        </div>
-                        <button onclick="window.deleteTransaction(${t.id})" class="text-red-400 hover:text-red-600 p-1">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        function getStartOfWeek(date) {
-            const d = new Date(date); const day = d.getDay() || 7; 
-            if (day !== 1) d.setHours(-24 * (day - 1)); return d.toISOString().split('T')[0];
-        }
-
-        function calculatePredictions(currentTotals) {
-            const totalProfitToday = currentTotals.profit;
-            if (appData.history.length === 0 && totalProfitToday === 0) { document.getElementById('predicted-earnings').innerText = "$0"; return; }
-            const today = new Date(); const todayStr = today.toISOString().split('T')[0]; const startOfWeek = getStartOfWeek(today);
-            let profitThisWeek = 0;
-            appData.history.forEach(record => { if (record.date >= startOfWeek && record.date <= todayStr) { profitThisWeek += record.profit; } });
-            profitThisWeek += totalProfitToday;
-            let daysElapsed = today.getDay() || 7; daysElapsed = Math.max(1, daysElapsed);
-            const dailyAverage = profitThisWeek / daysElapsed; const predictedWeekly = Math.round(dailyAverage * 7);
-            document.getElementById('predicted-earnings').innerText = `$${predictedWeekly.toLocaleString()}`;
-            document.getElementById('prediction-context').innerText = `Based on $${Math.round(dailyAverage)}/day average this week`;
-        }
-
-        function renderHistoryList() {
-            const list = document.getElementById('history-list'); list.innerHTML = '';
-            if (appData.history.length === 0) { list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>'; return; }
-            const sortedHistory = [...appData.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-            sortedHistory.slice(0, 10).forEach(record => {
-                const dateObj = new Date(record.date); dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
-                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors';
-                div.innerHTML = `<div><div class="font-medium text-gray-800 dark:text-gray-200 text-sm">${dateStr}</div><div class="text-xs text-gray-500 dark:text-gray-400">${record.itemsSold} items sold</div></div><div class="text-right"><div class="font-bold text-green-600 dark:text-green-400 text-sm">+$${record.profit}</div><div class="text-xs text-gray-500 dark:text-gray-400">Gross: $${record.gross}</div></div>`;
-                list.appendChild(div);
+            // 2. Subscribe to Master Inventory
+            const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
+            unsubMasterStock = onSnapshot(masterRef, (snap) => {
+                const val = snap.exists() ? (snap.data().qty || 0) : 0;
+                document.getElementById('admin-master-stock').innerText = val;
             });
         }
 
-        window.updateHourlyChart = function() {
-            const ctx = document.getElementById('hourlyChart').getContext('2d');
-            if (hourlyChartInstance) hourlyChartInstance.destroy();
-            const hourlyTotals = new Array(24).fill(0);
-            appData.history.forEach(rec => { if (rec.hourlyDistribution) { for (const [hour, count] of Object.entries(rec.hourlyDistribution)) { hourlyTotals[parseInt(hour)] += count; } } });
-            appData.currentTransactions.forEach(t => { const h = t.hour || new Date(t.timestamp).getHours(); hourlyTotals[h] += t.qty; });
-            const labels = hourlyTotals.map((_, i) => { const d = new Date(); d.setHours(i); return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }); });
-            const isDark = document.documentElement.classList.contains('dark');
-            const gridColor = isDark ? '#374151' : '#f3f4f6'; const textColor = isDark ? '#9ca3af' : '#6b7280';
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400); gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-            hourlyChartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Total Items Sold', data: hourlyTotals, borderColor: '#3b82f6', backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 8 } } } } });
+        window.switchAdminTab = (tab) => {
+            document.getElementById('admin-view-team').classList.add('hidden');
+            document.getElementById('admin-view-inventory').classList.add('hidden');
+            document.getElementById('adm-tab-team').classList.remove('border-b-4', 'border-blue-600', 'text-blue-600');
+            document.getElementById('adm-tab-inventory').classList.remove('border-b-4', 'border-blue-600', 'text-blue-600');
+            
+            document.getElementById(`admin-view-${tab}`).classList.remove('hidden');
+            document.getElementById(`adm-tab-${tab}`).classList.add('border-b-4', 'border-blue-600', 'text-blue-600');
         };
 
-        window.updateChart = function(viewMode) {
-            ['daily', 'weekly', 'monthly'].forEach(mode => { const btn = document.getElementById(`btn-chart-${mode}`); if (mode === viewMode) { btn.className = 'flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition'; } else { btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition'; } });
-            const ctx = document.getElementById('salesChart').getContext('2d'); if (chartInstance) chartInstance.destroy();
-            let labels = [], profitData = [], grossData = []; const todayTotals = getTodayTotals();
-            if (viewMode === 'daily') { const last7Days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); last7Days.push(d.toISOString().split('T')[0]); } labels = last7Days.map(d => { let date = new Date(d); date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); return date.toLocaleDateString('en-US', { weekday: 'short' }); }); last7Days.forEach(dateStr => { const record = appData.history.find(h => h.date === dateStr); let profit = record ? record.profit : 0; let gross = record ? record.gross : 0; const todayStr = new Date().toISOString().split('T')[0]; if (dateStr === todayStr) { profit += todayTotals.profit; gross += todayTotals.gross; } profitData.push(profit); grossData.push(gross); }); } 
-            else if (viewMode === 'weekly') { labels = ['Week -3', 'Week -2', 'Last Week', 'This Week']; profitData = [0, 0, 0, 0]; grossData = [0, 0, 0, 0]; const today = new Date(); const allData = [...appData.history]; if (todayTotals.gross > 0) allData.push({ date: today.toISOString().split('T')[0], ...todayTotals }); allData.forEach(record => { const rDate = new Date(record.date); const diffTime = Math.abs(today - rDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays <= 7) { profitData[3] += record.profit; grossData[3] += record.gross; } else if (diffDays <= 14) { profitData[2] += record.profit; grossData[2] += record.gross; } else if (diffDays <= 21) { profitData[1] += record.profit; grossData[1] += record.gross; } else if (diffDays <= 28) { profitData[0] += record.profit; grossData[0] += record.gross; } }); } 
-            else if (viewMode === 'monthly') { labels = []; profitData = [0, 0, 0, 0, 0, 0]; grossData = [0, 0, 0, 0, 0, 0]; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); labels.push(d.toLocaleDateString('en-US', { month: 'short' })); } const currentMonth = new Date().getMonth(); const currentYear = new Date().getFullYear(); const allData = [...appData.history]; if (todayTotals.gross > 0) allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals }); allData.forEach(record => { const rDate = new Date(record.date); rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset()); const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth()); if (monthDiff >= 0 && monthDiff <= 5) { const index = 5 - monthDiff; profitData[index] += record.profit; grossData[index] += record.gross; } }); }
-            const isDark = document.documentElement.classList.contains('dark'); const gridColor = isDark ? '#374151' : '#f3f4f6'; const textColor = isDark ? '#9ca3af' : '#6b7280';
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Profit', data: profitData, backgroundColor: 'rgba(34, 197, 94, 0.8)', borderRadius: 4, order: 1 }, { label: 'Gross', data: grossData, backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)', borderRadius: 4, order: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } } }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } } });
+        window.adminAddMasterStock = async () => {
+            const qty = prompt("Enter quantity to add to Warehouse:");
+            if(!qty) return;
+            const val = parseInt(qty);
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
+            await setDoc(ref, { qty: increment(val) }, { merge: true });
+            window.showToast("Warehouse updated");
         };
 
-        // Initialize on load
-        window.onload = function() {
-            const options = { weekday: 'long', month: 'short', day: 'numeric' };
-            document.getElementById('current-date-header').innerText = new Date().toLocaleDateString('en-US', options);
-            const isDark = document.documentElement.classList.contains('dark');
-            const themeIcon = document.getElementById('theme-icon');
-            if(themeIcon) { themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); lucide.createIcons(); }
-            if (isFirebaseInitialized) initAuthListener();
-            else if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-               window.showToast("Critical: Firebase config missing!");
+        window.adminDistributeStock = async () => {
+            const uid = document.getElementById('distribute-select-driver').value;
+            const qty = parseInt(document.getElementById('distribute-qty').value);
+            
+            if(!uid || !qty || qty <= 0) { window.showToast("Select driver and enter valid qty"); return; }
+
+            // 1. Decrease Master
+            const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
+            await setDoc(masterRef, { qty: increment(-qty) }, { merge: true });
+
+            // 2. Increase Driver (Complex: need to read-modify-write JSON)
+            const driverRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
+            const snap = await getDoc(driverRef);
+            if(snap.exists()) {
+                let dData = JSON.parse(snap.data().json);
+                dData.stock = (dData.stock || 0) + qty;
+                dData.stockLogs = dData.stockLogs || [];
+                dData.stockLogs.push({ date: Date.now(), type: 'receive', qty: qty, by: 'admin' });
+                
+                await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
+                window.showToast(`Sent ${qty} items to driver`);
+                document.getElementById('distribute-qty').value = '';
+            } else {
+                window.showToast("Driver has not initialized app yet.");
             }
         };
+
+        window.viewDriverDetails = async (uid, name) => {
+            document.getElementById('admin-user-detail').classList.remove('hidden');
+            document.getElementById('detail-user-name').innerText = name;
+            
+            const ref = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
+            const snap = await getDoc(ref);
+            
+            if(snap.exists()) {
+                const d = JSON.parse(snap.data().json);
+                
+                // Calculations
+                const currentStock = d.stock || 0;
+                let addedToday = 0;
+                let soldToday = 0;
+                
+                // Get start of today timestamp
+                const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+                
+                // Parse logs
+                d.stockLogs?.forEach(log => {
+                    if(log.date >= startOfDay.getTime()) addedToday += log.qty;
+                });
+                d.currentTransactions?.forEach(t => {
+                    soldToday += t.qty;
+                });
+
+                // Start of Day Stock = Current + Sold - Added
+                const startStock = currentStock + soldToday - addedToday;
+
+                document.getElementById('detail-stock').innerText = currentStock;
+                document.getElementById('detail-start-stock').innerText = startStock;
+
+                // Render Logs
+                const logList = document.getElementById('detail-log-list');
+                logList.innerHTML = '';
+                
+                // Combine sales and stock logs for a timeline
+                let timeline = [];
+                d.currentTransactions?.forEach(t => timeline.push({ ...t, type: 'sale' }));
+                d.stockLogs?.forEach(l => {
+                    if(l.date >= startOfDay.getTime()) timeline.push({ ...l, type: 'stock' });
+                });
+                timeline.sort((a,b) => b.date - a.date); // Newest first
+
+                timeline.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between border-b border-gray-100 dark:border-gray-700 pb-2";
+                    if(item.type === 'sale') {
+                        row.innerHTML = `<span class="text-gray-500">${new Date(item.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <span>Sold <b>${item.qty}</b> items</span> <span class="text-green-600 font-bold">+$${item.profit}</span>`;
+                    } else {
+                        row.innerHTML = `<span class="text-gray-500">${new Date(item.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <span>📦 Added <b>${item.qty}</b> items</span> <span class="text-blue-500 text-xs uppercase">${item.by}</span>`;
+                    }
+                    logList.appendChild(row);
+                });
+                
+                if(timeline.length === 0) logList.innerHTML = "<div class='text-center text-gray-400'>No activity today</div>";
+            }
+        };
+
+        // --- UTILS ---
+        window.showToast = (msg) => { const t = document.getElementById('toast'); t.innerText = msg; t.className = "show"; setTimeout(() => t.className = "", 3000); };
     </script>
 </body>
 </html>
