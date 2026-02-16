@@ -25,7 +25,7 @@
         .hidden { display: none !important; }
     </style>
     <script>
-        // Force Dark Mode Default
+        // Force Dark Mode Default on Load
         if (localStorage.theme === 'light') {
             document.documentElement.classList.remove('dark');
         } else {
@@ -120,7 +120,7 @@
                         <span class="text-2xl font-bold text-red-500" id="display-stock-value">$0</span>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-400 italic text-center">Ask Admin to add stock</div>
+                <div class="mt-2 text-xs text-gray-400 italic text-center">Stock is managed by Admin</div>
             </div>
 
             <!-- Quick Sell -->
@@ -191,7 +191,6 @@
 
                 <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1">Active Drivers</h3>
                 <div id="admin-driver-list" class="space-y-3">
-                    <!-- Driver cards injected here -->
                     <div class="text-center py-8 text-gray-400 animate-pulse">Loading team data...</div>
                 </div>
             </div>
@@ -283,7 +282,6 @@
         lucide.createIcons();
 
         // --- CONFIGURATION ---
-        // PASTE YOUR FIREBASE KEYS HERE
         const firebaseConfig = {
             apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
             authDomain: "salesonwheels-f6eec.firebaseapp.com",
@@ -302,14 +300,14 @@
 
         // --- GLOBAL STATE ---
         let currentUser = null;
-        let userRole = 'driver'; // 'driver' or 'admin'
+        let userRole = 'driver'; 
         let appData = { stock: 0, currentTransactions: [], history: [], stockLogs: [] };
         
         // Listeners
         let unsubUserData = null;
         let unsubProfile = null;
-        let unsubRoster = null; // Admin only
-        let unsubMasterStock = null; // Admin only
+        let unsubRoster = null; 
+        let unsubMasterStock = null; 
 
         // --- UTILS ---
         window.showToast = (msg) => { const t = document.getElementById('toast'); t.innerText = msg; t.className = "show"; setTimeout(() => t.className = "", 3000); };
@@ -348,7 +346,11 @@
                     if (!snap.exists()) {
                         // Create New Profile
                         await setDoc(profileRef, {
-                            name: user.displayName, email: user.email, role: 'driver', status: 'pending', createdAt: Date.now()
+                            name: user.displayName || user.email, 
+                            email: user.email, 
+                            role: 'driver', 
+                            status: 'pending', 
+                            createdAt: Date.now()
                         });
                     } else {
                         const data = snap.data();
@@ -356,9 +358,12 @@
                         status = data.status || 'pending';
                     }
 
-                    // *** CRITICAL FIX: Always add to roster so Admin sees user ***
+                    // *** CRITICAL: Add to roster so Admin sees user ***
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'roster', user.uid), {
-                        name: user.displayName, email: user.email, uid: user.uid, role: role
+                        name: user.displayName || user.email, 
+                        email: user.email, 
+                        uid: user.uid,
+                        lastLogin: Date.now()
                     }, { merge: true });
 
                     userRole = role;
@@ -381,7 +386,8 @@
         // --- DRIVER LOGIC ---
         function initDriverApp(user) {
             document.getElementById('driver-app').classList.remove('hidden');
-            document.getElementById('driver-name-display').innerText = user.displayName.split(' ')[0];
+            const displayName = user.displayName ? user.displayName.split(' ')[0] : 'Driver';
+            document.getElementById('driver-name-display').innerText = displayName;
             
             // Sync Data
             const dataRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
@@ -402,7 +408,7 @@
         function renderDriverUI() {
             // Calculate Stock
             document.getElementById('display-stock').innerText = appData.stock;
-            document.getElementById('display-stock-value').innerText = `$${(appData.stock * 60).toLocaleString()}`; // Owed to supplier
+            document.getElementById('display-stock-value').innerText = `$${(appData.stock * 60).toLocaleString()}`; 
             
             // Calculate Today's Stats
             const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit, gross: acc.gross + t.price }), {profit:0, gross:0});
@@ -498,7 +504,7 @@
                     card.onclick = () => window.viewDriverDetails(driver.uid, driver.name);
                     card.innerHTML = `
                         <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">${driver.name ? driver.name[0] : 'U'}</div>
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">${driver.name ? driver.name[0].toUpperCase() : 'U'}</div>
                             <div>
                                 <div class="font-bold text-gray-800 dark:text-white">${driver.name || 'Unknown User'}</div>
                                 <div class="text-xs text-gray-500">Stock: ${dStock} • Sold Today: ${dSold}</div>
@@ -525,7 +531,6 @@
             // 2. Subscribe to Master Inventory
             const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
             unsubMasterStock = onSnapshot(masterRef, (snap) => {
-                // Handle case if doc doesn't exist yet
                 const val = snap.exists() ? (snap.data().qty || 0) : 0;
                 document.getElementById('admin-master-stock').innerText = val;
             });
