@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales & Inventory Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for mobile app feel */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 50;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 90px;
+        }
+
+        /* Slide to delete animation */
+        .slide-out {
+            animation: slideOut 0.3s forwards;
+        }
+        @keyframes slideOut {
+            to { transform: translateX(100%); opacity: 0; height: 0; margin: 0; padding: 0; }
+        }
+    </style>
+    <script>
+        // Check theme before render to prevent flashing
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body class="text-gray-800 dark:text-gray-100 dark:bg-gray-900 pb-24 transition-colors duration-200">
+
+    <!-- App Container -->
+    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen shadow-xl relative transition-colors duration-200">
+        
+        <!-- Header -->
+        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md transition-colors duration-200">
+            <h1 class="text-xl font-bold text-center">Sales Tracker</h1>
+            <p id="current-date-header" class="text-center text-sm text-blue-200 dark:text-gray-400"></p>
+            <button onclick="toggleTheme()" class="absolute right-4 top-4 p-1 rounded-full hover:bg-white/20 transition">
+                <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="p-4">
+            
+            <!-- TAB 1: SALES & TERMINAL -->
+            <div id="tab-sales" class="tab-content active">
+                
+                <!-- Stock Management Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center justify-between">
+                        <div class="flex items-center"><i data-lucide="package" class="w-5 h-5 mr-2"></i> Inventory</div>
+                        <button onclick="toggleStockEdit()" class="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded text-gray-600 dark:text-gray-300 transition flex items-center">
+                            <i data-lucide="edit-2" class="w-3 h-3 mr-1"></i> Edit
+                        </button>
+                    </h2>
+                    
+                    <!-- Stock Display Mode -->
+                    <div id="stock-display-mode">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl font-bold dark:text-white" id="display-stock">0</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Items in Stock</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="number" id="stock-add-input" placeholder="Qty to add" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" min="1">
+                            <button onclick="addStock()" class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium active:bg-blue-700 transition">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Stock Edit Mode (Hidden by default) -->
+                    <div id="stock-edit-mode" class="hidden">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Set exact stock count:</p>
+                        <div class="flex space-x-2">
+                            <input type="number" id="stock-set-input" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500">
+                            <button onclick="saveStockEdit()" class="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg font-medium active:bg-green-700 transition">Set</button>
+                            <button onclick="toggleStockEdit()" class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg font-medium">Cancel</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded flex justify-between">
+                        <span>Value of Unsold Stock:</span>
+                        <span id="display-stock-value" class="font-semibold text-gray-700 dark:text-gray-200">$0</span>
+                    </div>
+                </div>
+
+                <!-- Sell Terminal Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Quick Sell
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="sellItem(1)" class="border-2 border-blue-100 dark:border-blue-900/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center active:bg-blue-200 dark:active:bg-blue-900/40 transition">
+                            <div class="font-bold text-lg text-blue-800 dark:text-blue-400">1 Item</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$80</div>
+                        </button>
+                        <button onclick="sellItem(2)" class="border-2 border-green-100 dark:border-green-900/50 hover:border-green-500 bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center active:bg-green-200 dark:active:bg-green-900/40 transition">
+                            <div class="font-bold text-lg text-green-800 dark:text-green-400">2 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$150</div>
+                        </button>
+                        <button onclick="sellItem(3)" class="border-2 border-purple-100 dark:border-purple-900/50 hover:border-purple-500 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center active:bg-purple-200 dark:active:bg-purple-900/40 transition">
+                            <div class="font-bold text-lg text-purple-800 dark:text-purple-400">3 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$220</div>
+                        </button>
+                        <button onclick="sellItem(4)" class="border-2 border-orange-100 dark:border-orange-900/50 hover:border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center active:bg-orange-200 dark:active:bg-orange-900/40 transition">
+                            <div class="font-bold text-lg text-orange-800 dark:text-orange-400">4 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$280</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Today's Transactions (Editable) -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center justify-between">
+                        <div class="flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Today's Sales</div>
+                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded-full" id="txn-count-badge">0 sales</span>
+                    </h2>
+                    
+                    <!-- Stats Summary Mini -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-100 dark:border-green-900/30 text-center">
+                             <div class="text-xs text-green-600 dark:text-green-400 uppercase">Profit</div>
+                             <div class="font-bold text-green-700 dark:text-green-300" id="today-profit">$0</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-100 dark:border-gray-600 text-center">
+                             <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Gross</div>
+                             <div class="font-bold text-gray-700 dark:text-white" id="today-gross">$0</div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction List -->
+                    <div id="current-transactions-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar mb-4">
+                        <!-- Items injected here -->
+                        <div class="text-center text-gray-400 text-sm py-4">No sales yet today.</div>
+                    </div>
+
+                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex justify-between items-center mb-4">
+                        <div class="text-xs text-red-600 dark:text-red-400 uppercase tracking-wide">Supplier Funds</div>
+                        <div class="text-xl font-bold text-red-700 dark:text-red-400" id="today-supplier">$0</div>
+                    </div>
+
+                    <button onclick="endDay()" class="w-full bg-gray-800 dark:bg-gray-700 text-white py-3 rounded-lg font-bold shadow-md active:bg-gray-900 dark:active:bg-gray-600 transition flex justify-center items-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Save Day & Reset Shift
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 2: REPORTS & ANALYTICS -->
+            <div id="tab-reports" class="tab-content">
+                
+                <!-- Predictions Card -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-sm p-5 mb-4 text-white">
+                    <h2 class="font-semibold text-blue-100 dark:text-blue-200 mb-1 flex items-center text-sm uppercase tracking-wider">
+                        <i data-lucide="trending-up" class="w-4 h-4 mr-2"></i> Predicted Weekly Profit
+                    </h2>
+                    <div class="text-3xl font-bold mb-1" id="predicted-earnings">$0</div>
+                    <p class="text-xs text-blue-200 dark:text-blue-300" id="prediction-context">Based on average sales this week</p>
+                </div>
+
+                <!-- Financial Charts Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 text-sm uppercase">Financial Performance</h3>
+                    <div class="flex space-x-2 mb-4 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                        <button onclick="updateChart('daily')" id="btn-chart-daily" class="flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition">Daily</button>
+                        <button onclick="updateChart('weekly')" id="btn-chart-weekly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Weekly</button>
+                        <button onclick="updateChart('monthly')" id="btn-chart-monthly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Monthly</button>
+                    </div>
+                    
+                    <div class="relative h-56 w-full">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Hourly Analysis Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                     <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-sm uppercase flex items-center">
+                         <i data-lucide="clock" class="w-4 h-4 mr-2"></i> Busiest Times (Hourly)
+                     </h3>
+                     <p class="text-xs text-gray-400 mb-4">Total items sold by hour of day</p>
+                     <div class="relative h-48 w-full">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3">Recent Days</h2>
+                    <div id="history-list" class="space-y-3 max-h-60 overflow-y-auto hide-scrollbar">
+                        <!-- History items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SETTINGS -->
+            <div id="tab-settings" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 flex items-center">
+                        <i data-lucide="database" class="w-5 h-5 mr-2"></i> Data Management
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Save a backup of all your sales data to your device.</p>
+                            <button onclick="exportData()" class="w-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 py-3 rounded-lg font-medium active:bg-blue-100 dark:active:bg-blue-900/50 transition flex justify-center items-center">
+                                <i data-lucide="download" class="w-5 h-5 mr-2"></i> Export Data (JSON)
+                            </button>
+                        </div>
+                        
+                        <hr class="border-gray-100 dark:border-gray-700">
+                        
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Restore data from a previously exported file.</p>
+                            <label class="w-full bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 py-3 rounded-lg font-medium active:bg-gray-100 dark:active:bg-gray-600 transition flex justify-center items-center cursor-pointer">
+                                <i data-lucide="upload" class="w-5 h-5 mr-2"></i> Import Data
+                                <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-xl shadow-sm p-4 border border-red-100 dark:border-red-900/50 mt-8 transition-colors">
+                    <h2 class="font-semibold text-red-700 dark:text-red-500 mb-2 flex items-center">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> Danger Zone
+                    </h2>
+                    <p class="text-xs text-red-600 dark:text-red-400 mb-3">This will permanently delete all stock and sales history. Export your data first!</p>
+                    <button onclick="resetApp()" class="w-full bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-bold shadow-sm active:bg-red-700 transition">
+                        Factory Reset App
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 w-full max-w-md bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around pb-safe pt-2 px-2 z-50 transition-colors">
+            <button onclick="switchTab('sales')" id="nav-sales" class="flex flex-col items-center p-2 text-blue-600 dark:text-blue-400 w-1/3">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Sales</span>
+            </button>
+            <button onclick="switchTab('reports')" id="nav-reports" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/3 transition">
+                <i data-lucide="pie-chart" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Reports</span>
+            </button>
+            <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/3 transition">
+                <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Settings</span>
+            </button>
+        </nav>
+        
+        <!-- Toast Element -->
+        <div id="toast">Message here</div>
+
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Constants & Pricing Model
+        const PRICING = {
+            1: { price: 80, profit: 20, supplier: 60 },
+            2: { price: 150, profit: 40, supplier: 110 },
+            3: { price: 220, profit: 60, supplier: 160 },
+            4: { price: 280, profit: 80, supplier: 200 }
+        };
+        const SUPPLIER_COST_PER_ITEM = 60; // Base cost
+
+        // State Management
+        let appData = {
+            stock: 0,
+            currentTransactions: [], // New array to track today's specific sales
+            history: [] 
+        };
+
+        let chartInstance = null;
+        let hourlyChartInstance = null;
+
+        // Initialize App
+        function initApp() {
+            const savedData = localStorage.getItem('salesAppData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                appData = parsed;
+                
+                // MIGRATION: If old data structure (no currentTransactions), init it
+                if (!appData.currentTransactions) {
+                    appData.currentTransactions = [];
+                }
+            }
+            
+            // Set Header Date
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('current-date-header').innerText = new Date().toLocaleDateString('en-US', options);
+
+            // Set correct theme icon
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeIcon = document.getElementById('theme-icon');
+            if(themeIcon) {
+                themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                lucide.createIcons();
+            }
+
+            updateUI();
+        }
+
+        // Save State
+        function saveData() {
+            localStorage.setItem('salesAppData', JSON.stringify(appData));
+            updateUI();
+        }
+
+        // Calculate Totals from Transaction Array
+        function getTodayTotals() {
+            return appData.currentTransactions.reduce((acc, t) => {
+                acc.gross += t.price;
+                acc.profit += t.profit;
+                acc.supplier += t.supplier;
+                acc.itemsSold += t.qty;
+                return acc;
+            }, { gross: 0, profit: 0, supplier: 0, itemsSold: 0 });
+        }
+
+        // Update UI Elements
+        function updateUI() {
+            const totals = getTodayTotals();
+
+            // Stock
+            document.getElementById('display-stock').innerText = appData.stock;
+            document.getElementById('display-stock-value').innerText = `$${(appData.stock * SUPPLIER_COST_PER_ITEM).toLocaleString()}`;
+            
+            // Today's Shift Stats
+            document.getElementById('today-gross').innerText = `$${totals.gross.toLocaleString()}`;
+            document.getElementById('today-profit').innerText = `$${totals.profit.toLocaleString()}`;
+            document.getElementById('today-supplier').innerText = `$${totals.supplier.toLocaleString()}`;
+            document.getElementById('txn-count-badge').innerText = `${appData.currentTransactions.length} sales`;
+
+            renderTransactionList();
+            calculatePredictions(totals);
+            renderHistoryList();
+        }
+
+        // --- Transaction Management ---
+
+        function renderTransactionList() {
+            const list = document.getElementById('current-transactions-list');
+            list.innerHTML = '';
+
+            if (appData.currentTransactions.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 text-sm py-4">No sales yet today.</div>';
+                return;
+            }
+
+            // Show newest on top
+            const reversedTxns = [...appData.currentTransactions].reverse();
+
+            reversedTxns.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700';
+                item.id = `txn-${t.id}`;
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 p-2 rounded-lg mr-3">
+                            <span class="font-bold text-lg">${t.qty}</span>
+                        </div>
+                        <div>
+                            <div class="font-medium dark:text-gray-200">Sale at ${t.time}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Profit: +$${t.profit}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="text-right mr-3">
+                            <div class="font-bold text-gray-800 dark:text-gray-100">$${t.price}</div>
+                        </div>
+                        <button onclick="deleteTransaction(${t.id})" class="text-red-400 hover:text-red-600 p-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function deleteTransaction(id) {
+            const index = appData.currentTransactions.findIndex(t => t.id === id);
+            if (index > -1) {
+                const t = appData.currentTransactions[index];
+                
+                // Animate removal
+                const el = document.getElementById(`txn-${id}`);
+                if (el) el.classList.add('slide-out');
+
+                setTimeout(() => {
+                    // Restore Stock
+                    appData.stock += t.qty;
+                    // Remove Transaction
+                    appData.currentTransactions.splice(index, 1);
+                    saveData();
+                    showToast("Sale deleted. Stock restored.");
+                }, 300);
+            }
+        }
+
+        // --- Actions ---
+
+        function toggleStockEdit() {
+            const displayMode = document.getElementById('stock-display-mode');
+            const editMode = document.getElementById('stock-edit-mode');
+            const input = document.getElementById('stock-set-input');
+
+            if (editMode.classList.contains('hidden')) {
+                displayMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+                input.value = appData.stock;
+                input.focus();
+            } else {
+                displayMode.classList.remove('hidden');
+                editMode.classList.add('hidden');
+            }
+        }
+
+        function saveStockEdit() {
+            const input = document.getElementById('stock-set-input');
+            const qty = parseInt(input.value);
+            if (isNaN(qty) || qty < 0) {
+                showToast("Please enter a valid stock number.");
+                return;
+            }
+            appData.stock = qty;
+            saveData();
+            toggleStockEdit();
+            showToast("Stock updated manually.");
+        }
+
+        function addStock() {
+            const input = document.getElementById('stock-add-input');
+            const qty = parseInt(input.value);
+            if (isNaN(qty) || qty <= 0) {
+                showToast("Please enter a valid quantity.");
+                return;
+            }
+            appData.stock += qty;
+            input.value = '';
+            saveData();
+            showToast(`Added ${qty} items to stock.`);
+        }
+
+        function sellItem(qty) {
+            if (appData.stock < qty) {
+                showToast(`Not enough stock! You only have ${appData.stock} left.`);
+                return;
+            }
+
+            const tier = PRICING[qty];
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            
+            // Create Transaction Record
+            const transaction = {
+                id: Date.now(),
+                timestamp: now.getTime(),
+                hour: now.getHours(), // 0-23 for analysis
+                time: timeStr,
+                qty: qty,
+                price: tier.price,
+                profit: tier.profit,
+                supplier: tier.supplier
+            };
+
+            // Update State
+            appData.stock -= qty;
+            appData.currentTransactions.push(transaction);
+
+            saveData();
+            showToast(`Sold ${qty} item(s) for $${tier.price}`);
+        }
+
+        function endDay() {
+            const totals = getTodayTotals();
+            if (appData.currentTransactions.length === 0) {
+                showToast("No sales to save today.");
+                return;
+            }
+
+            const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Calculate Hourly Distribution for today
+            const hourlyDist = {};
+            appData.currentTransactions.forEach(t => {
+                const h = t.hour || new Date(t.timestamp).getHours();
+                hourlyDist[h] = (hourlyDist[h] || 0) + t.qty;
+            });
+
+            // Check if we already saved today
+            const existingRecordIndex = appData.history.findIndex(h => h.date === todayDate);
+            
+            if (existingRecordIndex >= 0) {
+                // Merge logic (complex, simpler to just overwrite if saving "Day")
+                // For safety, let's just add to it
+                const rec = appData.history[existingRecordIndex];
+                rec.gross += totals.gross;
+                rec.profit += totals.profit;
+                rec.supplier += totals.supplier;
+                rec.itemsSold += totals.itemsSold;
+                
+                // Merge hourly
+                for (const [hour, count] of Object.entries(hourlyDist)) {
+                    rec.hourlyDistribution = rec.hourlyDistribution || {};
+                    rec.hourlyDistribution[hour] = (rec.hourlyDistribution[hour] || 0) + count;
+                }
+            } else {
+                appData.history.push({
+                    date: todayDate,
+                    ...totals,
+                    hourlyDistribution: hourlyDist
+                });
+            }
+
+            // Reset Today
+            appData.currentTransactions = [];
+            
+            saveData();
+            showToast("Shift saved successfully!");
+            
+            if (document.getElementById('tab-reports').classList.contains('active')) {
+                updateChart('daily');
+                updateHourlyChart();
+            }
+        }
+
+        // --- Reports & Predictions ---
+
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay() || 7; 
+            if (day !== 1) d.setHours(-24 * (day - 1));
+            return d.toISOString().split('T')[0];
+        }
+
+        function calculatePredictions(currentTotals) {
+            // Include current unsaved profit in prediction logic
+            const totalProfitToday = currentTotals.profit;
+            
+            if (appData.history.length === 0 && totalProfitToday === 0) {
+                document.getElementById('predicted-earnings').innerText = "$0";
+                return;
+            }
+
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const startOfWeek = getStartOfWeek(today);
+
+            let profitThisWeek = 0;
+            
+            appData.history.forEach(record => {
+                if (record.date >= startOfWeek && record.date <= todayStr) {
+                    profitThisWeek += record.profit;
+                }
+            });
+
+            profitThisWeek += totalProfitToday;
+
+            let daysElapsed = today.getDay() || 7; 
+            daysElapsed = Math.max(1, daysElapsed);
+
+            const dailyAverage = profitThisWeek / daysElapsed;
+            const predictedWeekly = Math.round(dailyAverage * 7);
+
+            document.getElementById('predicted-earnings').innerText = `$${predictedWeekly.toLocaleString()}`;
+            document.getElementById('prediction-context').innerText = `Based on $${Math.round(dailyAverage)}/day average this week`;
+        }
+
+        function renderHistoryList() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            
+            if (appData.history.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>';
+                return;
+            }
+
+            const sortedHistory = [...appData.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedHistory.slice(0, 10).forEach(record => {
+                const dateObj = new Date(record.date);
+                dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+                
+                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors';
+                div.innerHTML = `
+                    <div>
+                        <div class="font-medium text-gray-800 dark:text-gray-200 text-sm">${dateStr}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${record.itemsSold} items sold</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-green-600 dark:text-green-400 text-sm">+$${record.profit}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Gross: $${record.gross}</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- Charts ---
+
+        function updateHourlyChart() {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            if (hourlyChartInstance) hourlyChartInstance.destroy();
+
+            // Aggregate all hourly data from history + current transactions
+            const hourlyTotals = new Array(24).fill(0);
+
+            // History
+            appData.history.forEach(rec => {
+                if (rec.hourlyDistribution) {
+                    for (const [hour, count] of Object.entries(rec.hourlyDistribution)) {
+                        hourlyTotals[parseInt(hour)] += count;
+                    }
+                }
+            });
+
+            // Current Today
+            appData.currentTransactions.forEach(t => {
+                const h = t.hour || new Date(t.timestamp).getHours();
+                hourlyTotals[h] += t.qty;
+            });
+
+            // Format Labels (12 AM, 1 AM...)
+            const labels = hourlyTotals.map((_, i) => {
+                const d = new Date(); d.setHours(i);
+                return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+            });
+            
+            // Filter to only show range from first sale to last sale hour for cleaner look? 
+            // Or just show active hours. Let's show all for context or 8am-10pm? 
+            // Let's show strictly the hours that have data + 1 buffer, or just simplified.
+            // Simplified: All hours.
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+            // Gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            hourlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Items Sold',
+                        data: hourlyTotals,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 8 } }
+                    }
+                }
+            });
+        }
+
+        function updateChart(viewMode) {
+            // Update Toggle Buttons UI
+            ['daily', 'weekly', 'monthly'].forEach(mode => {
+                const btn = document.getElementById(`btn-chart-${mode}`);
+                if (mode === viewMode) {
+                    btn.className = 'flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition';
+                } else {
+                    btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition';
+                }
+            });
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            let labels = [];
+            let profitData = [];
+            let grossData = [];
+            
+            const todayTotals = getTodayTotals();
+
+            if (viewMode === 'daily') {
+                const last7Days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    last7Days.push(d.toISOString().split('T')[0]);
+                }
+
+                labels = last7Days.map(d => {
+                    let date = new Date(d);
+                    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                });
+
+                last7Days.forEach(dateStr => {
+                    const record = appData.history.find(h => h.date === dateStr);
+                    let profit = record ? record.profit : 0;
+                    let gross = record ? record.gross : 0;
+                    
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (dateStr === todayStr) {
+                        profit += todayTotals.profit;
+                        gross += todayTotals.gross;
+                    }
+
+                    profitData.push(profit);
+                    grossData.push(gross);
+                });
+
+            } else if (viewMode === 'weekly') {
+                labels = ['Week -3', 'Week -2', 'Last Week', 'This Week'];
+                profitData = [0, 0, 0, 0];
+                grossData = [0, 0, 0, 0];
+
+                const today = new Date();
+                
+                const allData = [...appData.history];
+                if (todayTotals.gross > 0) {
+                    allData.push({ date: today.toISOString().split('T')[0], ...todayTotals });
+                }
+
+                allData.forEach(record => {
+                    const rDate = new Date(record.date);
+                    const diffTime = Math.abs(today - rDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays <= 7) {
+                        profitData[3] += record.profit; grossData[3] += record.gross;
+                    } else if (diffDays <= 14) {
+                        profitData[2] += record.profit; grossData[2] += record.gross;
+                    } else if (diffDays <= 21) {
+                        profitData[1] += record.profit; grossData[1] += record.gross;
+                    } else if (diffDays <= 28) {
+                        profitData[0] += record.profit; grossData[0] += record.gross;
+                    }
+                });
+            } else if (viewMode === 'monthly') {
+                labels = [];
+                profitData = [0, 0, 0, 0, 0, 0];
+                grossData = [0, 0, 0, 0, 0, 0];
+
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+                }
+
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+
+                const allData = [...appData.history];
+                if (todayTotals.gross > 0) {
+                    allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals });
+                }
+
+                allData.forEach(record => {
+                    const rDate = new Date(record.date);
+                    rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset());
+                    
+                    const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth());
+                    
+                    if (monthDiff >= 0 && monthDiff <= 5) {
+                        const index = 5 - monthDiff;
+                        profitData[index] += record.profit;
+                        grossData[index] += record.gross;
+                    }
+                });
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Profit',
+                            data: profitData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            borderRadius: 4,
+                            order: 1
+                        },
+                        {
+                            label: 'Gross',
+                            data: grossData,
+                            backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)',
+                            borderRadius: 4,
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        // --- Utilities ---
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            const navIds = ['sales', 'reports', 'settings'];
+            navIds.forEach(id => {
+                const el = document.getElementById(`nav-${id}`);
+                if (id === tabName) {
+                    el.classList.remove('text-gray-400', 'dark:text-gray-500');
+                    el.classList.add('text-blue-600', 'dark:text-blue-400');
+                } else {
+                    el.classList.remove('text-blue-600', 'dark:text-blue-400');
+                    el.classList.add('text-gray-400', 'dark:text-gray-500');
+                }
+            });
+
+            if (tabName === 'reports') {
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
+                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn);
+                updateHourlyChart();
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            const icon = document.getElementById('theme-icon');
+            if(icon) {
+                icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                lucide.createIcons();
+            }
+
+            if (document.getElementById('tab-reports').classList.contains('active')) {
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
+                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn);
+                updateHourlyChart();
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- Data Management ---
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `Sales_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast("Data exported successfully.");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (importedData.stock !== undefined) {
+                        appData = importedData;
+                        // Migration fix
+                        if (!appData.currentTransactions) appData.currentTransactions = [];
+                        
+                        saveData();
+                        showToast("Data imported successfully!");
+                        updateUI();
+                    } else {
+                        showToast("Invalid data format.");
+                    }
+                } catch (err) {
+                    showToast("Error reading file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function resetApp() {
+            if (confirm("Are you sure? This cannot be undone unless you have exported a backup!")) {
+                localStorage.removeItem('salesAppData');
+                appData = { stock: 0, currentTransactions: [], history: [] };
+                updateUI();
+                showToast("App data has been reset.");
+            }
+        }
+
+        // Boot the app
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
