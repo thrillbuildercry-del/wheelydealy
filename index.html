@@ -426,7 +426,13 @@
 
                     <!-- NEW: HISTORY -->
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Shift History (Daily)</h3>
+                        <h3 class="font-bold text-sm mb-2 border-b pb-2 dark:border-gray-700 dark:text-white">Shift History</h3>
+                        <!-- History Tabs -->
+                        <div class="flex space-x-2 mb-2 border-b dark:border-gray-700">
+                            <button onclick="window.renderHistory('daily')" id="hist-tab-daily" class="pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500">Daily</button>
+                            <button onclick="window.renderHistory('weekly')" id="hist-tab-weekly" class="pb-1 text-sm font-bold text-gray-400">Weekly</button>
+                            <button onclick="window.renderHistory('monthly')" id="hist-tab-monthly" class="pb-1 text-sm font-bold text-gray-400">Monthly</button>
+                        </div>
                         <div id="detail-history-list" class="space-y-2 text-sm">
                             <!-- Populated via JS -->
                         </div>
@@ -467,7 +473,8 @@
         let currentUser = null;
         let userRole = 'driver'; 
         let appData = { stock: 0, debt: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
-        let currentDetailUid = null; 
+        let currentDetailUid = null;
+        let currentDriverData = null; // Store for history processing
         let globalRoster = []; 
         
         let driverChartInstance = null;
@@ -943,15 +950,6 @@
         
         // 1. DISTRIBUTE (Warehouse -> Driver)
         window.adminDistributeStock = async () => {
-             // Create a temporary simplified selection for distribution
-             // For now, prompt for quick distribute or use existing logic if we had a dedicated input
-             // Re-using the prompt approach for simplicity in the master card, OR
-             // we can't really do it without selecting a driver.
-             // The master card button is now just a shortcut to switch to transfer tab?
-             // No, let's make it a prompt for quick distribution or just alert user.
-             
-             // Actually, let's check if we have the "collect-driver" selected? No.
-             // Let's create a simple prompt distribution for the Master Stock Card button
              const driversList = globalRoster.map((d,i) => `${i+1}. ${d.name}`).join('\n');
              if(driversList.length === 0) return window.showToast("No drivers.");
              
@@ -1032,9 +1030,6 @@
             dData.stock = (dData.stock || 0) + stockChange;
             dData.debt = (dData.debt || 0) + debtChange;
             if(dData.debt < 0) dData.debt = 0; // Prevent negative debt?
-
-            // Log it (Optional but good)
-            // dData.stockLogs.push({ date: Date.now(), stockChg: stockChange, debtChg: debtChange, by: 'admin' });
 
             await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { stock: dData.stock, debt: dData.debt }, { merge: true });
@@ -1141,8 +1136,10 @@
 
         window.viewDriverDetails = (driver) => {
             currentDetailUid = driver.id; 
+            currentDriverData = driver;
             updateDetailView(driver);
             document.getElementById('admin-user-detail').classList.remove('hidden');
+            window.renderHistory('daily');
         };
 
         function updateDetailView(driver) {
@@ -1176,25 +1173,80 @@
             } else {
                 logList.innerHTML = '<div class="text-center text-gray-400 italic py-4">No recent activity synced.</div>';
             }
+        }
 
-            // HISTORY LIST
+        window.renderHistory = (mode) => {
+            if(!currentDriverData || !currentDriverData.history) return;
+
+            // Update Tab Styles
+            ['daily', 'weekly', 'monthly'].forEach(m => {
+                 const btn = document.getElementById(`hist-tab-${m}`);
+                 if(m === mode) {
+                     btn.className = "pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500";
+                 } else {
+                     btn.className = "pb-1 text-sm font-bold text-gray-400 hover:text-gray-600";
+                 }
+            });
+
             const histList = document.getElementById('detail-history-list');
             histList.innerHTML = '';
 
-            if (driver.history && driver.history.length > 0) {
-                [...driver.history].reverse().slice(0, 14).forEach(h => {
-                    const owed = (h.revenue || 0) - (h.profit || 0);
-                    const dateDisplay = new Date(h.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-                    
+            let dataToRender = [];
+
+            if (mode === 'daily') {
+                dataToRender = [...currentDriverData.history].reverse().slice(0, 30).map(h => ({
+                    label: new Date(h.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+                    sold: h.sold,
+                    revenue: h.revenue || 0,
+                    profit: h.profit || 0
+                }));
+            } 
+            else if (mode === 'weekly' || mode === 'monthly') {
+                let agg = {};
+                
+                currentDriverData.history.forEach(h => {
+                    const d = new Date(h.date);
+                    let key;
+                    if (mode === 'weekly') {
+                        // Week number key (simplistic, just yyyy-W-num)
+                        const onejan = new Date(d.getFullYear(),0,1);
+                        const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+                        key = `Week ${week}, ${d.getFullYear()}`;
+                    } else {
+                        key = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+                    }
+
+                    if(!agg[key]) agg[key] = { sold:0, revenue:0, profit:0 };
+                    agg[key].sold += (h.sold || 0);
+                    agg[key].revenue += (h.revenue || 0);
+                    agg[key].profit += (h.profit || 0);
+                });
+
+                dataToRender = Object.keys(agg).map(k => ({
+                    label: k,
+                    sold: agg[k].sold,
+                    revenue: agg[k].revenue,
+                    profit: agg[k].profit
+                })).reverse();
+            }
+
+            if (dataToRender.length > 0) {
+                dataToRender.forEach(item => {
+                    // Boss Earned = Revenue - Driver Profit (Commission)
+                    // If Revenue is missing (old data), assume BossShare = 0 or fallback logic? 
+                    // User requested "what should have been earned", so we rely on saved data.
+                    const bossShare = item.revenue - item.profit;
+                    const driverShare = item.profit;
+
                     histList.innerHTML += `
                         <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1">
                             <div>
-                                <div class="font-bold dark:text-gray-200">${dateDisplay}</div>
-                                <div class="text-xs text-gray-500">${h.sold} items sold</div>
+                                <div class="font-bold dark:text-gray-200">${item.label}</div>
+                                <div class="text-xs text-gray-500">${item.sold} items sold</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-bold text-gray-800 dark:text-white">$${h.revenue || 0} Rev</div>
-                                <div class="text-xs text-red-500">Owed: $${owed}</div>
+                                <div class="text-xs text-gray-500">Boss Earned: <span class="font-bold text-gray-700 dark:text-gray-300">$${bossShare}</span></div>
+                                <div class="text-xs text-green-600">Driver Earned: <span class="font-bold">+$${driverShare}</span></div>
                             </div>
                         </div>
                     `;
@@ -1202,7 +1254,7 @@
             } else {
                 histList.innerHTML = '<div class="text-center text-gray-400 italic py-2">No history recorded yet.</div>';
             }
-        }
+        };
     </script>
 </body>
 </html>
