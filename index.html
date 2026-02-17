@@ -45,7 +45,7 @@
     <div id="loading-overlay" class="modal-overlay z-[150]">
         <div class="text-white flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p class="font-bold tracking-wide">Loading Profile...</p>
+            <p class="font-bold tracking-wide">Loading...</p>
         </div>
     </div>
 
@@ -66,14 +66,14 @@
         </div>
     </div>
 
-    <!-- Approval Pending / Suspended Modal -->
+    <!-- Suspended Modal -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
-            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
+            <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
                 <i data-lucide="lock" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-bold dark:text-white">Access Restricted</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account has been suspended by the Admin. Please contact management.</p>
+            <h2 class="text-2xl font-bold dark:text-white">Account Suspended</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your access has been restricted by the Administrator.</p>
             <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
@@ -155,9 +155,7 @@
                         <span id="driver-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
                         <button onclick="window.changeCalendarMonth(1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                     </div>
-                    <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-1">
-                        <!-- Calendar JS injected here -->
-                    </div>
+                    <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-1"></div>
                     <div id="driver-selected-day-details" class="mt-2 text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded hidden"></div>
                 </div>
 
@@ -169,7 +167,6 @@
                         <option value="">Select Shift...</option>
                     </select>
                     
-                    <!-- Cover Hours (Hidden until shift selected) -->
                     <div id="drv-cover-times" class="hidden grid grid-cols-2 gap-2 mb-2">
                         <div>
                             <label class="text-[10px] font-bold">Cover Start</label>
@@ -198,7 +195,13 @@
     </div>
 
     <!-- DRIVER UI -->
-    <div id="driver-app" class="hidden pb-24">
+    <div id="driver-app" class="hidden pb-24 relative">
+        <!-- View Only Banner (for Admin View Mode) -->
+        <div id="view-only-banner" class="hidden sticky top-0 left-0 w-full bg-orange-500 text-white text-center py-2 text-xs font-bold z-50">
+            VIEW ONLY MODE
+            <button onclick="window.exitViewMode()" class="ml-4 bg-white text-orange-600 px-2 rounded hover:bg-gray-100">Exit</button>
+        </div>
+
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300" id="driver-header">
             <div>
                 <h1 class="text-lg font-bold">Driver Portal</h1>
@@ -234,7 +237,7 @@
                         <h2 class="text-gray-500 text-xs uppercase tracking-wide">My Stock</h2>
                         <div class="flex items-end">
                             <span class="text-4xl font-bold dark:text-white mr-3" id="display-stock">0</span>
-                            <button onclick="window.driverRequestStock()" class="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded-full font-bold mb-2 transition flex items-center">
+                            <button onclick="window.driverRequestStock()" class="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded-full font-bold mb-2 transition flex items-center btn-interactive">
                                 <i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> Request More
                             </button>
                         </div>
@@ -246,29 +249,21 @@
                 </div>
             </div>
 
-            <!-- New Sale Card (Split) -->
+            <!-- New Sale Card -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700">
-                
-                <!-- Standard Price Section -->
-                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center">
-                    <i data-lucide="tag" class="w-3 h-3 mr-1 text-green-500"></i> Standard Price ($80/ea)
-                </h2>
+                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center"><i data-lucide="tag" class="w-3 h-3 mr-1 text-green-500"></i> Standard Price ($80/ea)</h2>
                 <div class="grid grid-cols-4 gap-2 mb-4">
-                    <button onclick="window.sellItem(1, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-green-700 dark:text-green-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
-                    <button onclick="window.sellItem(2, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-green-700 dark:text-green-400">2</div><div class="text-[10px] text-gray-500">$160</div></button>
-                    <button onclick="window.sellItem(3, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-green-700 dark:text-green-400">3</div><div class="text-[10px] text-gray-500">$240</div></button>
-                    <button onclick="window.sellItem(4, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-green-700 dark:text-green-400">4</div><div class="text-[10px] text-gray-500">$320</div></button>
+                    <button onclick="window.sellItem(1, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
+                    <button onclick="window.sellItem(2, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">2</div><div class="text-[10px] text-gray-500">$160</div></button>
+                    <button onclick="window.sellItem(3, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">3</div><div class="text-[10px] text-gray-500">$240</div></button>
+                    <button onclick="window.sellItem(4, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">4</div><div class="text-[10px] text-gray-500">$320</div></button>
                 </div>
-
-                <!-- Deal Price Section -->
-                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center">
-                    <i data-lucide="percent" class="w-3 h-3 mr-1 text-orange-500"></i> Deal Price (Discount)
-                </h2>
+                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center"><i data-lucide="percent" class="w-3 h-3 mr-1 text-orange-500"></i> Deal Price (Discount)</h2>
                 <div class="grid grid-cols-4 gap-2">
-                    <button onclick="window.sellItem(1, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
-                    <button onclick="window.sellItem(2, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">2</div><div class="text-[10px] text-gray-500">$150</div></button>
-                    <button onclick="window.sellItem(3, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">3</div><div class="text-[10px] text-gray-500">$220</div></button>
-                    <button onclick="window.sellItem(4, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">4</div><div class="text-[10px] text-gray-500">$280</div></button>
+                    <button onclick="window.sellItem(1, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
+                    <button onclick="window.sellItem(2, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">2</div><div class="text-[10px] text-gray-500">$150</div></button>
+                    <button onclick="window.sellItem(3, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">3</div><div class="text-[10px] text-gray-500">$220</div></button>
+                    <button onclick="window.sellItem(4, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">4</div><div class="text-[10px] text-gray-500">$280</div></button>
                 </div>
             </div>
 
@@ -281,7 +276,7 @@
                 <div id="transaction-list" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar text-sm">
                     <div class="text-center text-gray-400 py-2">No sales yet today</div>
                 </div>
-                <button onclick="window.endDay()" class="mt-4 w-full bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition">End Shift & Save</button>
+                <button onclick="window.endDay()" class="mt-4 w-full bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition btn-interactive">End Shift & Save</button>
             </div>
         </main>
     </div>
@@ -324,54 +319,31 @@
 
                 <div class="flex justify-between items-center mb-3 ml-1">
                     <h3 class="font-bold text-gray-700 dark:text-gray-300">Driver Status & Debt</h3>
-                    <div class="text-xs text-gray-400">Green = Active</div>
+                    <div class="text-xs text-gray-400">Green = Online</div>
                 </div>
                 <div id="admin-driver-list" class="space-y-3">
                     <div class="text-center py-8 text-gray-400 animate-pulse">Loading team data...</div>
                 </div>
             </div>
 
-            <!-- TAB: TRANSFERS (UNIFIED) -->
+            <!-- TAB: TRANSFERS -->
             <div id="admin-view-transfer" class="admin-tab-content hidden">
-                
-                <!-- Stock Requests Section -->
                 <div id="admin-stock-requests" class="hidden mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
-                    <h3 class="font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-3 flex items-center">
-                        <i data-lucide="bell" class="w-4 h-4 mr-2"></i> Pending Stock Requests
-                    </h3>
+                    <h3 class="font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-3 flex items-center"><i data-lucide="bell" class="w-4 h-4 mr-2"></i> Pending Stock Requests</h3>
                     <div id="admin-stock-requests-list" class="space-y-2"></div>
                 </div>
-
-                <!-- Master Stock Card -->
                 <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 text-white mb-6 shadow-lg flex justify-between items-center">
-                     <div>
-                        <div class="text-xs uppercase text-gray-400">Warehouse Stock</div>
-                        <div class="text-2xl font-bold" id="admin-master-stock">--</div>
-                    </div>
-                    <div class="space-x-2">
-                         <button onclick="window.adminAddMasterStock()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-600">+ Restock</button>
-                         <button onclick="window.adminDistributeStock()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Distribute</button>
-                    </div>
+                     <div><div class="text-xs uppercase text-gray-400">Warehouse Stock</div><div class="text-2xl font-bold" id="admin-master-stock">--</div></div>
+                     <div class="space-x-2"><button onclick="window.adminAddMasterStock()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-600">+ Restock</button><button onclick="window.adminDistributeStock()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Distribute</button></div>
                 </div>
-
-                <!-- 1. Peer-to-Peer Transfer -->
+                <!-- P2P Transfer -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide">
-                        <i data-lucide="arrow-right-left" class="w-4 h-4 mr-2 text-purple-600"></i> Driver to Driver Transfer
-                    </h3>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide"><i data-lucide="arrow-right-left" class="w-4 h-4 mr-2 text-purple-600"></i> Driver to Driver Transfer</h3>
                     <div class="space-y-4">
                         <div class="flex space-x-2 items-start">
-                            <div class="flex-1">
-                                <label class="text-[10px] font-bold text-gray-500 uppercase">From</label>
-                                <select id="transfer-from" onchange="window.updateTransferStats('from')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
-                                <div id="transfer-stats-from" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div>
-                            </div>
+                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">From</label><select id="transfer-from" onchange="window.updateTransferStats('from')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="transfer-stats-from" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
                             <div class="pt-7 text-gray-400"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
-                            <div class="flex-1">
-                                <label class="text-[10px] font-bold text-gray-500 uppercase">To</label>
-                                <select id="transfer-to" onchange="window.updateTransferStats('to')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
-                                <div id="transfer-stats-to" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div>
-                            </div>
+                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">To</label><select id="transfer-to" onchange="window.updateTransferStats('to')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="transfer-stats-to" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
                         </div>
                         <div class="flex space-x-2">
                             <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Items</label><input type="number" id="p2p-stock" placeholder="0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold"></div>
@@ -380,18 +352,11 @@
                         <button onclick="window.adminP2PTransfer()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-purple-700 active:scale-95 transition">Transfer Assets</button>
                     </div>
                 </div>
-
-                <!-- 2. Manager Actions -->
+                <!-- Manager Actions -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide">
-                        <i data-lucide="download" class="w-4 h-4 mr-2 text-green-600"></i> Manager Collection / Returns
-                    </h3>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide"><i data-lucide="download" class="w-4 h-4 mr-2 text-green-600"></i> Manager Collection / Returns</h3>
                     <div class="space-y-4">
-                        <div>
-                             <label class="text-[10px] font-bold text-gray-500 uppercase">Select Target Driver</label>
-                             <select id="collect-driver" onchange="window.updateTransferStats('collect')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
-                             <div id="collect-stats" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div>
-                        </div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Select Target Driver</label><select id="collect-driver" onchange="window.updateTransferStats('collect')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="collect-stats" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
                         <div class="flex space-x-2">
                             <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Return Stock</label><input type="number" id="collect-stock" placeholder="0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold text-blue-600"></div>
                             <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Collect Debt ($)</label><input type="number" id="collect-debt" placeholder="$0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold text-green-600"></div>
@@ -403,7 +368,6 @@
 
             <!-- TAB: SCHEDULE -->
             <div id="admin-view-schedule" class="admin-tab-content hidden">
-                <!-- Assign Shift -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 text-sm uppercase tracking-wide">Assign Shift</h3>
                     <div class="grid grid-cols-2 gap-3 mb-3">
@@ -416,100 +380,61 @@
                     </div>
                     <button onclick="window.adminAssignShift()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">Add to Schedule</button>
                 </div>
-
-                <!-- Cover Requests -->
                 <div class="mb-6">
                     <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Cover Requests</h3>
-                    <div id="admin-cover-list" class="space-y-2">
-                        <div class="text-center text-gray-400 text-sm py-2">No active cover requests.</div>
-                    </div>
+                    <div id="admin-cover-list" class="space-y-2"><div class="text-center text-gray-400 text-sm py-2">No active cover requests.</div></div>
                 </div>
-
-                <!-- Admin Calendar View -->
                 <div>
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Team Schedule</h3>
+                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Team Schedule (Upcoming)</h3>
                     <div id="admin-calendar-controls" class="flex justify-between items-center mb-2">
                         <button onclick="window.changeCalendarMonth(-1, 'admin')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
                         <span id="admin-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
                         <button onclick="window.changeCalendarMonth(1, 'admin')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                     </div>
                     <div id="admin-calendar-grid" class="calendar-grid bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-1"></div>
-                    <div id="admin-selected-day-details" class="mt-2 text-xs bg-white dark:bg-gray-800 p-2 rounded hidden shadow-sm"></div>
+                    <div id="admin-selected-day-details" class="mt-2 bg-white dark:bg-gray-800 p-2 rounded hidden shadow-sm text-sm space-y-1"></div>
                 </div>
             </div>
 
-            <!-- TAB: EMPLOYEES (NEW) -->
+            <!-- TAB: EMPLOYEES -->
             <div id="admin-view-employees" class="admin-tab-content hidden">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                        <i data-lucide="users" class="w-5 h-5 mr-2 text-blue-600"></i> Employee Management
-                    </h3>
-                    <div id="admin-employee-list" class="space-y-3">
-                        <!-- Populated by JS -->
-                        <div class="text-center text-gray-400 text-sm">Loading employees...</div>
-                    </div>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center"><i data-lucide="users" class="w-5 h-5 mr-2 text-blue-600"></i> Employee Management</h3>
+                    <div id="admin-employee-list" class="space-y-3"><div class="text-center text-gray-400 text-sm">Loading...</div></div>
                 </div>
             </div>
 
             <!-- TAB: REPORTS -->
             <div id="admin-view-reports" class="admin-tab-content hidden">
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4">Team Performance (Last 7 Days)</h3>
-                    <div class="h-64">
-                        <canvas id="adminTeamChart"></canvas>
-                    </div>
-                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6"><h3 class="font-bold text-gray-800 dark:text-white mb-4">Team Performance</h3><div class="h-64"><canvas id="adminTeamChart"></canvas></div></div>
                 <div class="grid grid-cols-2 gap-4">
-                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (7d)</div>
-                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-gross">$0</div>
-                        <div class="text-sm text-green-600 font-bold" id="adm-report-week-profit">$0 Profit</div>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (Mo)</div>
-                        <div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-gross">$0</div>
-                        <div class="text-sm text-blue-600 font-bold" id="adm-report-month-profit">$0 Profit</div>
-                    </div>
+                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"><div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (7d)</div><div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-gross">$0</div><div class="text-sm text-green-600 font-bold" id="adm-report-week-profit">$0 Profit</div></div>
+                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"><div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (Mo)</div><div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-gross">$0</div><div class="text-sm text-blue-600 font-bold" id="adm-report-month-profit">$0 Profit</div></div>
                 </div>
             </div>
 
             <!-- VIEW: USER DETAIL -->
             <div id="admin-user-detail" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 overflow-y-auto hidden">
                 <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between z-10">
-                    <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition">
-                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
                     <h2 class="font-bold text-lg dark:text-white" id="detail-user-name">Driver Stats</h2>
-                    <div class="w-8"></div>
+                    <button onclick="window.adminViewAsDriver()" class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-bold hover:bg-orange-200">View Dashboard</button>
                 </div>
                 <div class="p-4 max-w-2xl mx-auto space-y-4">
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 p-4 rounded-xl">
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="text-xs font-bold text-red-500 uppercase">Owed to Boss</div>
-                            <div class="text-2xl font-bold text-red-600 dark:text-red-400" id="detail-debt">$0</div>
-                        </div>
-                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div class="text-xs text-gray-500 uppercase">Stock</div>
+                            <div class="flex justify-between items-center"><div class="text-xs text-gray-500 uppercase">Stock</div><button onclick="window.adminEditValue('stock')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button></div>
                             <div class="text-xl font-bold dark:text-white" id="detail-stock">0</div>
                         </div>
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div class="text-xs text-gray-500 uppercase">Profit Today</div>
-                            <div class="text-xl font-bold text-green-600" id="detail-profit">0</div>
+                            <div class="flex justify-between items-center"><div class="text-xs text-gray-500 uppercase">Debt</div><button onclick="window.adminEditValue('debt')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button></div>
+                            <div class="text-xl font-bold text-red-500" id="detail-debt">$0</div>
                         </div>
                     </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700"><h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Transactions</h3><div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div></div>
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Transactions</h3>
-                        <div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold text-sm mb-2 border-b pb-2 dark:border-gray-700 dark:text-white">Shift History</h3>
-                        <div class="flex space-x-2 mb-2 border-b dark:border-gray-700">
-                            <button onclick="window.renderHistory('daily')" id="hist-tab-daily" class="pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500">Daily</button>
-                            <button onclick="window.renderHistory('weekly')" id="hist-tab-weekly" class="pb-1 text-sm font-bold text-gray-400">Weekly</button>
-                            <button onclick="window.renderHistory('monthly')" id="hist-tab-monthly" class="pb-1 text-sm font-bold text-gray-400">Monthly</button>
-                        </div>
+                        <h3 class="font-bold text-sm mb-2 border-b pb-2 dark:border-gray-700 dark:text-white">History</h3>
+                        <div class="flex space-x-2 mb-2 border-b dark:border-gray-700"><button onclick="window.renderHistory('daily')" id="hist-tab-daily" class="pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500">Daily</button><button onclick="window.renderHistory('weekly')" id="hist-tab-weekly" class="pb-1 text-sm font-bold text-gray-400">Weekly</button><button onclick="window.renderHistory('monthly')" id="hist-tab-monthly" class="pb-1 text-sm font-bold text-gray-400">Monthly</button></div>
                         <div id="detail-history-list" class="space-y-2 text-sm"></div>
                     </div>
                 </div>
@@ -547,12 +472,13 @@
         // --- GLOBAL STATE ---
         let currentUser = null;
         let userRole = 'driver'; 
-        let appData = { stock: 0, debt: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
+        let appData = { stock: 0, debt: 0, onlineStatus: 'offline', currentTransactions: [], history: [], stockLogs: [] };
         let currentDetailUid = null;
         let currentDriverData = null; 
         let globalRoster = []; 
         let driverShifts = [];
-        let calendarDate = new Date(); // Current viewing month
+        let calendarDate = new Date(); 
+        let viewMode = false; // Is Admin viewing driver dashboard?
         
         let driverChartInstance = null;
         let adminChartInstance = null;
@@ -574,10 +500,7 @@
         // --- AUTH ---
         window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (e) { window.showToast("Login Failed: " + e.message); } };
         window.logout = async () => { 
-            if(unsubUserData) unsubUserData(); 
-            if(unsubProfile) unsubProfile(); 
-            if(unsubRoster) unsubRoster(); 
-            if(unsubAuthCheck) unsubAuthCheck();
+            if(unsubUserData) unsubUserData(); if(unsubProfile) unsubProfile(); if(unsubRoster) unsubRoster(); if(unsubAuthCheck) unsubAuthCheck();
             await signOut(auth); window.location.reload(); 
         };
 
@@ -589,43 +512,25 @@
                 
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
                 let profileSnap = await getDoc(profileRef);
-                
-                // Get role from profile to ensure persistence if roster is fresh
                 let knownRole = 'driver';
                 
                 if (!profileSnap.exists()) {
-                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', status: 'active', createdAt: Date.now() });
-                } else {
-                    knownRole = profileSnap.data().role || 'driver';
-                }
+                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', accessStatus: 'pending', createdAt: Date.now() });
+                } else { knownRole = profileSnap.data().role || 'driver'; }
 
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
-                // Sync role from profile to roster to fix admin login if lost
-                await setDoc(rosterRef, { 
-                    name: user.displayName || user.email, 
-                    email: user.email, 
-                    uid: user.uid, 
-                    role: knownRole, // Ensure role is synced
-                    lastLogin: Date.now() 
-                }, { merge: true });
+                await setDoc(rosterRef, { name: user.displayName || user.email, email: user.email, uid: user.uid, role: knownRole, lastLogin: Date.now() }, { merge: true });
 
                 unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
                     const data = snap.data();
-                    // Fix: Default status to 'active' so no approval tag is needed
-                    const status = data.status || 'active';
+                    const accessStatus = data.accessStatus || 'pending';
                     const role = data.role || knownRole || 'driver';
-                    
                     userRole = role;
                     document.getElementById('loading-overlay').classList.add('hidden');
 
-                    if (role === 'admin') {
-                        initAdminDashboard();
-                    } else if (status === 'active' || status === 'approved') {
-                        document.getElementById('approval-modal').classList.add('hidden');
-                        initDriverApp(user);
-                    } else {
-                        document.getElementById('approval-modal').classList.remove('hidden');
-                    }
+                    if (role === 'admin') { initAdminDashboard(); }
+                    else if (accessStatus !== 'suspended') { document.getElementById('approval-modal').classList.add('hidden'); initDriverApp(user); }
+                    else { document.getElementById('approval-modal').classList.remove('hidden'); }
                 });
             } else {
                 document.getElementById('login-modal').classList.remove('hidden');
@@ -640,54 +545,46 @@
             document.getElementById('driver-app').classList.remove('hidden');
             document.getElementById('driver-name-display').innerText = user.displayName ? user.displayName.split(' ')[0] : 'Driver';
             
+            // If view mode, we don't listen to real-time updates for *me*, we use passed data
+            if(viewMode) return;
+
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
                     if(data.json) appData = JSON.parse(data.json);
                     appData.stock = appData.stock || 0; appData.debt = appData.debt || 0; 
+                    appData.onlineStatus = appData.onlineStatus || 'offline';
                     appData.currentTransactions = appData.currentTransactions || []; appData.history = appData.history || [];
                     renderDriverUI();
                 } else { saveDriverData(); }
             });
 
             unsubMyShifts = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => {
-                if(snap.exists()) {
-                    driverShifts = snap.data().shifts || [];
-                    window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
-                }
+                if(snap.exists()) { driverShifts = snap.data().shifts || []; window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); }
             });
 
             const coverRef = collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests');
             onSnapshot(coverRef, (snap) => {
-                const list = document.getElementById('drv-ot-list');
-                const badge = document.getElementById('drv-ot-count');
-                const dot = document.getElementById('sched-notify-dot');
-                list.innerHTML = '';
-                let count = 0;
-
+                const list = document.getElementById('drv-ot-list'); const badge = document.getElementById('drv-ot-count'); const dot = document.getElementById('sched-notify-dot');
+                list.innerHTML = ''; let count = 0;
                 snap.forEach(d => {
                     const req = d.data();
                     if(req.status === 'open' && req.requesterUid !== currentUser.uid) {
                         count++;
-                        const card = document.createElement('div');
-                        card.className = "bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 flex justify-between items-center";
-                        card.innerHTML = `
-                            <div>
-                                <div class="font-bold text-sm dark:text-white">${req.date} (${req.start}-${req.end})</div>
-                                <div class="text-xs text-gray-500">${req.requesterName} needs cover</div>
-                            </div>
-                            <button onclick="window.driverAcceptCover('${d.id}')" class="bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-green-700">Take Shift</button>
-                        `;
-                        list.appendChild(card);
+                        list.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 flex justify-between items-center"><div><div class="font-bold text-sm dark:text-white">${req.date} (${req.coverStart}-${req.coverEnd})</div><div class="text-xs text-gray-500">${req.requesterName} needs cover</div></div><button onclick="window.driverAcceptCover('${d.id}')" class="bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-green-700 btn-interactive">Take Shift</button></div>`;
                     }
                 });
-                badge.innerText = count;
-                if(count > 0) dot.classList.remove('hidden'); else dot.classList.add('hidden');
+                badge.innerText = count; if(count > 0) dot.classList.remove('hidden'); else dot.classList.add('hidden');
                 if(count === 0) list.innerHTML = '<div class="text-center text-gray-400 text-xs py-2">No overtime available.</div>';
             });
         }
 
         function renderDriverUI() {
+            // Status UI
+            const dot = document.getElementById('status-dot'); const txt = document.getElementById('status-text'); const hdr = document.getElementById('driver-header');
+            if(appData.onlineStatus === 'online') { dot.className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"; txt.innerText="Online"; hdr.className="bg-green-600 dark:bg-green-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
+            else { dot.className="w-2 h-2 rounded-full bg-gray-400 mr-1.5"; txt.innerText="Offline"; hdr.className="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
+
             document.getElementById('display-stock').innerText = appData.stock;
             document.getElementById('display-debt').innerText = `$${appData.debt.toLocaleString()}`;
             document.getElementById('setting-stat-debt').innerText = `$${appData.debt.toLocaleString()}`;
@@ -696,27 +593,23 @@
             const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit }), {profit:0});
             document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
-            const list = document.getElementById('transaction-list');
-            list.innerHTML = '';
+            const list = document.getElementById('transaction-list'); list.innerHTML = '';
             appData.currentTransactions.map((t, i) => ({...t, originalIndex: i})).reverse().forEach(t => {
                 let badge = t.type === 'full' ? `<span class="text-[10px] text-green-500 font-bold ml-1">(STD)</span>` : `<span class="text-[10px] text-orange-500 font-bold ml-1">(DEAL)</span>`;
-                list.innerHTML += `<div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded group">
-                    <div><div class="text-sm dark:text-gray-200"><span class="font-bold">${t.qty}</span> items ${badge}</div><div class="text-xs text-gray-400">${t.time}</div></div>
-                    <div class="flex items-center space-x-3"><span class="font-bold text-green-600">+$${t.profit}</span><button onclick="window.deleteSale(${t.originalIndex})" class="text-gray-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-                </div>`;
+                list.innerHTML += `<div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded group"><div><div class="text-sm dark:text-gray-200"><span class="font-bold">${t.qty}</span> items ${badge}</div><div class="text-xs text-gray-400">${t.time}</div></div><div class="flex items-center space-x-3"><span class="font-bold text-green-600">+$${t.profit}</span><button onclick="window.deleteSale(${t.originalIndex})" class="text-gray-400 hover:text-red-500 p-1 btn-interactive"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
             });
             if(appData.currentTransactions.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-2">No sales yet today</div>';
             lucide.createIcons();
         }
 
         async function saveDriverData() {
-            if(!currentUser) return;
+            if(!currentUser || viewMode) return;
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { json: JSON.stringify(appData), lastUpdated: Date.now() });
             let todaySold = 0, todayProfit = 0, todayGross = 0;
             appData.currentTransactions.forEach(t => { todaySold += t.qty; todayProfit += t.profit; todayGross += t.price; });
             try {
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), {
-                    stock: appData.stock, debt: appData.debt, status: appData.status,
+                    stock: appData.stock, debt: appData.debt, onlineStatus: appData.onlineStatus,
                     todaySold, todayProfit, todayGross, recentLogs: appData.currentTransactions.slice(-20).reverse(), 
                     history: appData.history.slice(-30), lastSync: Date.now()
                 }, { merge: true });
@@ -724,16 +617,15 @@
         }
 
         window.toggleDriverStatus = async () => {
-            appData.status = appData.status === 'active' ? 'inactive' : 'active';
-            const dot = document.getElementById('status-dot'); const txt = document.getElementById('status-text'); const hdr = document.getElementById('driver-header');
-            if(appData.status === 'active') { dot.className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"; txt.innerText="Online"; hdr.className="bg-green-600 dark:bg-green-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
-            else { dot.className="w-2 h-2 rounded-full bg-gray-400 mr-1.5"; txt.innerText="Offline"; hdr.className="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
-            await saveDriverData();
+            if(viewMode) return;
+            appData.onlineStatus = appData.onlineStatus === 'online' ? 'offline' : 'online';
+            renderDriverUI(); await saveDriverData();
         };
 
         window.sellItem = async (qty, type) => {
+            if(viewMode) return;
             if(appData.stock < qty) { window.showToast("Not enough stock!"); return; }
-            if(appData.status !== 'active') { if(!confirm("You are Offline. Sell anyway?")) return; window.toggleDriverStatus(); }
+            if(appData.onlineStatus !== 'online') { if(!confirm("You are Offline. Sell anyway?")) return; window.toggleDriverStatus(); }
             
             let price=0, profit=0, owed=0;
             if (type === 'full') { price = 80*qty; profit = 20*qty; owed = 60*qty; }
@@ -745,29 +637,24 @@
         };
 
         window.deleteSale = async (idx) => {
+            if(viewMode) return;
             if(!confirm("Undo?")) return;
-            const t = appData.currentTransactions[idx];
-            appData.stock += t.qty; appData.debt -= t.owed;
+            const t = appData.currentTransactions[idx]; appData.stock += t.qty; appData.debt -= t.owed;
             appData.currentTransactions.splice(idx, 1);
             await saveDriverData(); renderDriverUI();
         };
 
         window.endDay = async () => {
+            if(viewMode) return;
             if(appData.currentTransactions.length === 0) { window.showToast("No sales."); return; }
             const stats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty, revenue: acc.price+acc.revenue }), {profit:0, sold:0, revenue:0});
             const d = new Date().toISOString().split('T')[0];
             const exists = appData.history.findIndex(h => h.date === d);
-            
-            let dayRev = 0; let dayProf = 0; let daySold = 0;
+            let dayRev=0, dayProf=0, daySold=0;
             appData.currentTransactions.forEach(t => { dayRev += t.price; dayProf += t.profit; daySold += t.qty; });
-
-            if(exists >= 0) { 
-                appData.history[exists].profit += dayProf; appData.history[exists].sold += daySold; appData.history[exists].revenue += dayRev; 
-            } else { 
-                appData.history.push({ date: d, profit: dayProf, sold: daySold, revenue: dayRev }); 
-            }
-            
-            appData.currentTransactions = []; appData.status = 'inactive';
+            if(exists >= 0) { appData.history[exists].profit += dayProf; appData.history[exists].sold += daySold; appData.history[exists].revenue += dayRev; } 
+            else { appData.history.push({ date: d, profit: dayProf, sold: daySold, revenue: dayRev }); }
+            appData.currentTransactions = []; appData.onlineStatus = 'offline';
             await saveDriverData(); renderDriverUI(); window.showToast("Saved!");
         };
 
@@ -775,7 +662,7 @@
         window.changeCalendarMonth = (offset, type) => {
             calendarDate.setMonth(calendarDate.getMonth() + offset);
             if(type === 'driver') window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
-            else window.renderCalendar('admin-calendar-grid', null, 'admin'); // Admin handles its own data fetching
+            else window.renderCalendar('admin-calendar-grid', null, 'admin'); 
         };
 
         window.renderCalendar = (elementId, shiftsData, mode) => {
@@ -783,27 +670,18 @@
             const monthLabel = document.getElementById(mode === 'driver' ? 'driver-calendar-month' : 'admin-calendar-month');
             grid.innerHTML = '';
             
-            const year = calendarDate.getFullYear();
-            const month = calendarDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const startDay = firstDay.getDay(); // 0 = Sun
+            const year = calendarDate.getFullYear(); const month = calendarDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startDay = new Date(year, month, 1).getDay(); // 0 = Sun
             
-            monthLabel.innerText = firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-            // Empty slots for start
+            monthLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
             for(let i=0; i<startDay; i++) grid.innerHTML += `<div></div>`;
 
-            // Helper to get shifts for a day
             const getShiftsForDay = (day) => {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                 if (mode === 'driver') return shiftsData.filter(s => s.date === dateStr);
-                // Admin mode: flatten globalRoster shifts
                 let adminShifts = [];
-                globalRoster.forEach(drv => {
-                    (drv.shifts || []).forEach(s => { if(s.date === dateStr) adminShifts.push({...s, name: drv.name}); });
-                });
+                globalRoster.forEach(drv => { (drv.shifts || []).forEach(s => { if(s.date === dateStr) adminShifts.push({...s, name: drv.name, uid: drv.id}); }); });
                 return adminShifts;
             };
 
@@ -812,151 +690,89 @@
                 let bars = '';
                 shifts.forEach(s => {
                     const color = mode === 'driver' ? 'bg-blue-500' : 'bg-purple-500';
-                    const text = mode === 'driver' ? `${s.start}-${s.end}` : `${s.name.substr(0,5)}..`;
+                    const text = mode === 'driver' ? `${s.start}-${s.end}` : `${s.name.substr(0,3)} ${s.start}`;
                     bars += `<div class="${color} text-white shift-bar">${text}</div>`;
                 });
-
-                grid.innerHTML += `
-                    <div class="calendar-day bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-600 rounded p-1" onclick="window.selectCalendarDay(${d}, '${mode}')">
-                        <div class="text-xs font-bold text-gray-400 mb-1">${d}</div>
-                        ${bars}
-                    </div>
-                `;
+                grid.innerHTML += `<div class="calendar-day bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-600 rounded p-1" onclick="window.selectCalendarDay(${d}, '${mode}')"><div class="text-xs font-bold text-gray-400 mb-1">${d}</div>${bars}</div>`;
             }
         };
 
         window.selectCalendarDay = (day, mode) => {
-            const year = calendarDate.getFullYear();
-            const month = calendarDate.getMonth();
+            const year = calendarDate.getFullYear(); const month = calendarDate.getMonth();
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            
-            // Show details
             const detailEl = document.getElementById(mode === 'driver' ? 'driver-selected-day-details' : 'admin-selected-day-details');
-            detailEl.innerHTML = `<strong>${dateStr}</strong><br>`;
-            detailEl.classList.remove('hidden');
+            detailEl.innerHTML = `<strong>${dateStr}</strong><br>`; detailEl.classList.remove('hidden');
 
             let shifts = [];
             if(mode === 'driver') {
                 shifts = driverShifts.filter(s => s.date === dateStr);
-                // Populate cover dropdown if valid
-                const select = document.getElementById('drv-cover-select');
-                select.innerHTML = '<option value="">Select Shift...</option>';
-                shifts.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = JSON.stringify(s);
-                    opt.innerText = `${s.start} - ${s.end}`;
-                    select.appendChild(opt);
-                });
-                // Reset inputs
+                const select = document.getElementById('drv-cover-select'); select.innerHTML = '<option value="">Select Shift...</option>';
+                shifts.forEach(s => { const opt = document.createElement('option'); opt.value = JSON.stringify(s); opt.innerText = `${s.start} - ${s.end}`; select.appendChild(opt); });
                 document.getElementById('drv-cover-times').classList.add('hidden');
             } else {
-                globalRoster.forEach(drv => { (drv.shifts || []).forEach(s => { if(s.date === dateStr) shifts.push({...s, name: drv.name}); }); });
+                globalRoster.forEach(drv => { (drv.shifts || []).forEach(s => { if(s.date === dateStr) shifts.push({...s, name: drv.name, uid: drv.id}); }); });
             }
 
             if(shifts.length === 0) detailEl.innerHTML += `<span class="text-gray-400">No shifts.</span>`;
-            else shifts.forEach(s => detailEl.innerHTML += `<div class="text-xs">${mode==='admin'?s.name+': ':''}${s.start} - ${s.end}</div>`);
+            else shifts.forEach(s => {
+                let action = '';
+                if(mode === 'admin') action = `<button onclick="window.adminDeleteShift('${s.uid}', '${s.date}', '${s.start}')" class="ml-2 text-red-500 text-xs hover:underline">Delete</button>`;
+                detailEl.innerHTML += `<div class="text-xs flex justify-between">${mode==='admin'?s.name+': ':''}${s.start} - ${s.end} ${action}</div>`;
+            });
         };
 
         // --- DRIVER UTILS ---
         window.driverRequestStock = async () => {
-            if(!confirm("Notify admin you need stock?")) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), {
-                requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, timestamp: Date.now(), status: 'pending'
-            });
+            if(viewMode) return; if(!confirm("Notify admin you need stock?")) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), { requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, timestamp: Date.now(), status: 'pending' });
             window.showToast("Request Sent");
         };
-
-        window.openSchedule = () => { 
-            document.getElementById('driver-schedule-modal').classList.remove('hidden'); 
-            window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
-        };
-
+        window.openSchedule = () => { document.getElementById('driver-schedule-modal').classList.remove('hidden'); window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); };
         window.updateCoverTimeInputs = () => {
             const val = document.getElementById('drv-cover-select').value;
-            const timeDiv = document.getElementById('drv-cover-times');
-            if(val) {
-                const s = JSON.parse(val);
-                document.getElementById('drv-cover-start').value = s.start;
-                document.getElementById('drv-cover-end').value = s.end;
-                timeDiv.classList.remove('hidden');
-            } else {
-                timeDiv.classList.add('hidden');
-            }
+            if(val) { const s = JSON.parse(val); document.getElementById('drv-cover-start').value = s.start; document.getElementById('drv-cover-end').value = s.end; document.getElementById('drv-cover-times').classList.remove('hidden'); }
+            else document.getElementById('drv-cover-times').classList.add('hidden');
         };
-
         window.driverRequestCover = async () => {
-            const val = document.getElementById('drv-cover-select').value; 
-            const start = document.getElementById('drv-cover-start').value;
-            const end = document.getElementById('drv-cover-end').value;
-            
+            if(viewMode) return;
+            const val = document.getElementById('drv-cover-select').value; const start = document.getElementById('drv-cover-start').value; const end = document.getElementById('drv-cover-end').value;
             if(!val || !start || !end) return window.showToast("Select shift & times");
             const originalShift = JSON.parse(val); 
-            
             if(!confirm(`Request cover for ${originalShift.date} from ${start} to ${end}?`)) return;
-
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), {
-                requesterUid: currentUser.uid, 
-                requesterName: document.getElementById('driver-name-display').innerText, 
-                date: originalShift.date, 
-                originalStart: originalShift.start,
-                originalEnd: originalShift.end,
-                coverStart: start, 
-                coverEnd: end, 
-                status: 'open', 
-                timestamp: Date.now()
-            });
-            window.showToast("Cover Requested"); 
-            document.getElementById('drv-cover-select').value = "";
-            document.getElementById('drv-cover-times').classList.add('hidden');
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), { requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, date: originalShift.date, originalStart: originalShift.start, originalEnd: originalShift.end, coverStart: start, coverEnd: end, status: 'open', timestamp: Date.now() });
+            window.showToast("Cover Requested"); document.getElementById('drv-cover-select').value = ""; document.getElementById('drv-cover-times').classList.add('hidden');
         };
-
         window.driverAcceptCover = async (reqId) => {
-            if(!confirm("Accept this overtime shift? This will add these hours to your schedule.")) return;
-            
+            if(viewMode) return;
+            if(!confirm("Accept this overtime shift?")) return;
             const reqRef = doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', reqId);
-            const reqSnap = await getDoc(reqRef);
-            if(!reqSnap.exists()) return;
+            const reqSnap = await getDoc(reqRef); if(!reqSnap.exists()) return;
             const req = reqSnap.data();
 
-            // 1. UPDATE REQUESTER ROSTER (Remove/Split Shift)
+            // 1. Split Requester Shift
             const requesterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', req.requesterUid);
             const reqRosterSnap = await getDoc(requesterRef);
             if(reqRosterSnap.exists()) {
                 let shifts = reqRosterSnap.data().shifts || [];
                 let newShifts = [];
-                
                 shifts.forEach(s => {
-                    // Identify the target shift
                     if(s.date === req.date && s.start === req.originalStart && s.end === req.originalEnd) {
-                        // Split logic
-                        // Part 1: Before cover
-                        if(s.start < req.coverStart) {
-                            newShifts.push({ date: s.date, start: s.start, end: req.coverStart });
-                        }
-                        // Part 2: After cover
-                        if(s.end > req.coverEnd) {
-                            newShifts.push({ date: s.date, start: req.coverEnd, end: s.end });
-                        }
-                        // Covered part is removed from requester
-                    } else {
-                        newShifts.push(s);
-                    }
+                        if(s.start < req.coverStart) newShifts.push({ date: s.date, start: s.start, end: req.coverStart }); // Pre-cover part
+                        if(s.end > req.coverEnd) newShifts.push({ date: s.date, start: req.coverEnd, end: s.end }); // Post-cover part
+                    } else newShifts.push(s);
                 });
                 await updateDoc(requesterRef, { shifts: newShifts });
             }
-
-            // 2. UPDATE ACCEPTER ROSTER (Add Shift)
+            // 2. Add to Accepter
             const accepterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid);
-            const accRosterSnap = await getDoc(accepterRef);
-            let myShifts = accRosterSnap.exists() ? (accRosterSnap.data().shifts || []) : [];
+            const accSnap = await getDoc(accepterRef);
+            let myShifts = accSnap.exists() ? (accSnap.data().shifts || []) : [];
             myShifts.push({ date: req.date, start: req.coverStart, end: req.coverEnd });
             await updateDoc(accepterRef, { shifts: myShifts });
-
-            // 3. CLOSE REQUEST
+            // 3. Close
             await updateDoc(reqRef, { status: 'filled', filledByUid: currentUser.uid, filledByName: document.getElementById('driver-name-display').innerText });
-            window.showToast("Shift Accepted & Added!");
+            window.showToast("Shift Accepted!");
         };
-
         window.openDriverStats = () => { document.getElementById('driver-stats-modal').classList.remove('hidden'); renderDriverCharts(); };
         function renderDriverCharts() { 
             const ctx = document.getElementById('driverProfitChart').getContext('2d'); if(driverChartInstance) driverChartInstance.destroy();
@@ -969,41 +785,23 @@
         function initAdminDashboard() {
             document.getElementById('admin-app').classList.remove('hidden');
             document.getElementById('admin-date-display').innerText = new Date().toDateString();
-            
             unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                 const list = document.getElementById('admin-driver-list'); const selects = document.querySelectorAll('.admin-driver-select');
                 list.innerHTML=''; selects.forEach(s=>s.innerHTML='<option value="">Select Driver...</option>');
                 globalRoster=[]; let sold=0, prof=0;
-                
                 snap.forEach(d => {
                     const drv = { id: d.id, ...d.data() };
                     globalRoster.push(drv);
-                    
                     if(drv.role !== 'admin') {
                         sold += (drv.todaySold||0); prof += (drv.todayProfit||0);
-                        const statusColor = (drv.status==='active' || drv.status==='approved') ? 'border-green-500' : 'border-gray-300';
-                        
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div>
-                                <div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div>
-                            </div>
-                            <div class="font-bold text-green-600">+$${drv.todayProfit||0}</div>
-                        </div>`;
-                        
-                        if(drv.status === 'active' || drv.status === 'approved') {
-                            const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name;
-                            selects.forEach(s=>s.appendChild(opt.cloneNode(true)));
-                        }
+                        const statusColor = (drv.onlineStatus==='online') ? 'border-green-500' : 'border-gray-300';
+                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div><div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div></div><div class="font-bold text-green-600">+$${drv.todayProfit||0}</div></div>`;
+                        if(drv.accessStatus !== 'suspended') { const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name; selects.forEach(s=>s.appendChild(opt.cloneNode(true))); }
                     }
                 });
                 document.getElementById('admin-total-profit').innerText = `$${prof}`; document.getElementById('admin-total-sold').innerText = sold;
-                updateAdminReports(globalRoster);
-                window.renderCalendar('admin-calendar-grid', null, 'admin'); // Refresh admin calendar
-                renderEmployeeList();
+                updateAdminReports(globalRoster); window.renderCalendar('admin-calendar-grid', null, 'admin'); renderEmployeeList();
             });
-
-            // Listeners for Stocks/Cover/Master (Preserved)
             unsubStockReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), (snap) => {
                 const div = document.getElementById('admin-stock-requests'); const list = document.getElementById('admin-stock-requests-list'); list.innerHTML = ''; let count = 0;
                 snap.forEach(docSnap => { const req = docSnap.data(); if(req.status === 'pending') { count++; list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded flex justify-between items-center text-sm"><span class="dark:text-white">${req.requesterName} <span class="text-xs text-gray-400">needs stock</span></span><div class="space-x-1"><button onclick="window.fulfillStockReq('${docSnap.id}', '${req.requesterUid}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Fulfill</button><button onclick="window.dismissStockReq('${docSnap.id}')" class="text-gray-400 text-xs px-2">Dismiss</button></div></div>`; }});
@@ -1019,26 +817,28 @@
 
         // --- NEW: EMPLOYEE MANAGEMENT TAB ---
         function renderEmployeeList() {
-            const list = document.getElementById('admin-employee-list');
-            list.innerHTML = '';
+            const list = document.getElementById('admin-employee-list'); list.innerHTML = '';
             const employees = globalRoster.filter(u => u.id !== currentUser.uid);
             if(employees.length === 0) { list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>'; return; }
             employees.forEach(u => {
-                const status = u.status || 'active'; // Default to active if tag missing
+                const status = u.accessStatus || 'pending'; // Changed from 'active' default to 'pending' to show new users properly
                 let actions = '';
-                if (u.role === 'admin') { actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase">Admin Access</span>`; } 
+                if (u.role === 'admin') { actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase mr-2">Admin</span><button onclick="window.adminSetRole('${u.id}','driver')" class="text-xs underline text-gray-500">Demote</button>`; } 
                 else {
-                    if(status === 'pending') actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
-                    else if (status === 'active' || status === 'approved') actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
-                    else actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
+                    actions = `<button onclick="window.adminSetRole('${u.id}','admin')" class="text-xs underline text-blue-500 mr-2">Promote</button>`;
+                    if(status === 'pending') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
+                    else if (status === 'active') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
+                    else actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
                     actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1 ml-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                 }
-                list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 mr-3 text-xs">${u.name?u.name[0]:'U'}</div><div><div class="font-bold text-sm dark:text-white flex items-center">${u.name}${u.role==='admin' ? '<i data-lucide="shield" class="w-3 h-3 text-purple-500 ml-1"></i>' : ''}</div><div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'||status==='approved'?'text-green-500':'text-red-500')}">${status}</div></div></div><div class="flex items-center">${actions}</div></div>`;
+                const badge = status === 'pending' ? '<span class="ml-2 bg-orange-100 text-orange-800 text-[10px] px-1 rounded uppercase font-bold">NEW</span>' : '';
+                list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 mr-3 text-xs">${u.name?u.name[0]:'U'}</div><div><div class="font-bold text-sm dark:text-white flex items-center">${u.name}${badge}</div><div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'?'text-green-500':'text-red-500')}">${status}</div></div></div><div class="flex items-center">${actions}</div></div>`;
             });
             lucide.createIcons();
         }
 
-        window.adminUpdateStatus = async (uid, newStatus) => { if(!confirm(`Change status?`)) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status: newStatus }); window.showToast("Status Updated"); };
+        window.adminUpdateStatus = async (uid, newStatus) => { if(!confirm(`Change status?`)) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { accessStatus: newStatus }); window.showToast("Status Updated"); };
+        window.adminSetRole = async (uid, newRole) => { if(!confirm(`Change role to ${newRole}?`)) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { role: newRole }); await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'), { role: newRole }); window.showToast("Role Updated"); };
         window.adminDeleteUser = async (uid) => { if(!confirm("Permanently delete?")) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); window.showToast("User Removed"); };
 
         // --- ADMIN HELPERS ---
@@ -1053,13 +853,83 @@
             await updateDoc(ref,{shifts}); window.showToast("Shift Assigned"); window.renderCalendar('admin-calendar-grid', null, 'admin'); 
         };
         
+        window.adminDeleteShift = async (uid, date, start) => {
+            if(!confirm("Delete this shift?")) return;
+            const ref=doc(db,'artifacts',appId,'public','data','roster',uid); const snap=await getDoc(ref);
+            if(snap.exists()) {
+                let shifts = snap.data().shifts || [];
+                shifts = shifts.filter(s => !(s.date === date && s.start === start));
+                await updateDoc(ref, { shifts });
+                window.showToast("Shift Deleted"); window.renderCalendar('admin-calendar-grid', null, 'admin');
+            }
+        };
+
         window.adminForceCover = async (id) => { if(confirm("Mark resolved?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', id), { status: 'filled', filledByUid: 'admin', filledByName: 'Admin Assigned' }); };
         window.updateTransferStats = (type) => { let uid,elId; if(type==='from'){uid=document.getElementById('transfer-from').value;elId='transfer-stats-from';} if(type==='to'){uid=document.getElementById('transfer-to').value;elId='transfer-stats-to';} if(type==='collect'){uid=document.getElementById('collect-driver').value;elId='collect-stats';} const drv=globalRoster.find(d=>d.id===uid); const el=document.getElementById(elId); if(drv) el.innerHTML=`<span class="text-blue-500 font-bold">Stock: ${drv.stock||0}</span> <span class="mx-1">|</span> <span class="text-red-500 font-bold">Debt: $${drv.debt||0}</span>`; else el.innerText=''; };
         window.adminDistributeStock = async () => { const l=globalRoster.filter(d=>d.role!=='admin').map((d,i)=>`${i+1}. ${d.name}`).join('\n'); const s=prompt(`Driver Num:\n${l}`); if(!s) return; const drvs=globalRoster.filter(d=>d.role!=='admin'); const d=drvs[parseInt(s)-1]; if(!d) return; const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); await updateDriverAssets(d.id,q,0); window.showToast("Sent"); };
         window.adminP2PTransfer = async () => { const f=document.getElementById('transfer-from').value; const t=document.getElementById('transfer-to').value; const s=parseInt(document.getElementById('p2p-stock').value)||0; const d=parseInt(document.getElementById('p2p-debt').value)||0; if(!f||!t||(s<=0&&d<=0)) return; await updateDriverAssets(f,-s,-d); await updateDriverAssets(t,s,d); window.showToast("Transferred"); };
         window.adminManageDriver = async () => { const u=document.getElementById('collect-driver').value; const s=parseInt(document.getElementById('collect-stock').value)||0; const d=parseInt(document.getElementById('collect-debt').value)||0; if(!u||(s<=0&&d<=0)) return; await updateDriverAssets(u,-s,-d); if(s>0) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(s)},{merge:true}); window.showToast("Processed"); };
         async function updateDriverAssets(uid,s,d) { const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); const sn=await getDoc(r); let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; dat.stock=(dat.stock||0)+s; dat.debt=(dat.debt||0)+d; if(dat.debt<0) dat.debt=0; await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); }
-        window.viewDriverDetails = (uid) => { if(typeof uid==='object') uid=uid.id; const d=globalRoster.find(x=>x.id===uid); if(!d) return; currentDriverData=d; document.getElementById('admin-user-detail').classList.remove('hidden'); document.getElementById('detail-user-name').innerText=d.name; document.getElementById('detail-stock').innerText=d.stock||0; document.getElementById('detail-debt').innerText=`$${d.debt||0}`; document.getElementById('detail-profit').innerText=`$${d.todayProfit||0}`; const l=document.getElementById('detail-log-list'); l.innerHTML=''; (d.recentLogs||[]).forEach(x=>{ l.innerHTML+=`<div class="flex justify-between border-b dark:border-gray-700 pb-1 mb-1 text-xs"><span>Sold ${x.qty} (${x.type})</span> <span class="text-green-600">+$${x.profit}</span></div>`; }); window.renderHistory('daily'); };
+        
+        window.viewDriverDetails = (uid) => { if(typeof uid==='object') uid=uid.id; const d=globalRoster.find(x=>x.id===uid); if(!d) return; currentDetailUid=uid; currentDriverData=d; document.getElementById('admin-user-detail').classList.remove('hidden'); document.getElementById('detail-user-name').innerText=d.name; document.getElementById('detail-stock').innerText=d.stock||0; document.getElementById('detail-debt').innerText=`$${d.debt||0}`; document.getElementById('detail-profit').innerText=`$${d.todayProfit||0}`; const l=document.getElementById('detail-log-list'); l.innerHTML=''; (d.recentLogs||[]).forEach(x=>{ l.innerHTML+=`<div class="flex justify-between border-b dark:border-gray-700 pb-1 mb-1 text-xs"><span>Sold ${x.qty} (${x.type})</span> <span class="text-green-600">+$${x.profit}</span></div>`; }); window.renderHistory('daily'); };
+        window.adminEditValue = async (field) => {
+            if(!currentDetailUid) return;
+            const currentVal = field === 'stock' ? document.getElementById('detail-stock').innerText : document.getElementById('detail-debt').innerText.replace('$','');
+            const newVal = prompt(`Enter new value for ${field}:`, currentVal);
+            if(newVal === null) return;
+            const numVal = parseFloat(newVal);
+            if(isNaN(numVal)) return window.showToast("Invalid number");
+            
+            const r=doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); const sn=await getDoc(r); 
+            let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]};
+            dat[field] = numVal;
+            await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); 
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid),{[field]:numVal},{merge:true});
+            window.showToast("Value Updated");
+            if(field === 'stock') document.getElementById('detail-stock').innerText = numVal;
+            else document.getElementById('detail-debt').innerText = `$${numVal}`;
+        };
+
+        window.adminViewAsDriver = () => {
+            if(!currentDriverData) return;
+            viewMode = true;
+            document.getElementById('admin-app').classList.add('hidden');
+            document.getElementById('driver-app').classList.remove('hidden');
+            document.getElementById('view-only-banner').classList.remove('hidden');
+            document.getElementById('admin-user-detail').classList.add('hidden'); // Close detail modal
+            
+            // Populate Driver UI with currentDriverData
+            // Note: We need deep data (history, transactions) which might not be fully in roster if truncated
+            // But we sync history (slice-30) and recentLogs (slice-20) to roster, so we can use that for view
+            appData = {
+                stock: currentDriverData.stock || 0,
+                debt: currentDriverData.debt || 0,
+                onlineStatus: currentDriverData.onlineStatus || 'offline',
+                currentTransactions: currentDriverData.recentLogs ? [...currentDriverData.recentLogs].reverse() : [], // reverse back to normal order if needed? renderUI reverses it again
+                history: currentDriverData.history || []
+            };
+            
+            // Adjust currentTransactions logic: recentLogs is stored reversed (newest first). 
+            // renderDriverUI reverses appData.currentTransactions (expects oldest first)
+            // So we need to reverse recentLogs back to chronological order
+            if(currentDriverData.recentLogs) appData.currentTransactions = [...currentDriverData.recentLogs].reverse();
+
+            document.getElementById('driver-name-display').innerText = currentDriverData.name + " (View)";
+            renderDriverUI();
+            
+            // Disable interactive buttons
+            document.querySelectorAll('.btn-interactive').forEach(b => b.disabled = true);
+        };
+
+        window.exitViewMode = () => {
+            viewMode = false;
+            document.getElementById('driver-app').classList.add('hidden');
+            document.getElementById('admin-app').classList.remove('hidden');
+            document.getElementById('view-only-banner').classList.add('hidden');
+            // Buttons auto re-enabled by simple page logic next refresh, but better reload or just reset
+            document.querySelectorAll('.btn-interactive').forEach(b => b.disabled = false);
+        };
+
         window.renderHistory = (mode) => { if(!currentDriverData||!currentDriverData.history) return; ['daily','weekly','monthly'].forEach(m=>document.getElementById(`hist-tab-${m}`).className=m===mode?"pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500":"pb-1 text-sm font-bold text-gray-400 hover:text-gray-600"); const list=document.getElementById('detail-history-list'); list.innerHTML=''; let d=[]; if(mode==='daily') d=[...currentDriverData.history].reverse().map(h=>({l:new Date(h.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}),s:h.sold,b:(h.revenue||0)-(h.profit||0),v:h.profit||0})); else { let agg={}; currentDriverData.history.forEach(h=>{ const dt=new Date(h.date); const k=mode==='weekly'?`Week ${Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7)}`:dt.toLocaleDateString(undefined,{month:'long'}); if(!agg[k]) agg[k]={s:0,b:0,v:0}; agg[k].s+=h.sold; agg[k].b+=((h.revenue||0)-(h.profit||0)); agg[k].v+=(h.profit||0); }); d=Object.keys(agg).map(k=>({l:k,s:agg[k].s,b:agg[k].b,v:agg[k].v})).reverse(); } d.forEach(i=>{ list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1 text-sm"><div><div class="font-bold dark:text-gray-200">${i.l}</div><div class="text-xs text-gray-500">${i.s} items</div></div><div class="text-right"><div class="text-xs text-gray-500">Boss: <b>$${i.b}</b></div><div class="text-xs text-green-600">Driver: <b>+$${i.v}</b></div></div></div>`; }); };
         window.switchAdminTab = (tab) => { ['team','transfer','schedule','employees','reports'].forEach(t => { document.getElementById(`admin-view-${t}`).classList.add('hidden'); document.getElementById(`adm-tab-${t}`).classList.remove('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${t}`).classList.add('text-gray-500','dark:text-gray-400'); }); document.getElementById(`admin-view-${tab}`).classList.remove('hidden'); document.getElementById(`adm-tab-${tab}`).classList.add('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${tab}`).classList.remove('text-gray-500','dark:text-gray-400'); };
         function updateAdminReports(roster) { let m={}; let wG=0,wP=0,mG=0,mP=0; const now=new Date(); const sW=new Date(now.setDate(now.getDate()-7)); const sM=new Date(new Date().getFullYear(),new Date().getMonth(),1); roster.forEach(d=>{ (d.history||[]).forEach(h=>{ const dt=new Date(h.date); if(!m[h.date]) m[h.date]={p:0,r:0}; m[h.date].p+=(h.profit||0); m[h.date].r+=(h.revenue||0); if(dt>=sW){wG+=(h.revenue||0);wP+=(h.profit||0);} if(dt>=sM){mG+=(h.revenue||0);mP+=(h.profit||0);} }); if(d.todaySold>0){wG+=d.todayGross;wP+=d.todayProfit;mG+=d.todayGross;mP+=d.todayProfit;} }); document.getElementById('adm-report-week-gross').innerText=`$${wG}`; document.getElementById('adm-report-week-profit').innerText=`$${wP} Profit`; document.getElementById('adm-report-month-gross').innerText=`$${mG}`; document.getElementById('adm-report-month-profit').innerText=`$${mP} Profit`; const d=Object.keys(m).sort().slice(-7); const ctx=document.getElementById('adminTeamChart').getContext('2d'); if(adminChartInstance) adminChartInstance.destroy(); adminChartInstance=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.slice(5)),datasets:[{label:'Gross',data:d.map(x=>m[x].r),borderColor:'#3B82F6',fill:false},{label:'Profit',data:d.map(x=>m[x].p),borderColor:'#10B981',fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#374151'}},x:{grid:{display:false}}}}}); }
