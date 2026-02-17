@@ -61,14 +61,14 @@
         </div>
     </div>
 
-    <!-- Approval Pending -->
+    <!-- Approval Pending / Suspended Modal -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
             <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
-                <i data-lucide="clock" class="w-8 h-8"></i>
+                <i data-lucide="lock" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-bold dark:text-white">Status Check</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account is pending approval or has been suspended. Please contact the Admin.</p>
+            <h2 class="text-2xl font-bold dark:text-white">Access Restricted</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account is pending approval or has been suspended by the Admin. Please contact management.</p>
             <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
@@ -115,7 +115,6 @@
                 <button onclick="document.getElementById('driver-stats-modal').classList.add('hidden')" class="p-1 hover:bg-blue-700 rounded"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <div class="p-4 overflow-y-auto">
-                <!-- Summary Cards -->
                 <div class="grid grid-cols-2 gap-3 mb-6">
                     <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
                         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">This Week</div>
@@ -126,11 +125,9 @@
                         <div class="text-xl font-bold text-blue-600" id="drv-stat-month">$0</div>
                     </div>
                 </div>
-                <!-- Chart -->
                 <div class="h-64 bg-white dark:bg-gray-900 rounded-lg p-2 border border-gray-100 dark:border-gray-700 mb-4">
                     <canvas id="driverProfitChart"></canvas>
                 </div>
-                <!-- Detailed Breakdown -->
                 <h3 class="font-bold text-sm mb-2 dark:text-white">Breakdown</h3>
                 <div class="space-y-2 text-sm" id="drv-stat-list">
                     <!-- Populated by JS -->
@@ -800,23 +797,27 @@
                 
                 snap.forEach(d => {
                     const drv = { id: d.id, ...d.data() };
-                    if(drv.role === 'admin') return; // Hide admin from list
+                    // We store all users in globalRoster for employee management, but filter for sales/transfers
                     globalRoster.push(drv);
-                    sold += (drv.todaySold||0); prof += (drv.todayProfit||0);
                     
-                    const statusColor = (drv.status==='active' || drv.status==='approved') ? 'border-green-500' : 'border-gray-300';
-                    
-                    list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div>
-                            <div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div>
-                        </div>
-                        <div class="font-bold text-green-600">+$${drv.todayProfit||0}</div>
-                    </div>`;
-                    
-                    if(drv.status === 'active' || drv.status === 'approved') {
-                        const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name;
-                        selects.forEach(s=>s.appendChild(opt.cloneNode(true)));
+                    if(drv.role !== 'admin') {
+                        sold += (drv.todaySold||0); prof += (drv.todayProfit||0);
+                        
+                        const statusColor = (drv.status==='active' || drv.status==='approved') ? 'border-green-500' : 'border-gray-300';
+                        
+                        // Only add non-admins to the Sales/Team view
+                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div>
+                                <div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div>
+                            </div>
+                            <div class="font-bold text-green-600">+$${drv.todayProfit||0}</div>
+                        </div>`;
+                        
+                        if(drv.status === 'active' || drv.status === 'approved') {
+                            const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name;
+                            selects.forEach(s=>s.appendChild(opt.cloneNode(true)));
+                        }
                     }
                 });
                 document.getElementById('admin-total-profit').innerText = `$${prof}`; document.getElementById('admin-total-sold').innerText = sold;
@@ -844,32 +845,43 @@
             const list = document.getElementById('admin-employee-list');
             list.innerHTML = '';
             
-            if(globalRoster.length === 0) {
+            // Filter list: Show everyone except current user
+            const employees = globalRoster.filter(u => u.id !== currentUser.uid);
+            
+            if(employees.length === 0) {
                 list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>';
                 return;
             }
 
-            globalRoster.forEach(u => {
+            employees.forEach(u => {
                 const status = u.status || 'pending';
                 let actions = '';
                 
-                if(status === 'pending') {
-                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
-                } else if (status === 'active' || status === 'approved') {
-                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
+                // Admin Protection Logic
+                if (u.role === 'admin') {
+                    actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase">Admin Access</span>`;
                 } else {
-                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
+                    // Regular Employee Actions
+                    if(status === 'pending') {
+                        actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
+                    } else if (status === 'active' || status === 'approved') {
+                        actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
+                    } else {
+                        actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
+                    }
+                    actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1 ml-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                 }
-                
-                actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
 
                 list.innerHTML += `
                     <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <div class="flex items-center">
                             <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 mr-3 text-xs">${u.name?u.name[0]:'U'}</div>
                             <div>
-                                <div class="font-bold text-sm dark:text-white">${u.name}</div>
-                                <div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'?'text-green-500':'text-red-500')}">${status}</div>
+                                <div class="font-bold text-sm dark:text-white flex items-center">
+                                    ${u.name}
+                                    ${u.role==='admin' ? '<i data-lucide="shield" class="w-3 h-3 text-purple-500 ml-1"></i>' : ''}
+                                </div>
+                                <div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'||status==='approved'?'text-green-500':'text-red-500')}">${status}</div>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -897,10 +909,10 @@
         window.fulfillStockReq = async (reqId, uid) => { document.getElementById('distribute-select-driver').value = uid; window.updateTransferStats('collect'); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' }); window.showToast("Driver Selected below"); };
         window.dismissStockReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', id)); };
         window.adminAssignShift = async () => { const uid=document.getElementById('sched-driver').value; const date=document.getElementById('sched-date').value; const start=document.getElementById('sched-start').value; const end=document.getElementById('sched-end').value; if(!uid||!date||!start||!end) return window.showToast("Fill all fields"); const ref=doc(db,'artifacts',appId,'public','data','roster',uid); const snap=await getDoc(ref); let shifts=snap.exists()?(snap.data().shifts||[]):[]; shifts.push({date,start,end}); await updateDoc(ref,{shifts}); window.showToast("Shift Assigned"); renderAdminScheduleList(); };
-        function renderAdminScheduleList() { const list=document.getElementById('admin-schedule-list'); list.innerHTML=''; let all=[]; globalRoster.forEach(d=>{ (d.shifts||[]).forEach(s=>{ if(new Date(s.date+'T23:59:00')>=new Date()) all.push({...s,name:d.name}); }); }); all.sort((a,b)=>new Date(a.date)-new Date(b.date)); if(all.length===0){list.innerHTML='<div class="text-center text-gray-400 text-sm py-4">No upcoming shifts.</div>'; return;} all.forEach(s=>{list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded text-sm"><div><span class="font-bold dark:text-white">${s.date}</span> <span class="text-gray-500 mx-1">|</span> ${s.name}</div><div class="text-xs text-blue-500 font-bold">${s.start} - ${s.end}</div></div>`;}); }
+        function renderAdminScheduleList() { const list=document.getElementById('admin-schedule-list'); list.innerHTML=''; let all=[]; globalRoster.forEach(d=>{ if(d.role!=='admin') (d.shifts||[]).forEach(s=>{ if(new Date(s.date+'T23:59:00')>=new Date()) all.push({...s,name:d.name}); }); }); all.sort((a,b)=>new Date(a.date)-new Date(b.date)); if(all.length===0){list.innerHTML='<div class="text-center text-gray-400 text-sm py-4">No upcoming shifts.</div>'; return;} all.forEach(s=>{list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded text-sm"><div><span class="font-bold dark:text-white">${s.date}</span> <span class="text-gray-500 mx-1">|</span> ${s.name}</div><div class="text-xs text-blue-500 font-bold">${s.start} - ${s.end}</div></div>`;}); }
         window.adminForceCover = async (id) => { if(confirm("Mark resolved?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', id), { status: 'filled', filledByUid: 'admin', filledByName: 'Admin Assigned' }); };
         window.updateTransferStats = (type) => { let uid,elId; if(type==='from'){uid=document.getElementById('transfer-from').value;elId='transfer-stats-from';} if(type==='to'){uid=document.getElementById('transfer-to').value;elId='transfer-stats-to';} if(type==='collect'){uid=document.getElementById('collect-driver').value;elId='collect-stats';} const drv=globalRoster.find(d=>d.id===uid); const el=document.getElementById(elId); if(drv) el.innerHTML=`<span class="text-blue-500 font-bold">Stock: ${drv.stock||0}</span> <span class="mx-1">|</span> <span class="text-red-500 font-bold">Debt: $${drv.debt||0}</span>`; else el.innerText=''; };
-        window.adminDistributeStock = async () => { const l=globalRoster.map((d,i)=>`${i+1}. ${d.name}`).join('\n'); const s=prompt(`Driver Num:\n${l}`); if(!s) return; const d=globalRoster[parseInt(s)-1]; if(!d) return; const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); await updateDriverAssets(d.id,q,0); window.showToast("Sent"); };
+        window.adminDistributeStock = async () => { const l=globalRoster.filter(d=>d.role!=='admin').map((d,i)=>`${i+1}. ${d.name}`).join('\n'); const s=prompt(`Driver Num:\n${l}`); if(!s) return; const drvs=globalRoster.filter(d=>d.role!=='admin'); const d=drvs[parseInt(s)-1]; if(!d) return; const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); await updateDriverAssets(d.id,q,0); window.showToast("Sent"); };
         window.adminP2PTransfer = async () => { const f=document.getElementById('transfer-from').value; const t=document.getElementById('transfer-to').value; const s=parseInt(document.getElementById('p2p-stock').value)||0; const d=parseInt(document.getElementById('p2p-debt').value)||0; if(!f||!t||(s<=0&&d<=0)) return; await updateDriverAssets(f,-s,-d); await updateDriverAssets(t,s,d); window.showToast("Transferred"); };
         window.adminManageDriver = async () => { const u=document.getElementById('collect-driver').value; const s=parseInt(document.getElementById('collect-stock').value)||0; const d=parseInt(document.getElementById('collect-debt').value)||0; if(!u||(s<=0&&d<=0)) return; await updateDriverAssets(u,-s,-d); if(s>0) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(s)},{merge:true}); window.showToast("Processed"); };
         async function updateDriverAssets(uid,s,d) { const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); const sn=await getDoc(r); let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; dat.stock=(dat.stock||0)+s; dat.debt=(dat.debt||0)+d; if(dat.debt<0) dat.debt=0; await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); }
