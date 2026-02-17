@@ -280,9 +280,11 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase">To Driver</label>
-                            <select id="distribute-select-driver" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-medium text-gray-800 dark:text-white admin-driver-select">
+                            <select id="distribute-select-driver" onchange="window.updateTransferStats('distribute')" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-medium text-gray-800 dark:text-white admin-driver-select">
                                 <option value="">Loading...</option>
                             </select>
+                             <!-- Preview Stats -->
+                             <div id="distribute-stats" class="text-xs text-gray-500 dark:text-gray-400 mt-1 pl-1 h-4"></div>
                         </div>
                         <div class="flex space-x-2 mt-1">
                             <input type="number" id="distribute-qty" placeholder="Qty" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none font-bold text-lg text-gray-800 dark:text-white">
@@ -298,15 +300,17 @@
                     </h3>
                     
                     <div class="space-y-4">
-                        <div class="flex space-x-2 items-center">
+                        <div class="flex space-x-2 items-start">
                             <div class="flex-1">
                                 <label class="text-xs font-bold text-gray-500 uppercase">From</label>
-                                <select id="transfer-from" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
+                                <select id="transfer-from" onchange="window.updateTransferStats('from')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
+                                <div id="transfer-stats-from" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1"></div>
                             </div>
-                            <div class="pt-5 text-gray-400"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                            <div class="pt-7 text-gray-400"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
                             <div class="flex-1">
                                 <label class="text-xs font-bold text-gray-500 uppercase">To</label>
-                                <select id="transfer-to" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
+                                <select id="transfer-to" onchange="window.updateTransferStats('to')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
+                                <div id="transfer-stats-to" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1"></div>
                             </div>
                         </div>
 
@@ -383,8 +387,14 @@
 
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Transactions</h3>
-                        <div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto">
-                            <!-- Populated via JS from Public Roster -->
+                        <div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- NEW: HISTORY -->
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Shift History (Daily)</h3>
+                        <div id="detail-history-list" class="space-y-2 text-sm">
+                            <!-- Populated via JS -->
                         </div>
                     </div>
                 </div>
@@ -425,6 +435,7 @@
         let appData = { stock: 0, debt: 0, status: 'inactive', currentTransactions: [], history: [], stockLogs: [] };
         let transferType = 'stock';
         let currentDetailUid = null; // Admin view focus
+        let globalRoster = []; // Store roster for dropdown stats
         
         let driverChartInstance = null;
         let adminChartInstance = null;
@@ -524,16 +535,14 @@
             const displayName = user.displayName ? user.displayName.split(' ')[0] : 'Driver';
             document.getElementById('driver-name-display').innerText = displayName;
             
-            // Sync Data
             const dataRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state');
             unsubUserData = onSnapshot(dataRef, (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
                     if(data.json) appData = JSON.parse(data.json);
                     
-                    // Init Defaults
                     appData.stock = appData.stock || 0;
-                    appData.debt = appData.debt || 0; // NEW: Amount Owed
+                    appData.debt = appData.debt || 0; 
                     appData.status = appData.status || 'inactive';
                     appData.stockLogs = appData.stockLogs || []; 
                     appData.currentTransactions = appData.currentTransactions || [];
@@ -547,7 +556,6 @@
         }
 
         function renderDriverUI() {
-            // Status UI
             const dot = document.getElementById('status-dot');
             const txt = document.getElementById('status-text');
             const hdr = document.getElementById('driver-header');
@@ -561,20 +569,16 @@
                 hdr.className = "bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300";
             }
 
-            // Stock & Debt
             document.getElementById('display-stock').innerText = appData.stock;
             document.getElementById('display-debt').innerText = `$${appData.debt.toLocaleString()}`;
             document.getElementById('setting-stat-debt').innerText = `$${appData.debt.toLocaleString()}`;
             
-            // Total Lifetime Sales (for settings)
             const totalSales = appData.history.reduce((a,b) => a + (b.sold || 0), 0) + appData.currentTransactions.reduce((a,b) => a + b.qty, 0);
             document.getElementById('setting-stat-total').innerText = totalSales;
 
-            // Today's Stats
             const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit }), {profit:0});
             document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
-            // Render Transaction List with DELETE button
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
             
@@ -603,11 +607,9 @@
         async function saveDriverData() {
             if(!currentUser) return;
             
-            // 1. Save Private Full Data
             const dataRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state');
             await setDoc(dataRef, { json: JSON.stringify(appData), lastUpdated: Date.now() });
 
-            // 2. Save Public Summary + RECENT LOGS for Admin Visibility
             let todaySold = 0;
             let todayProfit = 0;
             let todayGross = 0;
@@ -617,15 +619,8 @@
                 todayGross += t.price; 
             });
             
-            // Publicly visible recent logs (Last 20)
-            // Combine history (simplified) and current transactions for a log view
-            // Actually, we just want the Admin to see specific transaction details.
-            // We will push the last 20 `currentTransactions` and maybe some recent history? 
-            // Let's just push `currentTransactions` + last few history summaries.
-            
             const recentLogs = appData.currentTransactions.slice(-20).reverse();
-
-            const historySlice = appData.history.slice(-14); // 2 weeks for graphs
+            const historySlice = appData.history.slice(-30); 
             
             try {
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid);
@@ -636,7 +631,7 @@
                     todaySold: todaySold,
                     todayProfit: todayProfit,
                     todayGross: todayGross,
-                    recentLogs: recentLogs, // PRIVACY FIX: Sync logs to public doc
+                    recentLogs: recentLogs, 
                     history: historySlice, 
                     lastSync: Date.now()
                 }, { merge: true });
@@ -663,7 +658,7 @@
             const owedToBoss = tier.p - tier.prof;
 
             appData.stock -= qty;
-            appData.debt += owedToBoss; // DEBT INCREASES
+            appData.debt += owedToBoss; 
             
             appData.currentTransactions.push({ 
                 date: Date.now(), 
@@ -683,7 +678,7 @@
             
             const t = appData.currentTransactions[originalIndex];
             appData.stock += t.qty; 
-            appData.debt -= t.owed; // DEBT DECREASES
+            appData.debt -= t.owed; 
             appData.currentTransactions.splice(originalIndex, 1); 
             
             await saveDriverData();
@@ -707,7 +702,6 @@
             }
 
             appData.currentTransactions = [];
-            // Debt persists!
             appData.status = 'inactive'; 
             await saveDriverData();
             window.showToast("Day saved & Reset!");
@@ -795,27 +789,29 @@
                 
                 let totalSoldToday = 0;
                 let totalProfitToday = 0;
-                let rosterData = [];
+                globalRoster = [];
 
                 snap.forEach(docSnap => {
                     const driver = docSnap.data();
+                    driver.id = docSnap.id;
+                    
+                    // Filter: Hide current user (Admin) from list
+                    if (driver.id === currentUser.uid) return;
+
+                    globalRoster.push(driver); 
+
                     const dStock = driver.stock || 0;
                     const dDebt = driver.debt || 0;
                     const dSold = driver.todaySold || 0;
                     const dProfit = driver.todayProfit || 0;
                     const dStatus = driver.status || 'inactive';
                     
-                    // Attach ID for easier access
-                    driver.id = docSnap.id;
-                    rosterData.push(driver); 
-
                     totalSoldToday += dSold;
                     totalProfitToday += dProfit;
 
                     const statusColor = dStatus === 'active' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600';
                     const statusBorder = dStatus === 'active' ? 'border-green-500' : 'border-gray-300 dark:border-gray-600';
 
-                    // Update currently viewed detail if open
                     if (currentDetailUid === driver.id) {
                          updateDetailView(driver);
                     }
@@ -848,14 +844,13 @@
                     const option = document.createElement('option');
                     option.value = driver.uid || docSnap.id;
                     option.innerText = driver.name || 'Unknown';
-                    // Need to clone for multiple selects
                     selects.forEach(s => s.appendChild(option.cloneNode(true)));
                 });
 
                 document.getElementById('admin-total-profit').innerText = `$${totalProfitToday}`;
                 document.getElementById('admin-total-sold').innerText = totalSoldToday;
                 
-                updateAdminReports(rosterData);
+                updateAdminReports(globalRoster);
             });
 
             const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master');
@@ -864,6 +859,29 @@
                 document.getElementById('admin-master-stock').innerText = val;
             });
         }
+
+        // --- ADMIN TRANSFER STATS PREVIEW ---
+        window.updateTransferStats = (type) => {
+            let uid, displayId;
+            if (type === 'distribute') {
+                uid = document.getElementById('distribute-select-driver').value;
+                displayId = 'distribute-stats';
+            } else if (type === 'from') {
+                uid = document.getElementById('transfer-from').value;
+                displayId = 'transfer-stats-from';
+            } else if (type === 'to') {
+                uid = document.getElementById('transfer-to').value;
+                displayId = 'transfer-stats-to';
+            }
+
+            const driver = globalRoster.find(d => d.id === uid);
+            const el = document.getElementById(displayId);
+            if (driver) {
+                el.innerHTML = `<span class="text-blue-500">Stock: ${driver.stock || 0}</span> <span class="mx-1">|</span> <span class="text-red-500">Debt: $${driver.debt || 0}</span>`;
+            } else {
+                el.innerText = '';
+            }
+        };
 
         window.setTransferType = (type) => {
             transferType = type;
@@ -881,20 +899,14 @@
             if(!fromUid || !toUid || !val || val <= 0) { window.showToast("Invalid Transfer"); return; }
             if(fromUid === toUid) { window.showToast("Cannot transfer to self"); return; }
 
-            // We need to update two drivers. Doing this safely via public roster update first for UI, then private docs.
             try {
-                // FROM DRIVER
                 const fromRef = doc(db, 'artifacts', appId, 'users', fromUid, 'data', 'app_state');
                 const fromSnap = await getDoc(fromRef);
                 if(!fromSnap.exists()) throw new Error("Source driver not initialized");
-                
                 let fromData = JSON.parse(fromSnap.data().json);
                 
-                // TO DRIVER
                 const toRef = doc(db, 'artifacts', appId, 'users', toUid, 'data', 'app_state');
                 const toSnap = await getDoc(toRef);
-                
-                // Setup 'To' data if missing
                 let toData = toSnap.exists() ? JSON.parse(toSnap.data().json) : { stock:0, debt:0, stockLogs:[] };
 
                 if(transferType === 'stock') {
@@ -902,20 +914,14 @@
                     fromData.stock -= val;
                     toData.stock = (toData.stock || 0) + val;
                     fromData.stockLogs.push({ date: Date.now(), type: 'transfer_out', qty: val, to: toUid });
-                    // Usually receiving driver gets a log too, but skipping for brevity
                 } else {
-                    // Debt Transfer
-                    // Reduces FROM debt (they passed the buck)
-                    // Increases TO debt (they now hold the buck)
                     fromData.debt -= val;
                     toData.debt = (toData.debt || 0) + val;
                 }
 
-                // Save Both
                 await setDoc(fromRef, { json: JSON.stringify(fromData), lastUpdated: Date.now() });
                 await setDoc(toRef, { json: JSON.stringify(toData), lastUpdated: Date.now() });
 
-                // Update Public Roster for immediate UI feedback
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', fromUid), { stock: fromData.stock, debt: fromData.debt }, { merge: true });
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', toUid), { stock: toData.stock, debt: toData.debt }, { merge: true });
 
@@ -938,19 +944,17 @@
             const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
             rosterData.forEach(d => {
-                // Process History
                 if(d.history && Array.isArray(d.history)) {
                     d.history.forEach(h => {
                         if(!dateMap[h.date]) dateMap[h.date] = { profit: 0, revenue: 0 };
                         dateMap[h.date].profit += (h.profit || 0);
-                        dateMap[h.date].revenue += (h.revenue || 0); // Need revenue in history
+                        dateMap[h.date].revenue += (h.revenue || 0);
 
                         const dObj = new Date(h.date);
                         if(dObj >= startOfWeek) { weekGross += (h.revenue || 0); weekProf += h.profit; }
                         if(dObj >= startOfMonth) { monthGross += (h.revenue || 0); monthProf += h.profit; }
                     });
                 }
-                // Process Today
                 if(d.todaySold > 0) {
                      weekGross += (d.todayGross || 0); weekProf += d.todayProfit;
                      monthGross += (d.todayGross || 0); monthProf += d.todayProfit;
@@ -967,7 +971,6 @@
             document.getElementById('adm-report-month-gross').innerText = `$${monthGross}`;
             document.getElementById('adm-report-month-profit').innerText = `$${monthProf} Profit`;
 
-            // Chart
             const sortedDates = Object.keys(dateMap).sort().slice(-7); 
             
             const ctx = document.getElementById('adminTeamChart').getContext('2d');
@@ -1040,7 +1043,6 @@
             await setDoc(masterRef, { qty: increment(-qty) }, { merge: true });
 
             try {
-                // Direct Write to Driver State
                 const driverRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
                 const snap = await getDoc(driverRef);
                 
@@ -1056,7 +1058,6 @@
                 
                 await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
                 
-                // Update Public Roster
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid);
                 await setDoc(rosterRef, { stock: dData.stock }, { merge: true });
 
@@ -1069,7 +1070,6 @@
             }
         };
 
-        // ADMIN COLLECT PAYMENT
         window.adminCollectPayment = async () => {
             if(!currentDetailUid) return;
             const amtStr = document.getElementById('collect-amount').value;
@@ -1083,11 +1083,9 @@
                 if(snap.exists()) {
                     let dData = JSON.parse(snap.data().json);
                     dData.debt = (dData.debt || 0) - amount;
-                    if(dData.debt < 0) dData.debt = 0; // Prevent negative debt?
+                    if(dData.debt < 0) dData.debt = 0; 
                     
                     await setDoc(driverRef, { json: JSON.stringify(dData), lastUpdated: Date.now() });
-                    
-                    // Public Sync
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), { debt: dData.debt }, { merge: true });
                     
                     window.showToast(`Collected $${amount}`);
@@ -1097,7 +1095,7 @@
         };
 
         window.viewDriverDetails = (driver) => {
-            currentDetailUid = driver.id; // Set focus
+            currentDetailUid = driver.id; 
             updateDetailView(driver);
             document.getElementById('admin-user-detail').classList.remove('hidden');
         };
@@ -1108,13 +1106,12 @@
             document.getElementById('detail-debt').innerText = `$${driver.debt || 0}`;
             document.getElementById('detail-profit').innerText = `$${driver.todayProfit || 0}`;
             
-            // Populate Log List from Public Roster Data
-            const list = document.getElementById('detail-log-list');
-            list.innerHTML = '';
+            const logList = document.getElementById('detail-log-list');
+            logList.innerHTML = '';
             
             if(driver.recentLogs && driver.recentLogs.length > 0) {
                 driver.recentLogs.forEach(log => {
-                    list.innerHTML += `
+                    logList.innerHTML += `
                         <div class="flex justify-between border-b dark:border-gray-700 pb-2 mb-2 last:border-0">
                             <div>
                                 <div class="text-xs text-gray-400">${new Date(log.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
@@ -1128,7 +1125,34 @@
                     `;
                 });
             } else {
-                list.innerHTML = '<div class="text-center text-gray-400 italic py-4">No recent activity synced.</div>';
+                logList.innerHTML = '<div class="text-center text-gray-400 italic py-4">No recent activity synced.</div>';
+            }
+
+            // HISTORY LIST
+            const histList = document.getElementById('detail-history-list');
+            histList.innerHTML = '';
+
+            if (driver.history && driver.history.length > 0) {
+                // Show last 14 entries reverse chronological
+                [...driver.history].reverse().slice(0, 14).forEach(h => {
+                    const owed = (h.revenue || 0) - (h.profit || 0);
+                    const dateDisplay = new Date(h.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                    
+                    histList.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1">
+                            <div>
+                                <div class="font-bold dark:text-gray-200">${dateDisplay}</div>
+                                <div class="text-xs text-gray-500">${h.sold} items sold</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-bold text-gray-800 dark:text-white">$${h.revenue || 0} Rev</div>
+                                <div class="text-xs text-red-500">Owed: $${owed}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                histList.innerHTML = '<div class="text-center text-gray-400 italic py-2">No history recorded yet.</div>';
             }
         }
     </script>
