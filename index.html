@@ -73,7 +73,7 @@
                 <i data-lucide="lock" class="w-8 h-8"></i>
             </div>
             <h2 class="text-2xl font-bold dark:text-white">Access Restricted</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account is pending approval or has been suspended by the Admin. Please contact management.</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account has been suspended by the Admin. Please contact management.</p>
             <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
@@ -588,18 +588,33 @@
                 document.getElementById('loading-overlay').classList.remove('hidden');
                 
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
-                const profileSnap = await getDoc(profileRef);
+                let profileSnap = await getDoc(profileRef);
+                
+                // Get role from profile to ensure persistence if roster is fresh
+                let knownRole = 'driver';
+                
                 if (!profileSnap.exists()) {
-                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', createdAt: Date.now() });
+                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', status: 'active', createdAt: Date.now() });
+                } else {
+                    knownRole = profileSnap.data().role || 'driver';
                 }
 
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
-                await setDoc(rosterRef, { name: user.displayName || user.email, email: user.email, uid: user.uid, lastLogin: Date.now() }, { merge: true });
+                // Sync role from profile to roster to fix admin login if lost
+                await setDoc(rosterRef, { 
+                    name: user.displayName || user.email, 
+                    email: user.email, 
+                    uid: user.uid, 
+                    role: knownRole, // Ensure role is synced
+                    lastLogin: Date.now() 
+                }, { merge: true });
 
                 unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
                     const data = snap.data();
-                    const status = data.status || 'pending';
-                    const role = data.role || 'driver';
+                    // Fix: Default status to 'active' so no approval tag is needed
+                    const status = data.status || 'active';
+                    const role = data.role || knownRole || 'driver';
+                    
                     userRole = role;
                     document.getElementById('loading-overlay').classList.add('hidden');
 
@@ -1009,7 +1024,7 @@
             const employees = globalRoster.filter(u => u.id !== currentUser.uid);
             if(employees.length === 0) { list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>'; return; }
             employees.forEach(u => {
-                const status = u.status || 'pending';
+                const status = u.status || 'active'; // Default to active if tag missing
                 let actions = '';
                 if (u.role === 'admin') { actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase">Admin Access</span>`; } 
                 else {
