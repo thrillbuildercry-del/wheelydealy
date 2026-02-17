@@ -68,7 +68,7 @@
                 <i data-lucide="clock" class="w-8 h-8"></i>
             </div>
             <h2 class="text-2xl font-bold dark:text-white">Status Check</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Waiting for approval or loading profile...</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your account is pending approval or has been suspended. Please contact the Admin.</p>
             <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
@@ -286,6 +286,7 @@
                 <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 transition bg-gray-100 dark:bg-gray-700 text-blue-600">Team Sales</button>
                 <button onclick="window.switchAdminTab('transfer')" id="adm-tab-transfer" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button>
                 <button onclick="window.switchAdminTab('schedule')" id="adm-tab-schedule" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Schedule</button>
+                <button onclick="window.switchAdminTab('employees')" id="adm-tab-employees" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Employees</button>
                 <button onclick="window.switchAdminTab('reports')" id="adm-tab-reports" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
             </div>
 
@@ -397,7 +398,7 @@
                     <button onclick="window.adminAssignShift()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">Add to Schedule</button>
                 </div>
 
-                <!-- Cover Requests (Admin Enforcement) -->
+                <!-- Cover Requests -->
                 <div class="mb-6">
                     <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Cover Requests</h3>
                     <div id="admin-cover-list" class="space-y-2">
@@ -410,6 +411,19 @@
                     <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Upcoming Shifts</h3>
                     <div id="admin-schedule-list" class="space-y-2">
                         <div class="text-center text-gray-400 text-sm py-4">Loading schedule...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: EMPLOYEES (NEW) -->
+            <div id="admin-view-employees" class="admin-tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                        <i data-lucide="users" class="w-5 h-5 mr-2 text-blue-600"></i> Employee Management
+                    </h3>
+                    <div id="admin-employee-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                        <div class="text-center text-gray-400 text-sm">Loading employees...</div>
                     </div>
                 </div>
             </div>
@@ -527,6 +541,7 @@
         let unsubStockReqs = null;
         let unsubCoverReqs = null;
         let unsubMyShifts = null;
+        let unsubAuthCheck = null;
 
         // --- UTILS ---
         window.showToast = (msg) => { const t = document.getElementById('toast'); t.innerText = msg; t.className = "show"; setTimeout(() => t.className = "", 3000); };
@@ -534,7 +549,13 @@
 
         // --- AUTH ---
         window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (e) { window.showToast("Login Failed: " + e.message); } };
-        window.logout = async () => { if(unsubUserData) unsubUserData(); if(unsubProfile) unsubProfile(); if(unsubRoster) unsubRoster(); await signOut(auth); window.location.reload(); };
+        window.logout = async () => { 
+            if(unsubUserData) unsubUserData(); 
+            if(unsubProfile) unsubProfile(); 
+            if(unsubRoster) unsubRoster(); 
+            if(unsubAuthCheck) unsubAuthCheck();
+            await signOut(auth); window.location.reload(); 
+        };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -542,22 +563,39 @@
                 document.getElementById('login-modal').classList.add('hidden');
                 document.getElementById('loading-overlay').classList.remove('hidden');
                 
+                // 1. Create/Ensure Profile Exists
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
-                unsubProfile = onSnapshot(profileRef, async (snap) => {
-                    let role = 'driver'; let status = 'pending';
-                    if (!snap.exists()) {
-                        await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', status: 'pending', createdAt: Date.now() });
-                    } else { const data = snap.data(); role = data.role || 'driver'; status = data.status || 'pending'; }
+                const profileSnap = await getDoc(profileRef);
+                if (!profileSnap.exists()) {
+                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', createdAt: Date.now() });
+                }
 
-                    try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), { name: user.displayName || user.email, email: user.email, uid: user.uid, lastLogin: Date.now() }, { merge: true }); } catch (e) {}
+                // 2. Ensure Roster Entry (Auth Source of Truth)
+                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
+                await setDoc(rosterRef, { name: user.displayName || user.email, email: user.email, uid: user.uid, lastLogin: Date.now() }, { merge: true });
 
+                // 3. Listen to Roster for Permission
+                unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
+                    const data = snap.data();
+                    const status = data.status || 'pending'; // Default to pending if not set
+                    const role = data.role || 'driver';
+                    
                     userRole = role;
                     document.getElementById('loading-overlay').classList.add('hidden');
-                    if (status === 'approved' || role === 'admin') {
+
+                    if (role === 'admin') {
+                        initAdminDashboard();
+                    } else if (status === 'active' || status === 'approved') {
                         document.getElementById('approval-modal').classList.add('hidden');
-                        if (role === 'admin') initAdminDashboard(); else initDriverApp(user);
-                    } else { document.getElementById('approval-modal').classList.remove('hidden'); }
+                        initDriverApp(user);
+                    } else {
+                        // Pending or Suspended
+                        document.getElementById('approval-modal').classList.remove('hidden');
+                        document.getElementById('driver-app').classList.add('hidden');
+                        document.getElementById('admin-app').classList.add('hidden');
+                    }
                 });
+
             } else {
                 document.getElementById('login-modal').classList.remove('hidden');
                 document.getElementById('loading-overlay').classList.add('hidden');
@@ -591,7 +629,7 @@
                 }
             });
 
-            // Listen to Cover Requests (Overtime Opportunities)
+            // Listen to Cover Requests
             const coverRef = collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests');
             onSnapshot(coverRef, (snap) => {
                 const list = document.getElementById('drv-ot-list');
@@ -623,7 +661,6 @@
         }
 
         function renderDriverUI() {
-            // Update basic UI elements
             document.getElementById('display-stock').innerText = appData.stock;
             document.getElementById('display-debt').innerText = `$${appData.debt.toLocaleString()}`;
             document.getElementById('setting-stat-debt').innerText = `$${appData.debt.toLocaleString()}`;
@@ -632,7 +669,6 @@
             const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit }), {profit:0});
             document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
 
-            // Transactions
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
             appData.currentTransactions.map((t, i) => ({...t, originalIndex: i})).reverse().forEach(t => {
@@ -692,19 +728,14 @@
         window.endDay = async () => {
             if(appData.currentTransactions.length === 0) { window.showToast("No sales."); return; }
             const stats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty, revenue: acc.price+acc.revenue }), {profit:0, sold:0, revenue:0});
-            // Fix revenue summing in reduce above
-            
             const d = new Date().toISOString().split('T')[0];
             const exists = appData.history.findIndex(h => h.date === d);
             
-            // Recalculate correctly
             let dayRev = 0; let dayProf = 0; let daySold = 0;
             appData.currentTransactions.forEach(t => { dayRev += t.price; dayProf += t.profit; daySold += t.qty; });
 
             if(exists >= 0) { 
-                appData.history[exists].profit += dayProf; 
-                appData.history[exists].sold += daySold; 
-                appData.history[exists].revenue += dayRev; 
+                appData.history[exists].profit += dayProf; appData.history[exists].sold += daySold; appData.history[exists].revenue += dayRev; 
             } else { 
                 appData.history.push({ date: d, profit: dayProf, sold: daySold, revenue: dayRev }); 
             }
@@ -713,69 +744,45 @@
             await saveDriverData(); renderDriverUI(); window.showToast("Saved!");
         };
 
-        // --- NEW DRIVER FEATURES ---
+        // --- DRIVER UTILS ---
         window.driverRequestStock = async () => {
             if(!confirm("Notify admin you need stock?")) return;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), {
-                requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText,
-                timestamp: Date.now(), status: 'pending'
+                requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, timestamp: Date.now(), status: 'pending'
             });
             window.showToast("Request Sent");
         };
 
-        window.openSchedule = () => {
-            document.getElementById('driver-schedule-modal').classList.remove('hidden');
-            renderDriverSchedule();
-        };
-
+        window.openSchedule = () => { document.getElementById('driver-schedule-modal').classList.remove('hidden'); renderDriverSchedule(); };
         function renderDriverSchedule() {
-            const list = document.getElementById('drv-my-shifts');
-            const select = document.getElementById('drv-cover-select');
+            const list = document.getElementById('drv-my-shifts'); const select = document.getElementById('drv-cover-select');
             list.innerHTML = ''; select.innerHTML = '<option value="">Select Shift...</option>';
-            
-            // Filter future shifts
             const upcoming = driverShifts.filter(s => new Date(s.date + 'T23:59:00') >= new Date()).sort((a,b) => new Date(a.date) - new Date(b.date));
-            
             if(upcoming.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 text-xs py-2">No upcoming shifts.</div>'; return; }
-
             upcoming.forEach(s => {
-                list.innerHTML += `<div class="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center">
-                    <span class="font-bold text-sm dark:text-gray-200">${s.date}</span>
-                    <span class="text-xs text-gray-500">${s.start} - ${s.end}</span>
-                </div>`;
-                const opt = document.createElement('option');
-                opt.value = JSON.stringify(s);
-                opt.innerText = `${s.date} (${s.start}-${s.end})`;
-                select.appendChild(opt);
+                list.innerHTML += `<div class="bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center"><span class="font-bold text-sm dark:text-gray-200">${s.date}</span><span class="text-xs text-gray-500">${s.start} - ${s.end}</span></div>`;
+                const opt = document.createElement('option'); opt.value = JSON.stringify(s); opt.innerText = `${s.date} (${s.start}-${s.end})`; select.appendChild(opt);
             });
         }
 
         window.driverRequestCover = async () => {
-            const val = document.getElementById('drv-cover-select').value;
-            if(!val) return window.showToast("Select a shift");
-            const shift = JSON.parse(val);
-            if(!confirm(`Request cover for ${shift.date}?`)) return;
-
+            const val = document.getElementById('drv-cover-select').value; if(!val) return window.showToast("Select a shift");
+            const shift = JSON.parse(val); if(!confirm(`Request cover for ${shift.date}?`)) return;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), {
-                requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText,
-                date: shift.date, start: shift.start, end: shift.end, status: 'open', timestamp: Date.now()
+                requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, date: shift.date, start: shift.start, end: shift.end, status: 'open', timestamp: Date.now()
             });
-            window.showToast("Cover Requested");
-            document.getElementById('drv-cover-select').value = "";
+            window.showToast("Cover Requested"); document.getElementById('drv-cover-select').value = "";
         };
 
         window.driverAcceptCover = async (reqId) => {
             if(!confirm("Accept this overtime shift?")) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', reqId), {
-                status: 'filled', filledByUid: currentUser.uid, filledByName: document.getElementById('driver-name-display').innerText
-            });
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', reqId), { status: 'filled', filledByUid: currentUser.uid, filledByName: document.getElementById('driver-name-display').innerText });
             window.showToast("Shift Accepted!");
         };
 
         window.openDriverStats = () => { document.getElementById('driver-stats-modal').classList.remove('hidden'); renderDriverCharts(); };
         function renderDriverCharts() { 
-            const ctx = document.getElementById('driverProfitChart').getContext('2d');
-            if(driverChartInstance) driverChartInstance.destroy();
+            const ctx = document.getElementById('driverProfitChart').getContext('2d'); if(driverChartInstance) driverChartInstance.destroy();
             const data = appData.history.slice(-7);
             driverChartInstance = new Chart(ctx, { type: 'bar', data: { labels: data.map(d=>d.date.slice(5)), datasets: [{ label:'Profit', data: data.map(d=>d.profit), backgroundColor:'#3B82F6', borderRadius:4 }] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:'#374151'}}, x:{grid:{display:false}}}}});
             const list = document.getElementById('drv-stat-list'); list.innerHTML=''; [...appData.history].reverse().slice(0,7).forEach(h=> list.innerHTML+=`<div class="flex justify-between text-xs py-1 border-b dark:border-gray-700"><span class="text-gray-500">${h.date}</span><span class="text-green-600 font-bold">+$${h.profit}</span></div>`);
@@ -786,7 +793,6 @@
             document.getElementById('admin-app').classList.remove('hidden');
             document.getElementById('admin-date-display').innerText = new Date().toDateString();
             
-            // Roster Listener
             unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                 const list = document.getElementById('admin-driver-list'); const selects = document.querySelectorAll('.admin-driver-select');
                 list.innerHTML=''; selects.forEach(s=>s.innerHTML='<option value="">Select Driver...</option>');
@@ -794,255 +800,114 @@
                 
                 snap.forEach(d => {
                     const drv = { id: d.id, ...d.data() };
-                    if(drv.id === currentUser.uid) return;
+                    if(drv.role === 'admin') return; // Hide admin from list
                     globalRoster.push(drv);
                     sold += (drv.todaySold||0); prof += (drv.todayProfit||0);
                     
-                    // Populate UI
+                    const statusColor = (drv.status==='active' || drv.status==='approved') ? 'border-green-500' : 'border-gray-300';
+                    
                     list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${drv.status==='active'?'border-green-500':'border-gray-300'}">${drv.name?drv.name[0]:'U'}</div>
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div>
                             <div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div>
                         </div>
                         <div class="font-bold text-green-600">+$${drv.todayProfit||0}</div>
                     </div>`;
                     
-                    const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name;
-                    selects.forEach(s=>s.appendChild(opt.cloneNode(true)));
+                    if(drv.status === 'active' || drv.status === 'approved') {
+                        const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name;
+                        selects.forEach(s=>s.appendChild(opt.cloneNode(true)));
+                    }
                 });
                 document.getElementById('admin-total-profit').innerText = `$${prof}`; document.getElementById('admin-total-sold').innerText = sold;
                 updateAdminReports(globalRoster);
                 renderAdminScheduleList();
+                renderEmployeeList(); // Update Employee Tab
             });
 
-            // Stock Requests Listener
+            // Listeners for Stocks/Cover/Master (Preserved)
             unsubStockReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), (snap) => {
-                const div = document.getElementById('admin-stock-requests');
-                const list = document.getElementById('admin-stock-requests-list');
-                list.innerHTML = ''; let count = 0;
-                snap.forEach(docSnap => {
-                    const req = docSnap.data();
-                    if(req.status === 'pending') {
-                        count++;
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded flex justify-between items-center text-sm">
-                            <span class="dark:text-white">${req.requesterName} <span class="text-xs text-gray-400">needs stock</span></span>
-                            <div class="space-x-1">
-                                <button onclick="window.fulfillStockReq('${docSnap.id}', '${req.requesterUid}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Fulfill</button>
-                                <button onclick="window.dismissStockReq('${docSnap.id}')" class="text-gray-400 text-xs px-2">Dismiss</button>
-                            </div>
-                        </div>`;
-                    }
-                });
+                const div = document.getElementById('admin-stock-requests'); const list = document.getElementById('admin-stock-requests-list'); list.innerHTML = ''; let count = 0;
+                snap.forEach(docSnap => { const req = docSnap.data(); if(req.status === 'pending') { count++; list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded flex justify-between items-center text-sm"><span class="dark:text-white">${req.requesterName} <span class="text-xs text-gray-400">needs stock</span></span><div class="space-x-1"><button onclick="window.fulfillStockReq('${docSnap.id}', '${req.requesterUid}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Fulfill</button><button onclick="window.dismissStockReq('${docSnap.id}')" class="text-gray-400 text-xs px-2">Dismiss</button></div></div>`; }});
                 if(count > 0) div.classList.remove('hidden'); else div.classList.add('hidden');
             });
-
-            // Cover Requests Listener
             unsubCoverReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), (snap) => {
-                const list = document.getElementById('admin-cover-list');
-                list.innerHTML = ''; let hasReqs = false;
-                snap.forEach(d => {
-                    const req = d.data();
-                    if(req.status === 'open') {
-                        hasReqs = true;
-                        list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-900 flex justify-between items-center">
-                            <div class="text-sm">
-                                <span class="font-bold text-red-600">OPEN:</span> ${req.requesterName} on ${req.date}
-                            </div>
-                            <button onclick="window.adminForceCover('${d.id}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded">Close/Assign</button>
-                        </div>`;
-                    }
-                });
+                const list = document.getElementById('admin-cover-list'); list.innerHTML = ''; let hasReqs = false;
+                snap.forEach(d => { const req = d.data(); if(req.status === 'open') { hasReqs = true; list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-900 flex justify-between items-center"><div class="text-sm"><span class="font-bold text-red-600">OPEN:</span> ${req.requesterName} on ${req.date}</div><button onclick="window.adminForceCover('${d.id}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded">Close/Assign</button></div>`; }});
                 if(!hasReqs) list.innerHTML = '<div class="text-center text-gray-400 text-sm py-2">No active cover requests.</div>';
             });
-
-            // Master Stock Listener
             unsubMasterStock = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => document.getElementById('admin-master-stock').innerText = s.exists()?s.data().qty:0);
         }
 
-        // --- ADMIN FUNCTIONS ---
-        window.fulfillStockReq = async (reqId, uid) => {
-            document.getElementById('distribute-select-driver').value = uid;
-            window.updateTransferStats('collect'); 
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' });
-            window.showToast("Driver Selected below");
-        };
-        window.dismissStockReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', id)); };
-
-        window.adminAssignShift = async () => {
-            const uid = document.getElementById('sched-driver').value;
-            const date = document.getElementById('sched-date').value;
-            const start = document.getElementById('sched-start').value;
-            const end = document.getElementById('sched-end').value;
-
-            if(!uid || !date || !start || !end) return window.showToast("Fill all fields");
-
-            const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid);
-            const snap = await getDoc(rosterRef);
-            let shifts = [];
-            if(snap.exists()) shifts = snap.data().shifts || [];
-            
-            shifts.push({ date, start, end });
-            await updateDoc(rosterRef, { shifts });
-            window.showToast("Shift Assigned");
-            renderAdminScheduleList();
-        };
-
-        function renderAdminScheduleList() {
-            const list = document.getElementById('admin-schedule-list');
+        // --- NEW: EMPLOYEE MANAGEMENT TAB ---
+        function renderEmployeeList() {
+            const list = document.getElementById('admin-employee-list');
             list.innerHTML = '';
-            let allShifts = [];
             
-            globalRoster.forEach(drv => {
-                if(drv.shifts) {
-                    drv.shifts.forEach(s => {
-                        if(new Date(s.date + 'T23:59:00') >= new Date()) {
-                            allShifts.push({ ...s, name: drv.name });
-                        }
-                    });
+            if(globalRoster.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>';
+                return;
+            }
+
+            globalRoster.forEach(u => {
+                const status = u.status || 'pending';
+                let actions = '';
+                
+                if(status === 'pending') {
+                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
+                } else if (status === 'active' || status === 'approved') {
+                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
+                } else {
+                    actions = `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
                 }
+                
+                actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+
+                list.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 mr-3 text-xs">${u.name?u.name[0]:'U'}</div>
+                            <div>
+                                <div class="font-bold text-sm dark:text-white">${u.name}</div>
+                                <div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'?'text-green-500':'text-red-500')}">${status}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            ${actions}
+                        </div>
+                    </div>
+                `;
             });
-
-            allShifts.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            if(allShifts.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">No upcoming shifts.</div>'; return; }
-
-            allShifts.forEach(s => {
-                list.innerHTML += `<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded text-sm">
-                    <div><span class="font-bold dark:text-white">${s.date}</span> <span class="text-gray-500 mx-1">|</span> ${s.name}</div>
-                    <div class="text-xs text-blue-500 font-bold">${s.start} - ${s.end}</div>
-                </div>`;
-            });
+            lucide.createIcons();
         }
 
-        window.adminForceCover = async (id) => {
-            if(confirm("Mark resolved?")) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', id), { status: 'filled', filledByUid: 'admin', filledByName: 'Admin Assigned' });
-            }
+        window.adminUpdateStatus = async (uid, newStatus) => {
+            if(!confirm(`Change status to ${newStatus}?`)) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status: newStatus });
+            window.showToast("Status Updated");
         };
 
-        window.updateTransferStats = (type) => {
-            let uid, elId;
-            if(type==='from'){uid=document.getElementById('transfer-from').value; elId='transfer-stats-from';}
-            if(type==='to'){uid=document.getElementById('transfer-to').value; elId='transfer-stats-to';}
-            if(type==='collect'){uid=document.getElementById('collect-driver').value; elId='collect-stats';}
-            
-            const drv = globalRoster.find(d=>d.id===uid);
-            const el = document.getElementById(elId);
-            if(drv) el.innerHTML=`<span class="text-blue-500 font-bold">Stock: ${drv.stock||0}</span> <span class="mx-1">|</span> <span class="text-red-500 font-bold">Debt: $${drv.debt||0}</span>`; else el.innerText='';
+        window.adminDeleteUser = async (uid) => {
+            if(!confirm("Permanently delete this user from roster? (Data may persist in private collection)")) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid));
+            window.showToast("User Removed");
         };
 
-        window.adminDistributeStock = async () => {
-            const list = globalRoster.map((d,i)=>`${i+1}. ${d.name}`).join('\n');
-            const sel = prompt(`Driver Num:\n${list}`); if(!sel) return;
-            const drv = globalRoster[parseInt(sel)-1]; if(!drv) return;
-            const qty = parseInt(prompt(`Qty for ${drv.name}?`)); if(!qty) return;
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {qty: increment(-qty)}, {merge:true});
-            await updateDriverAssets(drv.id, qty, 0); window.showToast("Sent");
-        };
-
-        window.adminP2PTransfer = async () => {
-            const from = document.getElementById('transfer-from').value; const to = document.getElementById('transfer-to').value;
-            const s = parseInt(document.getElementById('p2p-stock').value)||0; const d = parseInt(document.getElementById('p2p-debt').value)||0;
-            if(!from || !to || (s<=0 && d<=0)) return;
-            await updateDriverAssets(from, -s, -d); await updateDriverAssets(to, s, d); window.showToast("Transferred");
-        };
-
-        window.adminManageDriver = async () => {
-            const uid = document.getElementById('collect-driver').value;
-            const s = parseInt(document.getElementById('collect-stock').value)||0; const d = parseInt(document.getElementById('collect-debt').value)||0;
-            if(!uid || (s<=0 && d<=0)) return;
-            await updateDriverAssets(uid, -s, -d);
-            if(s>0) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {qty: increment(s)}, {merge:true});
-            window.showToast("Processed"); document.getElementById('collect-stock').value=''; document.getElementById('collect-debt').value='';
-        };
-
-        async function updateDriverAssets(uid, sChg, dChg) {
-            const ref = doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state');
-            const snap = await getDoc(ref); let d = snap.exists() ? JSON.parse(snap.data().json) : {stock:0,debt:0,history:[],currentTransactions:[]};
-            d.stock = (d.stock||0)+sChg; d.debt = (d.debt||0)+dChg; if(d.debt<0) d.debt=0;
-            await setDoc(ref, {json:JSON.stringify(d), lastUpdated:Date.now()});
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), {stock:d.stock, debt:d.debt}, {merge:true});
-        }
-
-        window.viewDriverDetails = (uid) => {
-            if(typeof uid === 'object') uid = uid.id; 
-            const driver = globalRoster.find(d => d.id === uid);
-            if(!driver) return;
-            currentDriverData = driver;
-            document.getElementById('admin-user-detail').classList.remove('hidden');
-            document.getElementById('detail-user-name').innerText = driver.name;
-            document.getElementById('detail-stock').innerText = driver.stock||0;
-            document.getElementById('detail-debt').innerText = `$${driver.debt||0}`;
-            document.getElementById('detail-profit').innerText = `$${driver.todayProfit||0}`;
-            
-            const logs = document.getElementById('detail-log-list'); logs.innerHTML = '';
-            (driver.recentLogs||[]).forEach(l => {
-                logs.innerHTML += `<div class="flex justify-between border-b dark:border-gray-700 pb-1 mb-1 text-xs"><span>Sold ${l.qty} (${l.type})</span> <span class="text-green-600">+$${l.profit}</span></div>`;
-            });
-            window.renderHistory('daily');
-        };
-
-        window.renderHistory = (mode) => {
-            if(!currentDriverData || !currentDriverData.history) return;
-            ['daily', 'weekly', 'monthly'].forEach(m => document.getElementById(`hist-tab-${m}`).className = m===mode ? "pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500" : "pb-1 text-sm font-bold text-gray-400 hover:text-gray-600");
-            
-            const list = document.getElementById('detail-history-list'); list.innerHTML = '';
-            let data = [];
-            if(mode==='daily') data = [...currentDriverData.history].reverse().map(h=>({l: new Date(h.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}), s:h.sold, boss: (h.revenue||0)-(h.profit||0), drv: h.profit||0 }));
-            else {
-                let agg={};
-                currentDriverData.history.forEach(h => {
-                    const d=new Date(h.date); 
-                    const k = mode==='weekly' ? `Week ${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + new Date(d.getFullYear(),0,1).getDay()+1)/7)}` : d.toLocaleDateString(undefined,{month:'long'});
-                    if(!agg[k]) agg[k]={s:0,b:0,d:0};
-                    agg[k].s += h.sold; agg[k].b += ((h.revenue||0)-(h.profit||0)); agg[k].d += (h.profit||0);
-                });
-                data = Object.keys(agg).map(k=>({l:k, s:agg[k].s, boss:agg[k].b, drv:agg[k].d})).reverse();
-            }
-            
-            data.forEach(i => list.innerHTML += `<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1 text-sm">
-                <div><div class="font-bold dark:text-gray-200">${i.l}</div><div class="text-xs text-gray-500">${i.s} items</div></div>
-                <div class="text-right"><div class="text-xs text-gray-500">Boss: <b>$${i.boss}</b></div><div class="text-xs text-green-600">Driver: <b>+$${i.drv}</b></div></div>
-            </div>`);
-        };
-
-        window.switchAdminTab = (tab) => {
-            ['team','transfer','schedule','reports'].forEach(t => {
-                document.getElementById(`admin-view-${t}`).classList.add('hidden');
-                document.getElementById(`adm-tab-${t}`).classList.remove('bg-gray-100','dark:bg-gray-700','text-blue-600');
-                document.getElementById(`adm-tab-${t}`).classList.add('text-gray-500','dark:text-gray-400');
-            });
-            document.getElementById(`admin-view-${tab}`).classList.remove('hidden');
-            document.getElementById(`adm-tab-${tab}`).classList.add('bg-gray-100','dark:bg-gray-700','text-blue-600');
-            document.getElementById(`adm-tab-${tab}`).classList.remove('text-gray-500','dark:text-gray-400');
-        };
-        
-        function updateAdminReports(roster) {
-            let dateMap = {}; let wG=0, wP=0, mG=0, mP=0;
-            const now=new Date(); const startW=new Date(now.setDate(now.getDate()-7)); const startM=new Date(new Date().getFullYear(),new Date().getMonth(),1);
-            
-            roster.forEach(d => {
-                (d.history||[]).forEach(h => {
-                    const dt=new Date(h.date);
-                    if(!dateMap[h.date]) dateMap[h.date]={p:0,r:0};
-                    dateMap[h.date].p+=(h.profit||0); dateMap[h.date].r+=(h.revenue||0);
-                    if(dt>=startW) { wG+=(h.revenue||0); wP+=(h.profit||0); }
-                    if(dt>=startM) { mG+=(h.revenue||0); mP+=(h.profit||0); }
-                });
-                if(d.todaySold>0) { wG+=d.todayGross; wP+=d.todayProfit; mG+=d.todayGross; mP+=d.todayProfit; }
-            });
-            
-            document.getElementById('adm-report-week-gross').innerText = `$${wG}`;
-            document.getElementById('adm-report-week-profit').innerText = `$${wP} Profit`;
-            document.getElementById('adm-report-month-gross').innerText = `$${mG}`;
-            document.getElementById('adm-report-month-profit').innerText = `$${mP} Profit`;
-            
-            const dates = Object.keys(dateMap).sort().slice(-7);
-            const ctx = document.getElementById('adminTeamChart').getContext('2d');
-            if(adminChartInstance) adminChartInstance.destroy();
-            adminChartInstance = new Chart(ctx, { type: 'line', data: { labels: dates.map(d=>d.slice(5)), datasets: [{ label:'Gross', data:dates.map(d=>dateMap[d].r), borderColor:'#3B82F6', fill:false}, { label:'Profit', data:dates.map(d=>dateMap[d].p), borderColor:'#10B981', fill:false}] }, options:{responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true, grid:{color:'#374151'}}, x:{grid:{display:false}}}} });
-        }
-
+        // --- ADMIN HELPERS (Existing) ---
+        window.fulfillStockReq = async (reqId, uid) => { document.getElementById('distribute-select-driver').value = uid; window.updateTransferStats('collect'); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' }); window.showToast("Driver Selected below"); };
+        window.dismissStockReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', id)); };
+        window.adminAssignShift = async () => { const uid=document.getElementById('sched-driver').value; const date=document.getElementById('sched-date').value; const start=document.getElementById('sched-start').value; const end=document.getElementById('sched-end').value; if(!uid||!date||!start||!end) return window.showToast("Fill all fields"); const ref=doc(db,'artifacts',appId,'public','data','roster',uid); const snap=await getDoc(ref); let shifts=snap.exists()?(snap.data().shifts||[]):[]; shifts.push({date,start,end}); await updateDoc(ref,{shifts}); window.showToast("Shift Assigned"); renderAdminScheduleList(); };
+        function renderAdminScheduleList() { const list=document.getElementById('admin-schedule-list'); list.innerHTML=''; let all=[]; globalRoster.forEach(d=>{ (d.shifts||[]).forEach(s=>{ if(new Date(s.date+'T23:59:00')>=new Date()) all.push({...s,name:d.name}); }); }); all.sort((a,b)=>new Date(a.date)-new Date(b.date)); if(all.length===0){list.innerHTML='<div class="text-center text-gray-400 text-sm py-4">No upcoming shifts.</div>'; return;} all.forEach(s=>{list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded text-sm"><div><span class="font-bold dark:text-white">${s.date}</span> <span class="text-gray-500 mx-1">|</span> ${s.name}</div><div class="text-xs text-blue-500 font-bold">${s.start} - ${s.end}</div></div>`;}); }
+        window.adminForceCover = async (id) => { if(confirm("Mark resolved?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', id), { status: 'filled', filledByUid: 'admin', filledByName: 'Admin Assigned' }); };
+        window.updateTransferStats = (type) => { let uid,elId; if(type==='from'){uid=document.getElementById('transfer-from').value;elId='transfer-stats-from';} if(type==='to'){uid=document.getElementById('transfer-to').value;elId='transfer-stats-to';} if(type==='collect'){uid=document.getElementById('collect-driver').value;elId='collect-stats';} const drv=globalRoster.find(d=>d.id===uid); const el=document.getElementById(elId); if(drv) el.innerHTML=`<span class="text-blue-500 font-bold">Stock: ${drv.stock||0}</span> <span class="mx-1">|</span> <span class="text-red-500 font-bold">Debt: $${drv.debt||0}</span>`; else el.innerText=''; };
+        window.adminDistributeStock = async () => { const l=globalRoster.map((d,i)=>`${i+1}. ${d.name}`).join('\n'); const s=prompt(`Driver Num:\n${l}`); if(!s) return; const d=globalRoster[parseInt(s)-1]; if(!d) return; const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); await updateDriverAssets(d.id,q,0); window.showToast("Sent"); };
+        window.adminP2PTransfer = async () => { const f=document.getElementById('transfer-from').value; const t=document.getElementById('transfer-to').value; const s=parseInt(document.getElementById('p2p-stock').value)||0; const d=parseInt(document.getElementById('p2p-debt').value)||0; if(!f||!t||(s<=0&&d<=0)) return; await updateDriverAssets(f,-s,-d); await updateDriverAssets(t,s,d); window.showToast("Transferred"); };
+        window.adminManageDriver = async () => { const u=document.getElementById('collect-driver').value; const s=parseInt(document.getElementById('collect-stock').value)||0; const d=parseInt(document.getElementById('collect-debt').value)||0; if(!u||(s<=0&&d<=0)) return; await updateDriverAssets(u,-s,-d); if(s>0) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(s)},{merge:true}); window.showToast("Processed"); };
+        async function updateDriverAssets(uid,s,d) { const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); const sn=await getDoc(r); let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; dat.stock=(dat.stock||0)+s; dat.debt=(dat.debt||0)+d; if(dat.debt<0) dat.debt=0; await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); }
+        window.viewDriverDetails = (uid) => { if(typeof uid==='object') uid=uid.id; const d=globalRoster.find(x=>x.id===uid); if(!d) return; currentDriverData=d; document.getElementById('admin-user-detail').classList.remove('hidden'); document.getElementById('detail-user-name').innerText=d.name; document.getElementById('detail-stock').innerText=d.stock||0; document.getElementById('detail-debt').innerText=`$${d.debt||0}`; document.getElementById('detail-profit').innerText=`$${d.todayProfit||0}`; const l=document.getElementById('detail-log-list'); l.innerHTML=''; (d.recentLogs||[]).forEach(x=>{ l.innerHTML+=`<div class="flex justify-between border-b dark:border-gray-700 pb-1 mb-1 text-xs"><span>Sold ${x.qty} (${x.type})</span> <span class="text-green-600">+$${x.profit}</span></div>`; }); window.renderHistory('daily'); };
+        window.renderHistory = (mode) => { if(!currentDriverData||!currentDriverData.history) return; ['daily','weekly','monthly'].forEach(m=>document.getElementById(`hist-tab-${m}`).className=m===mode?"pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500":"pb-1 text-sm font-bold text-gray-400 hover:text-gray-600"); const list=document.getElementById('detail-history-list'); list.innerHTML=''; let d=[]; if(mode==='daily') d=[...currentDriverData.history].reverse().map(h=>({l:new Date(h.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}),s:h.sold,b:(h.revenue||0)-(h.profit||0),v:h.profit||0})); else { let agg={}; currentDriverData.history.forEach(h=>{ const dt=new Date(h.date); const k=mode==='weekly'?`Week ${Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7)}`:dt.toLocaleDateString(undefined,{month:'long'}); if(!agg[k]) agg[k]={s:0,b:0,v:0}; agg[k].s+=h.sold; agg[k].b+=((h.revenue||0)-(h.profit||0)); agg[k].v+=(h.profit||0); }); d=Object.keys(agg).map(k=>({l:k,s:agg[k].s,b:agg[k].b,v:agg[k].v})).reverse(); } d.forEach(i=>{ list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1 text-sm"><div><div class="font-bold dark:text-gray-200">${i.l}</div><div class="text-xs text-gray-500">${i.s} items</div></div><div class="text-right"><div class="text-xs text-gray-500">Boss: <b>$${i.b}</b></div><div class="text-xs text-green-600">Driver: <b>+$${i.v}</b></div></div></div>`; }); };
+        window.switchAdminTab = (tab) => { ['team','transfer','schedule','employees','reports'].forEach(t => { document.getElementById(`admin-view-${t}`).classList.add('hidden'); document.getElementById(`adm-tab-${t}`).classList.remove('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${t}`).classList.add('text-gray-500','dark:text-gray-400'); }); document.getElementById(`admin-view-${tab}`).classList.remove('hidden'); document.getElementById(`adm-tab-${tab}`).classList.add('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${tab}`).classList.remove('text-gray-500','dark:text-gray-400'); };
+        function updateAdminReports(roster) { let m={}; let wG=0,wP=0,mG=0,mP=0; const now=new Date(); const sW=new Date(now.setDate(now.getDate()-7)); const sM=new Date(new Date().getFullYear(),new Date().getMonth(),1); roster.forEach(d=>{ (d.history||[]).forEach(h=>{ const dt=new Date(h.date); if(!m[h.date]) m[h.date]={p:0,r:0}; m[h.date].p+=(h.profit||0); m[h.date].r+=(h.revenue||0); if(dt>=sW){wG+=(h.revenue||0);wP+=(h.profit||0);} if(dt>=sM){mG+=(h.revenue||0);mP+=(h.profit||0);} }); if(d.todaySold>0){wG+=d.todayGross;wP+=d.todayProfit;mG+=d.todayGross;mP+=d.todayProfit;} }); document.getElementById('adm-report-week-gross').innerText=`$${wG}`; document.getElementById('adm-report-week-profit').innerText=`$${wP} Profit`; document.getElementById('adm-report-month-gross').innerText=`$${mG}`; document.getElementById('adm-report-month-profit').innerText=`$${mP} Profit`; const d=Object.keys(m).sort().slice(-7); const ctx=document.getElementById('adminTeamChart').getContext('2d'); if(adminChartInstance) adminChartInstance.destroy(); adminChartInstance=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.slice(5)),datasets:[{label:'Gross',data:d.map(x=>m[x].r),borderColor:'#3B82F6',fill:false},{label:'Profit',data:d.map(x=>m[x].p),borderColor:'#10B981',fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#374151'}},x:{grid:{display:false}}}}}); }
         window.adminAddMasterStock = async () => { const q=prompt("Qty:"); if(q) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(parseInt(q))},{merge:true}); };
     </script>
 </body>
