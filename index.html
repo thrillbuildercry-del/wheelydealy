@@ -128,7 +128,7 @@
     <div id="buyer-app" class="hidden pb-24">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
             <h1 class="text-lg font-bold flex items-center"><i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Shop Deals</h1>
-            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="window.openSettings()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
         <main class="p-4 max-w-md mx-auto space-y-6">
@@ -206,7 +206,7 @@
                 <button onclick="window.openDriverStats()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
                     <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
                 </button>
-                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                <button onclick="window.openSettings()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -291,7 +291,7 @@
                 <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
                 <p class="text-xs text-gray-400" id="admin-date-display"></p>
             </div>
-            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
+            <button onclick="window.openSettings()" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
         </header>
@@ -557,9 +557,9 @@
     </div>
 
     <div id="driver-stats-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 w-11/12 max-w-md rounded-2xl p-4">
+        <div class="bg-white dark:bg-gray-800 w-11/12 max-w-md rounded-2xl p-4 max-h-[90vh] overflow-y-auto">
             <button onclick="document.getElementById('driver-stats-modal').classList.add('hidden')" class="mb-4 text-sm text-gray-500 hover:text-gray-700">Close</button>
-            <canvas id="driverProfitChart"></canvas>
+            <div class="h-64"><canvas id="driverProfitChart"></canvas></div>
             <div id="drv-stat-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
         </div>
     </div>
@@ -600,6 +600,20 @@
             t.innerText = msg; 
             t.className = "show"; 
             setTimeout(() => t.className = "", 3000); 
+        };
+
+        window.openSettings = () => {
+            const modal = document.getElementById('settings-modal');
+            const vehicleSection = document.getElementById('settings-vehicle-section');
+            modal.classList.remove('hidden');
+
+            if (userRole === 'driver' || userRole === 'admin') vehicleSection.classList.remove('hidden');
+
+            // iOS: focus after paint so keyboard opens reliably when modal appears.
+            setTimeout(() => {
+                const input = document.getElementById('set-vehicle-desc');
+                if (input && !vehicleSection.classList.contains('hidden')) input.focus();
+            }, 80);
         };
         
         window.toggleTheme = () => { 
@@ -881,7 +895,7 @@
             if(!viewMode) { 
                 if(appData.onlineStatus !== 'online' && (!appData.vehicle || !appData.vehicle.model)) {
                     // Force open settings if vehicle is missing
-                    document.getElementById('settings-modal').classList.remove('hidden');
+                    window.openSettings();
                     return window.showToast("Please save vehicle details first!");
                 }
                 appData.onlineStatus = appData.onlineStatus==='online'?'offline':'online'; 
