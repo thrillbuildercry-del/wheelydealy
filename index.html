@@ -29,14 +29,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .hidden { display: none !important; }
         .btn-interactive:active { transform: scale(0.95); }
-        
-        /* Sync Indicator Pulse */
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-        }
-        .sync-active { animation: pulse-green 2s infinite; background-color: #22c55e; }
     </style>
     <script>
         if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark'); } 
@@ -61,6 +53,7 @@
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Portal Login</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Drivers & Admins</p>
             </div>
             <div class="space-y-3">
                 <button onclick="window.handleGoogleLogin('driver')" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
@@ -82,7 +75,10 @@
             </div>
             <h2 id="approval-title" class="text-2xl font-bold dark:text-white">Access Restricted</h2>
             <p id="approval-msg" class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Please contact management.</p>
-            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
+            <div class="flex flex-col gap-2">
+                <button onclick="window.location.reload()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Refresh Status</button>
+                <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
+            </div>
         </div>
     </div>
 
@@ -95,11 +91,23 @@
             </div>
             
             <!-- Driver Vehicle Info -->
-            <div id="settings-vehicle-section" class="mb-4 hidden">
-                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Vehicle (Required)</h3>
-                <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
-                <input type="text" id="set-vehicle-desc" placeholder="Make & Model (e.g. Toyota Camry)" class="w-full mb-2 p-2 rounded border bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
-                <button onclick="window.saveVehicleInfo()" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">Save Vehicle</button>
+            <div id="settings-vehicle-section" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 class="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase mb-2">My Vehicle (Required)</h3>
+                <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
+                <input type="text" id="set-vehicle-desc" placeholder="Make & Model (e.g. Toyota Camry)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
+                <button onclick="window.saveVehicleInfo()" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">Save Vehicle Details</button>
+            </div>
+
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Snapshot</h3>
+                <div class="flex justify-between text-sm">
+                    <span>Total Sales (Lifetime)</span>
+                    <span class="font-bold" id="setting-stat-total">0</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span>Current Debt</span>
+                    <span class="font-bold text-red-500" id="setting-stat-debt">$0</span>
+                </div>
             </div>
 
             <div class="space-y-3">
@@ -768,7 +776,6 @@
             unsubMyShifts = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => { 
                 if(snap.exists()) { 
                     driverShifts = snap.data().shifts || []; 
-                    // Safety check for empty array before render
                     window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); 
                 } 
             });
@@ -1457,7 +1464,7 @@
         };
 
         async function updateDriverAssets(uid,s,d) { 
-            // FETCH FRESH STATE FIRST
+            // FIX: Read latest state first to avoid overwriting recent sales
             const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn=await getDoc(r); 
             let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; 
@@ -1467,8 +1474,9 @@
             dat.debt=(dat.debt||0)+d; 
             if(dat.debt<0) dat.debt=0; 
             
-            // Save back
+            // Save back to private state
             await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); 
+            // Update public roster for admin visibility
             await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); 
         }
 
