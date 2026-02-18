@@ -45,7 +45,7 @@
     <div id="loading-overlay" class="modal-overlay z-[150]">
         <div class="text-white flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p class="font-bold tracking-wide">Loading...</p>
+            <p class="font-bold tracking-wide">Loading Profile...</p>
         </div>
     </div>
 
@@ -66,14 +66,14 @@
         </div>
     </div>
 
-    <!-- Suspended Modal -->
+    <!-- Approval Pending / Suspended Modal -->
     <div id="approval-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
-            <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
                 <i data-lucide="lock" class="w-8 h-8"></i>
             </div>
-            <h2 class="text-2xl font-bold dark:text-white">Account Suspended</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Your access has been restricted by the Administrator.</p>
+            <h2 id="approval-title" class="text-2xl font-bold dark:text-white">Access Restricted</h2>
+            <p id="approval-msg" class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Please contact management.</p>
             <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
         </div>
     </div>
@@ -155,7 +155,9 @@
                         <span id="driver-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
                         <button onclick="window.changeCalendarMonth(1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                     </div>
-                    <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-1"></div>
+                    <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-1">
+                        <!-- Calendar JS injected here -->
+                    </div>
                     <div id="driver-selected-day-details" class="mt-2 text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded hidden"></div>
                 </div>
 
@@ -500,7 +502,10 @@
         // --- AUTH ---
         window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (e) { window.showToast("Login Failed: " + e.message); } };
         window.logout = async () => { 
-            if(unsubUserData) unsubUserData(); if(unsubProfile) unsubProfile(); if(unsubRoster) unsubRoster(); if(unsubAuthCheck) unsubAuthCheck();
+            if(unsubUserData) unsubUserData(); 
+            if(unsubProfile) unsubProfile(); 
+            if(unsubRoster) unsubRoster(); 
+            if(unsubAuthCheck) unsubAuthCheck();
             await signOut(auth); window.location.reload(); 
         };
 
@@ -519,18 +524,44 @@
                 } else { knownRole = profileSnap.data().role || 'driver'; }
 
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
-                await setDoc(rosterRef, { name: user.displayName || user.email, email: user.email, uid: user.uid, role: knownRole, lastLogin: Date.now() }, { merge: true });
+                // Sync role but preserve existing accessStatus if present, default to 'pending' if not
+                await setDoc(rosterRef, { 
+                    name: user.displayName || user.email, 
+                    email: user.email, 
+                    uid: user.uid, 
+                    role: knownRole, 
+                    lastLogin: Date.now() 
+                }, { merge: true });
 
                 unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
                     const data = snap.data();
                     const accessStatus = data.accessStatus || 'pending';
                     const role = data.role || knownRole || 'driver';
+                    
                     userRole = role;
                     document.getElementById('loading-overlay').classList.add('hidden');
 
-                    if (role === 'admin') { initAdminDashboard(); }
-                    else if (accessStatus !== 'suspended') { document.getElementById('approval-modal').classList.add('hidden'); initDriverApp(user); }
-                    else { document.getElementById('approval-modal').classList.remove('hidden'); }
+                    if (role === 'admin') {
+                        initAdminDashboard();
+                    } else if (accessStatus === 'active' || accessStatus === 'approved') {
+                        document.getElementById('approval-modal').classList.add('hidden');
+                        initDriverApp(user);
+                    } else {
+                        // Pending or Suspended
+                        document.getElementById('approval-modal').classList.remove('hidden');
+                        document.getElementById('driver-app').classList.add('hidden');
+                        document.getElementById('admin-app').classList.add('hidden');
+                        
+                        const title = document.getElementById('approval-title');
+                        const msg = document.getElementById('approval-msg');
+                        if(accessStatus === 'suspended') {
+                            title.innerText = "Account Suspended";
+                            msg.innerText = "Your access has been restricted by the Administrator.";
+                        } else {
+                            title.innerText = "Access Pending";
+                            msg.innerText = "Sign in Pending, please contact an administrator for help";
+                        }
+                    }
                 });
             } else {
                 document.getElementById('login-modal').classList.remove('hidden');
@@ -821,13 +852,13 @@
             const employees = globalRoster.filter(u => u.id !== currentUser.uid);
             if(employees.length === 0) { list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>'; return; }
             employees.forEach(u => {
-                const status = u.accessStatus || 'pending'; // Changed from 'active' default to 'pending' to show new users properly
+                const status = u.accessStatus || 'pending'; 
                 let actions = '';
                 if (u.role === 'admin') { actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase mr-2">Admin</span><button onclick="window.adminSetRole('${u.id}','driver')" class="text-xs underline text-gray-500">Demote</button>`; } 
                 else {
                     actions = `<button onclick="window.adminSetRole('${u.id}','admin')" class="text-xs underline text-blue-500 mr-2">Promote</button>`;
                     if(status === 'pending') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
-                    else if (status === 'active') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
+                    else if (status === 'active' || status === 'approved') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
                     else actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
                     actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1 ml-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                 }
