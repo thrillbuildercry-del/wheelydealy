@@ -539,7 +539,13 @@
                 <h2 class="font-bold dark:text-white">Schedule</h2>
                 <button onclick="document.getElementById('driver-schedule-modal').classList.add('hidden')">X</button>
             </div>
+            <div id="driver-calendar-controls" class="flex justify-between items-center mb-2">
+                <button onclick="window.changeCalendarMonth(-1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                <span id="driver-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
+                <button onclick="window.changeCalendarMonth(1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
             <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded p-1 mb-4"></div>
+            <div id="driver-selected-day-details" class="mb-2 text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded hidden"></div>
             <select id="drv-cover-select" onchange="window.updateCoverTimeInputs()" class="w-full p-2 mb-2 border rounded dark:bg-gray-700 text-sm"></select>
             <div id="drv-cover-times" class="hidden grid grid-cols-2 gap-2 mb-2">
                 <input type="time" id="drv-cover-start" class="border rounded p-1">
@@ -770,8 +776,10 @@
             // 3. Orders
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (snap) => {
                 const list = document.getElementById('driver-orders-list'); 
+                const offlineMsg = document.getElementById('driver-offline-msg');
                 list.innerHTML = ''; 
                 let hasActive = false;
+                let pendingCount = 0;
 
                 snap.forEach(d => {
                     const o = {id: d.id, ...d.data()};
@@ -790,18 +798,29 @@
                         }
                         currentOrder = o;
                     } 
-                    // If Pending Order (Available for anyone)
-                    else if(o.status === 'pending' && appData.onlineStatus === 'online') {
+                    // If Pending Order (always visible, accept enabled only online)
+                    else if(o.status === 'pending') {
+                        pendingCount++;
+                        const disabled = appData.onlineStatus !== 'online';
                         list.innerHTML += `
                         <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800 mb-2">
                             <div class="font-bold text-sm dark:text-white">${o.address}</div>
                             <div class="flex justify-between mt-1">
                                 <span class="text-xs text-green-600 font-bold">$${o.price} (${o.qty}x)</span>
-                                <button onclick="window.acceptOrder('${d.id}')" class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-700">Accept</button>
+                                <button onclick="window.acceptOrder('${d.id}')" ${disabled ? 'disabled' : ''} class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Accept</button>
                             </div>
                         </div>`;
                     }
                 });
+
+                if(offlineMsg) {
+                    if(appData.onlineStatus !== 'online' && pendingCount > 0) offlineMsg.classList.remove('hidden');
+                    else offlineMsg.classList.add('hidden');
+                }
+
+                if(!hasActive && pendingCount === 0) {
+                    list.innerHTML = '<div class="text-center text-gray-400 text-sm py-2">No open customer requests.</div>';
+                }
 
                 if(!hasActive) { 
                     document.getElementById('driver-active-delivery').classList.add('hidden'); 
@@ -815,9 +834,19 @@
 
         // Driver Utility Functions
         window.saveVehicleInfo = async () => { 
-            appData.vehicle = { color: document.getElementById('set-vehicle-color').value, model: document.getElementById('set-vehicle-desc').value }; 
+            const color = document.getElementById('set-vehicle-color').value.trim();
+            const model = document.getElementById('set-vehicle-desc').value.trim();
+            if(!model) return window.showToast("Vehicle make/model is required");
+
+            appData.vehicle = { color, model }; 
             await saveDriverData(); 
             window.showToast("Vehicle Saved"); 
+        };
+
+        window.openSchedule = () => {
+            document.getElementById('driver-schedule-modal').classList.remove('hidden');
+            window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
+            lucide.createIcons();
         };
 
         window.acceptOrder = async (oid) => { 
@@ -967,13 +996,14 @@
 
         window.renderCalendar = (elId, shiftsData, mode) => {
             const grid = document.getElementById(elId); 
+            if(!grid) return;
             grid.innerHTML = '';
             
             const mLabel = document.getElementById(mode==='driver'?'driver-calendar-month':'admin-calendar-month');
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             
-            mLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+            if(mLabel) mLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
             
             const startDay = new Date(year, month, 1).getDay(); 
             for(let i=0; i<startDay; i++) grid.innerHTML += `<div></div>`;
@@ -985,7 +1015,7 @@
                 let shifts = [];
                 
                 if(mode==='driver') {
-                    shifts = shiftsData.filter(s => s.date === dateStr);
+                    shifts = (shiftsData || []).filter(s => s.date === dateStr);
                 } else {
                     globalRoster.forEach(drv => { 
                         (drv.shifts||[]).forEach(s => { 
@@ -1002,6 +1032,7 @@
         window.selectCalendarDay = (day, mode) => {
             const dateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const detailEl = document.getElementById(mode==='driver'?'driver-selected-day-details':'admin-selected-day-details');
+            if(!detailEl) return;
             detailEl.innerHTML = `<strong>${dateStr}</strong><br>`; 
             detailEl.classList.remove('hidden');
             
