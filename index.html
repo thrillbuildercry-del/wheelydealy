@@ -33,6 +33,7 @@
         .hidden { display: none !important; }
         
         .btn-interactive:active { transform: scale(0.95); }
+        #driver-stats-modal canvas { width: 100% !important; height: 100% !important; }
     </style>
     <script>
         if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark'); } 
@@ -1160,7 +1161,8 @@
 
         window.openDriverStats = () => { 
             document.getElementById('driver-stats-modal').classList.remove('hidden'); 
-            renderDriverCharts(); 
+            // Mobile Safari: defer chart creation until modal has laid out.
+            setTimeout(() => renderDriverCharts(), 80);
         };
 
         function renderDriverCharts() { 
@@ -1180,6 +1182,7 @@
                     scales:{y:{beginAtZero:true, grid:{color:'#374151'}}, x:{grid:{display:false}}}
                 }
             });
+            driverChartInstance.resize();
             
             const list = document.getElementById('drv-stat-list'); 
             list.innerHTML=''; 
@@ -1455,8 +1458,9 @@
             const drvs=globalRoster.filter(d=>d.role!=='admin'); 
             const d=drvs[parseInt(s)-1]; if(!d) return; 
             const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; 
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); 
+            // Update driver first, then warehouse. Prevents warehouse-only deductions on partial failure.
             await updateDriverAssets(d.id,q,0); 
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); 
             window.showToast("Sent"); 
         };
 
@@ -1484,7 +1488,16 @@
         async function updateDriverAssets(uid,s,d) { 
             const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn=await getDoc(r); 
-            let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; 
+            let dat={stock:0,debt:0,history:[],currentTransactions:[],vehicle:{},onlineStatus:'offline'};
+            if(sn.exists()) {
+                const raw = sn.data();
+                if(raw?.json) {
+                    try { dat = { ...dat, ...JSON.parse(raw.json) }; } catch(_) {}
+                } else {
+                    // Backward-compatible fallback if legacy docs do not use the `json` wrapper.
+                    dat = { ...dat, ...raw };
+                }
+            }
             dat.stock=(dat.stock||0)+s; 
             dat.debt=(dat.debt||0)+d; 
             if(dat.debt<0) dat.debt=0; 
@@ -1576,7 +1589,8 @@
         };
         
         window.fulfillStockReq = async (reqId, uid) => { 
-            document.getElementById('distribute-select-driver').value = uid; 
+            const collectSel = document.getElementById('collect-driver');
+            if(collectSel) collectSel.value = uid; 
             window.updateTransferStats('collect'); 
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' }); 
             window.showToast("Driver Selected below"); 
