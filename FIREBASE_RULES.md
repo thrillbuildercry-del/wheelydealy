@@ -30,6 +30,36 @@ service cloud.firestore {
       return isDriver() && (myRoster().accessStatus == 'active' || myRoster().accessStatus == 'approved' || myRoster().role == 'admin');
     }
 
+    function onlyKeysChanged(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    function rosterSelfServiceUpdate(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && onlyKeysChanged(['onlineStatus', 'vehicle', 'shifts', 'stock', 'debt', 'todayProfit']);
+    }
+
+    function rosterCoverAcceptanceUpdate(uid) {
+      return isActiveDriver()
+        && uid != request.auth.uid
+        && onlyKeysChanged(['shifts'])
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.accessStatus == resource.data.accessStatus
+        && request.resource.data.uid == resource.data.uid;
+    }
+
+    function buyerOrderUpdate() {
+      return signedIn()
+        && resource.data.buyerUid == request.auth.uid
+        && onlyKeysChanged(['remindRequested'])
+        && request.resource.data.remindRequested == true
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.driverUid == resource.data.driverUid
+        && request.resource.data.price == resource.data.price
+        && request.resource.data.qty == resource.data.qty;
+    }
+
     // Private user app state (stock/debt/history/vehicle)
     match /artifacts/sales-tracker-v1/users/{uid}/data/{docId} {
       allow read, write: if signedIn() && request.auth.uid == uid;
@@ -45,7 +75,7 @@ service cloud.firestore {
     match /artifacts/sales-tracker-v1/public/data/roster/{uid} {
       allow read: if signedIn();
       allow create: if signedIn() && request.auth.uid == uid;
-      allow update: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow update: if isAdmin() || rosterSelfServiceUpdate(uid) || rosterCoverAcceptanceUpdate(uid);
       allow delete: if isAdmin();
     }
 
@@ -54,7 +84,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn();
       allow update: if isAdmin()
-        || (signedIn() && resource.data.buyerUid == request.auth.uid)
+        || buyerOrderUpdate()
         || (isActiveDriver() && (
             resource.data.driverUid == request.auth.uid
             || (resource.data.status == 'pending' && request.resource.data.driverUid == request.auth.uid)
@@ -86,4 +116,7 @@ service cloud.firestore {
 
 ## Notes
 - These rules expect `role` and `accessStatus` fields in `public/data/roster/{uid}`.
+- Roster self-updates are intentionally limited to operational fields (`onlineStatus`, `vehicle`, `shifts`, `stock`, `debt`, `todayProfit`) so drivers cannot self-promote their `role`/`accessStatus`.
+- The `rosterCoverAcceptanceUpdate` path permits active drivers to update another driver's `shifts` only, which keeps the `driverAcceptCover()` flow working without opening up broader cross-user writes.
+- Buyers are restricted to reminder metadata updates on orders and cannot modify dispatch/financial fields such as `status`, `driverUid`, `price`, or `qty`.
 - If you keep `appId` configurable, duplicate/parameterize the path prefix currently hardcoded as `sales-tracker-v1`.
