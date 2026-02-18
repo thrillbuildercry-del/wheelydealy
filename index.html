@@ -18,22 +18,25 @@
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Calendar Styles */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .calendar-day { min-height: 60px; position: relative; cursor: pointer; }
-        .shift-bar { font-size: 9px; padding: 1px 2px; border-radius: 2px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .calendar-day { min-height: 50px; position: relative; cursor: pointer; }
+        .shift-bar { font-size: 8px; padding: 1px 2px; border-radius: 2px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 200; left: 50%; bottom: 80px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .hidden { display: none !important; }
-        
         .btn-interactive:active { transform: scale(0.95); }
-        #driver-stats-modal canvas { width: 100% !important; height: 100% !important; }
+        
+        /* Sync Indicator Pulse */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+        .sync-active { animation: pulse-green 2s infinite; background-color: #22c55e; }
     </style>
     <script>
         if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark'); } 
@@ -46,7 +49,7 @@
     <div id="loading-overlay" class="modal-overlay z-[150]">
         <div class="text-white flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p class="font-bold tracking-wide">Loading Profile...</p>
+            <p class="font-bold tracking-wide">Loading...</p>
         </div>
     </div>
 
@@ -58,7 +61,6 @@
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Portal Login</h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Drivers & Admins</p>
             </div>
             <div class="space-y-3">
                 <button onclick="window.handleGoogleLogin('driver')" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
@@ -92,24 +94,12 @@
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <!-- Driver Vehicle Info (Will be shown for drivers) -->
+            <!-- Driver Vehicle Info -->
             <div id="settings-vehicle-section" class="mb-4 hidden">
                 <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Vehicle (Required)</h3>
                 <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
                 <input type="text" id="set-vehicle-desc" placeholder="Make & Model (e.g. Toyota Camry)" class="w-full mb-2 p-2 rounded border bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-sm dark:text-white">
                 <button onclick="window.saveVehicleInfo()" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">Save Vehicle</button>
-            </div>
-
-            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Snapshot</h3>
-                <div class="flex justify-between text-sm">
-                    <span>Total Sales (Lifetime)</span>
-                    <span class="font-bold" id="setting-stat-total">0</span>
-                </div>
-                <div class="flex justify-between text-sm mt-1">
-                    <span>Current Debt</span>
-                    <span class="font-bold text-red-500" id="setting-stat-debt">$0</span>
-                </div>
             </div>
 
             <div class="space-y-3">
@@ -129,7 +119,7 @@
     <div id="buyer-app" class="hidden pb-24">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
             <h1 class="text-lg font-bold flex items-center"><i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Shop Deals</h1>
-            <button onclick="window.openSettings()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
         <main class="p-4 max-w-md mx-auto space-y-6">
@@ -194,10 +184,13 @@
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center" id="driver-header">
             <div>
                 <h1 class="text-lg font-bold">Driver Portal</h1>
-                <button onclick="window.toggleDriverStatus()" id="status-badge" class="flex items-center bg-black/20 px-2 py-0.5 rounded-full mt-1 text-xs transition active:scale-95">
-                    <div id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></div>
-                    <span id="status-text">Offline</span>
-                </button>
+                <div class="flex items-center space-x-2 mt-1">
+                    <div id="driver-sync-light" class="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <button onclick="window.toggleDriverStatus()" id="status-badge" class="flex items-center bg-black/20 px-2 py-0.5 rounded-full text-xs transition active:scale-95">
+                        <div id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></div>
+                        <span id="status-text">Offline</span>
+                    </button>
+                </div>
             </div>
             <div class="flex space-x-2">
                 <button onclick="window.openSchedule()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition relative">
@@ -207,7 +200,7 @@
                 <button onclick="window.openDriverStats()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
                     <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
                 </button>
-                <button onclick="window.openSettings()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -215,10 +208,10 @@
 
         <main class="p-4 max-w-md mx-auto space-y-4">
             <!-- Incoming Orders -->
-            <div id="driver-incoming-orders" class="hidden space-y-2">
+            <div id="driver-incoming-orders" class="space-y-2">
                 <h2 class="text-xs font-bold text-gray-500 uppercase">Incoming Jobs</h2>
+                <div id="driver-offline-msg" class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800 text-center text-sm text-yellow-700 dark:text-yellow-400 mb-2">You are <b>Offline</b>. Go Online to see jobs.</div>
                 <div id="driver-orders-list"></div>
-                <div id="driver-offline-msg" class="text-center text-gray-400 text-sm py-4 hidden">You are currently offline.<br>Go <b>Online</b> to view active jobs.</div>
             </div>
 
             <!-- Active Delivery -->
@@ -243,7 +236,7 @@
                         <h2 class="text-gray-500 text-xs uppercase">My Stock</h2>
                         <div class="flex items-end">
                             <span class="text-4xl font-bold dark:text-white mr-3" id="display-stock">0</span>
-                            <button onclick="window.driverRequestStock()" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition"><i data-lucide="plus-circle" class="w-3 h-3"></i></button>
+                            <button onclick="window.driverRequestStock()" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition btn-interactive"><i data-lucide="plus-circle" class="w-3 h-3"></i></button>
                         </div>
                     </div>
                     <div class="text-right">
@@ -292,7 +285,7 @@
                 <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
                 <p class="text-xs text-gray-400" id="admin-date-display"></p>
             </div>
-            <button onclick="window.openSettings()" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
+            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
         </header>
@@ -540,13 +533,7 @@
                 <h2 class="font-bold dark:text-white">Schedule</h2>
                 <button onclick="document.getElementById('driver-schedule-modal').classList.add('hidden')">X</button>
             </div>
-            <div id="driver-calendar-controls" class="flex justify-between items-center mb-2">
-                <button onclick="window.changeCalendarMonth(-1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                <span id="driver-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
-                <button onclick="window.changeCalendarMonth(1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-            </div>
             <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded p-1 mb-4"></div>
-            <div id="driver-selected-day-details" class="mb-2 text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded hidden"></div>
             <select id="drv-cover-select" onchange="window.updateCoverTimeInputs()" class="w-full p-2 mb-2 border rounded dark:bg-gray-700 text-sm"></select>
             <div id="drv-cover-times" class="hidden grid grid-cols-2 gap-2 mb-2">
                 <input type="time" id="drv-cover-start" class="border rounded p-1">
@@ -558,9 +545,17 @@
     </div>
 
     <div id="driver-stats-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 w-11/12 max-w-md rounded-2xl p-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 w-11/12 max-w-md rounded-2xl p-4">
             <button onclick="document.getElementById('driver-stats-modal').classList.add('hidden')" class="mb-4 text-sm text-gray-500 hover:text-gray-700">Close</button>
-            <div class="h-64"><canvas id="driverProfitChart"></canvas></div>
+            
+            <!-- Earnings Projection -->
+            <div class="mb-4 bg-gradient-to-r from-green-500 to-emerald-600 p-3 rounded-lg text-white">
+                <h3 class="text-xs uppercase font-bold mb-1 opacity-80">Weekly Projection</h3>
+                <div class="text-2xl font-bold" id="drv-projected-earnings">$0</div>
+                <div class="text-[10px] opacity-80">Based on recent performance</div>
+            </div>
+
+            <canvas id="driverProfitChart"></canvas>
             <div id="drv-stat-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
         </div>
     </div>
@@ -601,20 +596,6 @@
             t.innerText = msg; 
             t.className = "show"; 
             setTimeout(() => t.className = "", 3000); 
-        };
-
-        window.openSettings = () => {
-            const modal = document.getElementById('settings-modal');
-            const vehicleSection = document.getElementById('settings-vehicle-section');
-            modal.classList.remove('hidden');
-
-            if (userRole === 'driver' || userRole === 'admin') vehicleSection.classList.remove('hidden');
-
-            // iOS: focus after paint so keyboard opens reliably when modal appears.
-            setTimeout(() => {
-                const input = document.getElementById('set-vehicle-desc');
-                if (input && !vehicleSection.classList.contains('hidden')) input.focus();
-            }, 80);
         };
         
         window.toggleTheme = () => { 
@@ -765,6 +746,9 @@
             document.getElementById('driver-name-display').innerText = user.displayName;
             if(viewMode) return;
 
+            // Make sure vehicle settings are accessible
+            document.getElementById('settings-vehicle-section').classList.remove('hidden');
+
             // 1. Private App State
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
@@ -784,6 +768,7 @@
             unsubMyShifts = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => { 
                 if(snap.exists()) { 
                     driverShifts = snap.data().shifts || []; 
+                    // Safety check for empty array before render
                     window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); 
                 } 
             });
@@ -791,10 +776,8 @@
             // 3. Orders
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'orders'), (snap) => {
                 const list = document.getElementById('driver-orders-list'); 
-                const offlineMsg = document.getElementById('driver-offline-msg');
                 list.innerHTML = ''; 
                 let hasActive = false;
-                let pendingCount = 0;
 
                 snap.forEach(d => {
                     const o = {id: d.id, ...d.data()};
@@ -813,55 +796,34 @@
                         }
                         currentOrder = o;
                     } 
-                    // If Pending Order (always visible, accept enabled only online)
-                    else if(o.status === 'pending') {
-                        pendingCount++;
-                        const disabled = appData.onlineStatus !== 'online';
+                    // If Pending Order (Available for anyone)
+                    else if(o.status === 'pending' && appData.onlineStatus === 'online') {
                         list.innerHTML += `
                         <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800 mb-2">
                             <div class="font-bold text-sm dark:text-white">${o.address}</div>
                             <div class="flex justify-between mt-1">
                                 <span class="text-xs text-green-600 font-bold">$${o.price} (${o.qty}x)</span>
-                                <button onclick="window.acceptOrder('${d.id}')" ${disabled ? 'disabled' : ''} class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Accept</button>
+                                <button onclick="window.acceptOrder('${d.id}')" class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-700">Accept</button>
                             </div>
                         </div>`;
                     }
                 });
-
-                if(offlineMsg) {
-                    if(appData.onlineStatus !== 'online' && pendingCount > 0) offlineMsg.classList.remove('hidden');
-                    else offlineMsg.classList.add('hidden');
-                }
-
-                if(!hasActive && pendingCount === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-400 text-sm py-2">No open customer requests.</div>';
-                }
 
                 if(!hasActive) { 
                     document.getElementById('driver-active-delivery').classList.add('hidden'); 
                     document.getElementById('driver-incoming-orders').classList.remove('hidden'); 
                 }
             });
-
-            // Reveal Vehicle Settings if needed
-            document.getElementById('settings-vehicle-section').classList.remove('hidden');
         }
 
         // Driver Utility Functions
         window.saveVehicleInfo = async () => { 
-            const color = document.getElementById('set-vehicle-color').value.trim();
-            const model = document.getElementById('set-vehicle-desc').value.trim();
-            if(!model) return window.showToast("Vehicle make/model is required");
-
-            appData.vehicle = { color, model }; 
+            const c = document.getElementById('set-vehicle-color').value;
+            const m = document.getElementById('set-vehicle-desc').value;
+            if(!c || !m) return window.showToast("Fill all fields");
+            appData.vehicle = { color: c, model: m }; 
             await saveDriverData(); 
             window.showToast("Vehicle Saved"); 
-        };
-
-        window.openSchedule = () => {
-            document.getElementById('driver-schedule-modal').classList.remove('hidden');
-            window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
-            lucide.createIcons();
         };
 
         window.acceptOrder = async (oid) => { 
@@ -896,7 +858,7 @@
             if(!viewMode) { 
                 if(appData.onlineStatus !== 'online' && (!appData.vehicle || !appData.vehicle.model)) {
                     // Force open settings if vehicle is missing
-                    window.openSettings();
+                    document.getElementById('settings-modal').classList.remove('hidden');
                     return window.showToast("Please save vehicle details first!");
                 }
                 appData.onlineStatus = appData.onlineStatus==='online'?'offline':'online'; 
@@ -959,15 +921,18 @@
             const dot = document.getElementById('status-dot'); 
             const txt = document.getElementById('status-text');
             const offlineMsg = document.getElementById('driver-offline-msg');
+            const syncLight = document.getElementById('driver-sync-light');
 
             if(appData.onlineStatus === 'online') { 
                 dot.className = "w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"; 
                 txt.innerText = "Online"; 
                 if(offlineMsg) offlineMsg.classList.add('hidden');
+                if(syncLight) syncLight.classList.add('sync-active');
             } else { 
                 dot.className = "w-2 h-2 rounded-full bg-gray-400 mr-1.5"; 
                 txt.innerText = "Offline"; 
                 if(offlineMsg) offlineMsg.classList.remove('hidden');
+                if(syncLight) syncLight.classList.remove('sync-active');
             }
             
             document.getElementById('display-stock').innerText = appData.stock; 
@@ -1011,14 +976,13 @@
 
         window.renderCalendar = (elId, shiftsData, mode) => {
             const grid = document.getElementById(elId); 
-            if(!grid) return;
             grid.innerHTML = '';
             
             const mLabel = document.getElementById(mode==='driver'?'driver-calendar-month':'admin-calendar-month');
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             
-            if(mLabel) mLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+            mLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
             
             const startDay = new Date(year, month, 1).getDay(); 
             for(let i=0; i<startDay; i++) grid.innerHTML += `<div></div>`;
@@ -1030,6 +994,7 @@
                 let shifts = [];
                 
                 if(mode==='driver') {
+                    // Safe access in case shiftsData is null
                     shifts = (shiftsData || []).filter(s => s.date === dateStr);
                 } else {
                     globalRoster.forEach(drv => { 
@@ -1047,7 +1012,6 @@
         window.selectCalendarDay = (day, mode) => {
             const dateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const detailEl = document.getElementById(mode==='driver'?'driver-selected-day-details':'admin-selected-day-details');
-            if(!detailEl) return;
             detailEl.innerHTML = `<strong>${dateStr}</strong><br>`; 
             detailEl.classList.remove('hidden');
             
@@ -1161,8 +1125,7 @@
 
         window.openDriverStats = () => { 
             document.getElementById('driver-stats-modal').classList.remove('hidden'); 
-            // Mobile Safari: defer chart creation until modal has laid out.
-            setTimeout(() => renderDriverCharts(), 80);
+            renderDriverCharts(); 
         };
 
         function renderDriverCharts() { 
@@ -1182,13 +1145,22 @@
                     scales:{y:{beginAtZero:true, grid:{color:'#374151'}}, x:{grid:{display:false}}}
                 }
             });
-            driverChartInstance.resize();
             
             const list = document.getElementById('drv-stat-list'); 
             list.innerHTML=''; 
+            
+            // EARNINGS PROJECTION LOGIC
+            let totalProfit = 0;
+            let count = 0;
             [...appData.history].reverse().slice(0,7).forEach(h => {
+                totalProfit += h.profit;
+                count++;
                 list.innerHTML += `<div class="flex justify-between text-xs py-1 border-b dark:border-gray-700"><span class="text-gray-500">${h.date}</span><span class="text-green-600 font-bold">+$${h.profit}</span></div>`;
             });
+            
+            const avgDaily = count > 0 ? totalProfit / count : 0;
+            const projectedWeekly = Math.round(avgDaily * 7);
+            document.getElementById('drv-projected-earnings').innerText = `$${projectedWeekly}`;
         }
 
         // --- ADMIN LOGIC ---
@@ -1458,9 +1430,8 @@
             const drvs=globalRoster.filter(d=>d.role!=='admin'); 
             const d=drvs[parseInt(s)-1]; if(!d) return; 
             const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; 
-            // Update driver first, then warehouse. Prevents warehouse-only deductions on partial failure.
-            await updateDriverAssets(d.id,q,0); 
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); 
+            await updateDriverAssets(d.id,q,0); 
             window.showToast("Sent"); 
         };
 
@@ -1486,21 +1457,17 @@
         };
 
         async function updateDriverAssets(uid,s,d) { 
+            // FETCH FRESH STATE FIRST
             const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn=await getDoc(r); 
-            let dat={stock:0,debt:0,history:[],currentTransactions:[],vehicle:{},onlineStatus:'offline'};
-            if(sn.exists()) {
-                const raw = sn.data();
-                if(raw?.json) {
-                    try { dat = { ...dat, ...JSON.parse(raw.json) }; } catch(_) {}
-                } else {
-                    // Backward-compatible fallback if legacy docs do not use the `json` wrapper.
-                    dat = { ...dat, ...raw };
-                }
-            }
+            let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; 
+            
+            // Apply Update
             dat.stock=(dat.stock||0)+s; 
             dat.debt=(dat.debt||0)+d; 
             if(dat.debt<0) dat.debt=0; 
+            
+            // Save back
             await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); 
             await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); 
         }
@@ -1589,8 +1556,7 @@
         };
         
         window.fulfillStockReq = async (reqId, uid) => { 
-            const collectSel = document.getElementById('collect-driver');
-            if(collectSel) collectSel.value = uid; 
+            document.getElementById('distribute-select-driver').value = uid; 
             window.updateTransferStats('collect'); 
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' }); 
             window.showToast("Driver Selected below"); 
