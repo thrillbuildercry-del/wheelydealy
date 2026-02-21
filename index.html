@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,961 +10,1608 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <style>
-        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom styles for mobile app feel */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
-        /* Calendar Styles */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .calendar-day { min-height: 60px; position: relative; cursor: pointer; }
-        .shift-bar { font-size: 9px; padding: 1px 2px; border-radius: 2px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 200; left: 50%; bottom: 80px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
-        #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .hidden { display: none !important; }
-        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 50;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 90px;
+        }
+
+        /* Slide to delete animation */
+        .slide-out {
+            animation: slideOut 0.3s forwards;
+        }
+        @keyframes slideOut {
+            to { transform: translateX(100%); opacity: 0; height: 0; margin: 0; padding: 0; }
+        }
     </style>
     <script>
-        if (localStorage.theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
+        // Check theme before render to prevent flashing
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
     </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen">
+<body class="text-gray-800 dark:text-gray-100 dark:bg-gray-900 pb-24 transition-colors duration-200">
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="modal-overlay z-[150]">
-        <div class="text-white flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p class="font-bold tracking-wide">Loading Profile...</p>
-        </div>
-    </div>
-
-    <!-- Auth Modal -->
-    <div id="login-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
-            <div class="text-center mb-6">
-                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
-                    <i data-lucide="shield-check" class="w-8 h-8"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Portal Login</h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Drivers & Admins</p>
-            </div>
-            <button onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-gray-700 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 font-bold py-3 rounded-lg shadow-sm flex justify-center items-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z"/><path fill="#EA4335" d="M12 4.36c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0 7.7 0 3.99 2.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Sign in with Google
+    <!-- App Container -->
+    <div class="max-w-md mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen shadow-xl relative transition-colors duration-200">
+        
+        <!-- Header -->
+        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md transition-colors duration-200">
+            <h1 class="text-xl font-bold text-center">Sales Tracker</h1>
+            <p id="current-date-header" class="text-center text-sm text-blue-200 dark:text-gray-400"></p>
+            <button onclick="toggleTheme()" class="absolute right-4 top-4 p-1 rounded-full hover:bg-white/20 transition">
+                <i data-lucide="moon" id="theme-icon" class="w-5 h-5 text-white"></i>
             </button>
-        </div>
-    </div>
+        </header>
 
-    <!-- Approval Pending / Suspended Modal -->
-    <div id="approval-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm text-center">
-            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
-                <i data-lucide="lock" class="w-8 h-8"></i>
-            </div>
-            <h2 id="approval-title" class="text-2xl font-bold dark:text-white">Access Restricted</h2>
-            <p id="approval-msg" class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Please contact management.</p>
-            <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-lg text-gray-700 dark:text-gray-300">Sign Out</button>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold dark:text-white">Options</h2>
-                <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
+        <!-- Main Content Area -->
+        <main class="p-4">
             
-            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">My Snapshot</h3>
-                <div class="flex justify-between text-sm">
-                    <span>Total Sales (Lifetime)</span>
-                    <span class="font-bold" id="setting-stat-total">0</span>
-                </div>
-                <div class="flex justify-between text-sm mt-1">
-                    <span>Current Debt</span>
-                    <span class="font-bold text-red-500" id="setting-stat-debt">$0</span>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <span class="font-medium dark:text-white">Dark Mode</span>
-                    <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
-                </button>
-                <hr class="border-gray-200 dark:border-gray-700 my-2">
-                <button onclick="window.logout()" class="w-full flex justify-center items-center p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-bold">
-                    <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Log Out
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DRIVER REPORTS MODAL -->
-    <div id="driver-stats-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-0 rounded-2xl shadow-2xl w-11/12 max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-4 bg-blue-600 dark:bg-gray-700 text-white flex justify-between items-center">
-                <h2 class="text-lg font-bold">My Performance</h2>
-                <button onclick="document.getElementById('driver-stats-modal').classList.add('hidden')" class="p-1 hover:bg-blue-700 rounded"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto">
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">This Week</div>
-                        <div class="text-xl font-bold text-green-600" id="drv-stat-week">$0</div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">This Month</div>
-                        <div class="text-xl font-bold text-blue-600" id="drv-stat-month">$0</div>
-                    </div>
-                </div>
-                <div class="h-64 bg-white dark:bg-gray-900 rounded-lg p-2 border border-gray-100 dark:border-gray-700 mb-4">
-                    <canvas id="driverProfitChart"></canvas>
-                </div>
-                <h3 class="font-bold text-sm mb-2 dark:text-white">Breakdown</h3>
-                <div class="space-y-2 text-sm" id="drv-stat-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- DRIVER SCHEDULE MODAL -->
-    <div id="driver-schedule-modal" class="modal-overlay hidden">
-        <div class="bg-white dark:bg-gray-800 p-0 rounded-2xl shadow-2xl w-11/12 max-w-md overflow-hidden flex flex-col max-h-[95vh]">
-            <div class="p-4 bg-purple-600 dark:bg-purple-800 text-white flex justify-between items-center">
-                <h2 class="text-lg font-bold">Work Schedule</h2>
-                <button onclick="document.getElementById('driver-schedule-modal').classList.add('hidden')" class="p-1 hover:bg-purple-700 rounded"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <div class="p-4 overflow-y-auto space-y-6">
+            <!-- TAB 1: SALES & TERMINAL -->
+            <div id="tab-sales" class="tab-content active">
                 
-                <!-- Calendar View -->
-                <div>
-                    <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide mb-2">My Calendar</h3>
-                    <div id="driver-calendar-controls" class="flex justify-between items-center mb-2">
-                        <button onclick="window.changeCalendarMonth(-1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                        <span id="driver-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
-                        <button onclick="window.changeCalendarMonth(1, 'driver')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                    <div id="driver-calendar-grid" class="calendar-grid bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-1">
-                        <!-- Calendar JS injected here -->
-                    </div>
-                    <div id="driver-selected-day-details" class="mt-2 text-xs bg-gray-100 dark:bg-gray-900 p-2 rounded hidden"></div>
-                </div>
-
-                <!-- Cover Request Form -->
-                <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800">
-                    <h3 class="font-bold text-purple-800 dark:text-purple-300 text-xs uppercase mb-2">Request Cover</h3>
-                    <p class="text-[10px] text-gray-500 mb-2">Select a shift to request cover. You can adjust hours for partial cover.</p>
-                    <select id="drv-cover-select" onchange="window.updateCoverTimeInputs()" class="w-full p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm mb-2">
-                        <option value="">Select Shift...</option>
-                    </select>
+                <!-- Stock Management Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center justify-between">
+                        <div class="flex items-center"><i data-lucide="package" class="w-5 h-5 mr-2"></i> Inventory</div>
+                        <button onclick="toggleStockEdit()" class="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 rounded text-gray-600 dark:text-gray-300 transition flex items-center">
+                            <i data-lucide="edit-2" class="w-3 h-3 mr-1"></i> Edit
+                        </button>
+                    </h2>
                     
-                    <div id="drv-cover-times" class="hidden grid grid-cols-2 gap-2 mb-2">
-                        <div>
-                            <label class="text-[10px] font-bold">Cover Start</label>
-                            <input type="time" id="drv-cover-start" class="w-full p-1 text-sm rounded border dark:bg-gray-700 dark:border-gray-600">
+                    <!-- Stock Display Mode -->
+                    <div id="stock-display-mode">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-3xl font-bold dark:text-white" id="display-stock">0</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Items in Stock</span>
                         </div>
-                        <div>
-                            <label class="text-[10px] font-bold">Cover End</label>
-                            <input type="time" id="drv-cover-end" class="w-full p-1 text-sm rounded border dark:bg-gray-700 dark:border-gray-600">
+                        <div class="flex space-x-2">
+                            <input type="number" id="stock-add-input" placeholder="Qty to add" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" min="1">
+                            <button onclick="addStock()" class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium active:bg-blue-700 transition">Add</button>
                         </div>
                     </div>
 
-                    <button onclick="window.driverRequestCover()" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 rounded-lg transition">Post Request</button>
-                </div>
+                    <!-- Stock Edit Mode (Hidden by default) -->
+                    <div id="stock-edit-mode" class="hidden">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Set exact stock count:</p>
+                        <div class="flex space-x-2">
+                            <input type="number" id="stock-set-input" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500">
+                            <button onclick="saveStockEdit()" class="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg font-medium active:bg-green-700 transition">Set</button>
+                            <button onclick="toggleStockEdit()" class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg font-medium">Cancel</button>
+                        </div>
+                    </div>
 
-                <!-- Available Overtime -->
-                <div>
-                    <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide mb-2 flex items-center">
-                        Available Overtime <span class="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 rounded-full ml-2 font-bold" id="drv-ot-count">0</span>
-                    </h3>
-                    <div id="drv-ot-list" class="space-y-2">
-                        <div class="text-center text-gray-400 text-xs py-2">No overtime available.</div>
+                    <div class="mt-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded flex justify-between">
+                        <span>Value of Unsold Stock:</span>
+                        <span id="display-stock-value" class="font-semibold text-gray-700 dark:text-gray-200">$0</span>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- DRIVER UI -->
-    <div id="driver-app" class="hidden pb-24 relative">
-        <!-- View Only Banner (for Admin View Mode) -->
-        <div id="view-only-banner" class="hidden sticky top-0 left-0 w-full bg-orange-500 text-white text-center py-2 text-xs font-bold z-50">
-            VIEW ONLY MODE
-            <button onclick="window.exitViewMode()" class="ml-4 bg-white text-orange-600 px-2 rounded hover:bg-gray-100">Exit</button>
-        </div>
+                <!-- Sell Terminal Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Quick Sell
+                    </h2>
+                    
+                    <button onclick="sellItem('1_full')" class="w-full mb-3 border-2 border-blue-100 dark:border-blue-900/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center active:bg-blue-200 dark:active:bg-blue-900/40 transition">
+                        <div class="font-bold text-lg text-blue-800 dark:text-blue-400">1 Item</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">$80</div>
+                    </button>
 
-        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300" id="driver-header">
-            <div>
-                <h1 class="text-lg font-bold">Driver Portal</h1>
-                <div class="flex items-center text-xs text-blue-200 mt-1 space-x-2">
-                    <span id="driver-name-display">Guest</span>
-                    <span>•</span>
-                    <!-- Status Toggle -->
-                    <button onclick="window.toggleDriverStatus()" id="status-badge" class="flex items-center bg-black/20 px-2 py-0.5 rounded-full hover:bg-black/30 transition">
-                        <div id="status-dot" class="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></div>
-                        <span id="status-text">Offline</span>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-3 mb-2">
+                        <!-- Headers -->
+                        <div class="text-[10px] text-center font-bold text-gray-400 dark:text-gray-500 col-span-1 uppercase tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1">Deal Price</div>
+                        <div class="text-[10px] text-center font-bold text-gray-400 dark:text-gray-500 col-span-1 uppercase tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1">Full Price</div>
+
+                        <!-- 2 Items -->
+                        <button onclick="sellItem('2_deal')" class="border-2 border-green-100 dark:border-green-900/50 hover:border-green-500 bg-green-50 dark:bg-green-900/20 rounded-lg py-3 px-1 text-center active:bg-green-200 dark:active:bg-green-900/40 transition flex flex-col items-center justify-center">
+                            <div class="font-bold text-md text-green-800 dark:text-green-400">2 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$150</div>
+                        </button>
+                        <button onclick="sellItem('2_full')" class="border-2 border-green-200 dark:border-green-800 hover:border-green-500 bg-white dark:bg-gray-800 rounded-lg py-3 px-1 text-center active:bg-green-50 dark:active:bg-gray-700 transition flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
+                            <div class="absolute top-0 right-0 bg-green-500 text-white text-[9px] px-1.5 py-0.5 rounded-bl font-bold tracking-wide">+$10 Profit</div>
+                            <div class="font-bold text-md text-gray-800 dark:text-gray-200">2 Items</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">$160</div>
+                        </button>
+
+                        <!-- 3 Items -->
+                        <button onclick="sellItem('3_deal')" class="border-2 border-purple-100 dark:border-purple-900/50 hover:border-purple-500 bg-purple-50 dark:bg-purple-900/20 rounded-lg py-3 px-1 text-center active:bg-purple-200 dark:active:bg-purple-900/40 transition flex flex-col items-center justify-center">
+                            <div class="font-bold text-md text-purple-800 dark:text-purple-400">3 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$220</div>
+                        </button>
+                        <button onclick="sellItem('3_full')" class="border-2 border-purple-200 dark:border-purple-800 hover:border-purple-500 bg-white dark:bg-gray-800 rounded-lg py-3 px-1 text-center active:bg-purple-50 dark:active:bg-gray-700 transition flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
+                            <div class="absolute top-0 right-0 bg-purple-500 text-white text-[9px] px-1.5 py-0.5 rounded-bl font-bold tracking-wide">+$20 Profit</div>
+                            <div class="font-bold text-md text-gray-800 dark:text-gray-200">3 Items</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">$240</div>
+                        </button>
+
+                        <!-- 4 Items -->
+                        <button onclick="sellItem('4_deal')" class="border-2 border-orange-100 dark:border-orange-900/50 hover:border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-lg py-3 px-1 text-center active:bg-orange-200 dark:active:bg-orange-900/40 transition flex flex-col items-center justify-center">
+                            <div class="font-bold text-md text-orange-800 dark:text-orange-400">4 Items</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">$280</div>
+                        </button>
+                        <button onclick="sellItem('4_full')" class="border-2 border-orange-200 dark:border-orange-800 hover:border-orange-500 bg-white dark:bg-gray-800 rounded-lg py-3 px-1 text-center active:bg-orange-50 dark:active:bg-gray-700 transition flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
+                            <div class="absolute top-0 right-0 bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded-bl font-bold tracking-wide">+$40 Profit</div>
+                            <div class="font-bold text-md text-gray-800 dark:text-gray-200">4 Items</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">$320</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Today's Transactions (Editable) -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 flex items-center justify-between">
+                        <div class="flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Today's Sales</div>
+                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded-full" id="txn-count-badge">0 sales</span>
+                    </h2>
+                    
+                    <!-- Stats Summary Mini -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-100 dark:border-green-900/30 text-center">
+                             <div class="text-xs text-green-600 dark:text-green-400 uppercase">Profit</div>
+                             <div class="font-bold text-green-700 dark:text-green-300" id="today-profit">$0</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-100 dark:border-gray-600 text-center">
+                             <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Gross</div>
+                             <div class="font-bold text-gray-700 dark:text-white" id="today-gross">$0</div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction List -->
+                    <div id="current-transactions-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar mb-4">
+                        <!-- Items injected here -->
+                        <div class="text-center text-gray-400 text-sm py-4">No sales yet today.</div>
+                    </div>
+
+                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex justify-between items-center mb-4 border border-red-100 dark:border-red-900/30">
+                        <div class="text-xs text-red-600 dark:text-red-400 uppercase tracking-wide font-medium">Supplier Funds</div>
+                        <div class="text-xl font-bold text-red-700 dark:text-red-400" id="today-supplier">$0</div>
+                    </div>
+
+                    <button onclick="showEndDaySummary()" class="w-full bg-gray-800 dark:bg-gray-700 text-white py-3 rounded-lg font-bold shadow-md active:bg-gray-900 dark:active:bg-gray-600 transition flex justify-center items-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Save Day & Reset Shift
                     </button>
                 </div>
             </div>
-            <div class="flex space-x-2">
-                <button onclick="window.openSchedule()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition relative">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    <div id="sched-notify-dot" class="hidden absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700 dark:border-gray-700"></div>
-                </button>
-                <button onclick="window.openDriverStats()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
-                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
-                </button>
-                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
-            </div>
-        </header>
 
-        <main class="p-4 max-w-md mx-auto">
-            <!-- Stock Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
-                <div class="flex justify-between items-center relative z-10">
-                    <div>
-                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">My Stock</h2>
-                        <div class="flex items-end">
-                            <span class="text-4xl font-bold dark:text-white mr-3" id="display-stock">0</span>
-                            <button onclick="window.driverRequestStock()" class="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-200 px-2 py-1 rounded-full font-bold mb-2 transition flex items-center btn-interactive">
-                                <i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> Request More
+            <!-- TAB 2: REPORTS & ANALYTICS -->
+            <div id="tab-reports" class="tab-content">
+                
+                <!-- Predictions Card -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-sm p-5 mb-4 text-white">
+                    <h2 class="font-semibold text-blue-100 dark:text-blue-200 mb-1 flex items-center text-sm uppercase tracking-wider">
+                        <i data-lucide="trending-up" class="w-4 h-4 mr-2"></i> Predicted Weekly Profit
+                    </h2>
+                    <div class="text-3xl font-bold mb-1" id="predicted-earnings">$0</div>
+                    <p class="text-xs text-blue-200 dark:text-blue-300" id="prediction-context">Based on average sales this week</p>
+                </div>
+
+                <!-- Financial Charts Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 text-sm uppercase">Financial Performance</h3>
+                    <div class="flex space-x-2 mb-4 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                        <button onclick="updateChart('daily')" id="btn-chart-daily" class="flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition">Daily</button>
+                        <button onclick="updateChart('weekly')" id="btn-chart-weekly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Weekly</button>
+                        <button onclick="updateChart('monthly')" id="btn-chart-monthly" class="flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition">Monthly</button>
+                    </div>
+                    
+                    <div class="relative h-56 w-full">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Hourly Analysis Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                     <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-sm uppercase flex items-center">
+                         <i data-lucide="clock" class="w-4 h-4 mr-2"></i> Busiest Times (Hourly)
+                     </h3>
+                     <p class="text-xs text-gray-400 mb-4">Total items sold by hour of day</p>
+                     <div class="relative h-48 w-full">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3">Recent Days</h2>
+                    <div id="history-list" class="space-y-3 max-h-60 overflow-y-auto hide-scrollbar">
+                        <!-- History items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CALCULATOR -->
+            <div id="tab-calculator" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 flex items-center">
+                        <i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Supplier Ledger & Cash
+                    </h2>
+                    
+                    <!-- Debt Ledger Section -->
+                    <div class="bg-red-50 dark:bg-red-900/10 rounded-lg p-3 mb-4 border border-red-100 dark:border-red-900/30">
+                        <h3 class="text-xs font-bold text-red-800 dark:text-red-400 uppercase mb-3 flex items-center"><i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> Supplier Debt</h3>
+                        
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Previous Unpaid Debt</span>
+                            <span class="font-bold text-gray-800 dark:text-gray-100" id="calc-carried-debt">$0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-red-200 dark:border-red-900/40">
+                            <span class="text-sm text-red-700 dark:text-red-400">Today's Auto-Debt (Sales)</span>
+                            <span class="font-bold text-red-700 dark:text-red-400" id="calc-auto-owed">$0</span>
+                        </div>
+
+                        <!-- Custom Debt Addition -->
+                        <div class="mb-2">
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase block mb-1">Add Custom Debt</span>
+                            <div class="flex space-x-2">
+                                <input type="text" id="new-custom-debt-desc" placeholder="Reason..." class="flex-1 w-1/2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-red-400">
+                                <input type="number" id="new-custom-debt-amount" placeholder="$ Amount" class="w-24 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-red-400">
+                                <button onclick="addCustomDebt()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded font-medium transition shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        
+                        <!-- List of Custom Debts -->
+                        <div id="list-custom-debts" class="mb-3 space-y-1"></div>
+
+                        <div class="pt-2 flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded shadow-sm border border-red-100 dark:border-red-900/50">
+                            <span class="text-xs font-bold text-red-800 dark:text-red-300 uppercase tracking-wide">Total Gross Debt</span>
+                            <span class="font-bold text-red-800 dark:text-red-400 text-lg" id="calc-total-gross-debt">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Payments Ledger Section -->
+                    <div class="bg-green-50 dark:bg-green-900/10 rounded-lg p-3 mb-4 border border-green-100 dark:border-green-900/30">
+                        <h3 class="text-xs font-bold text-green-800 dark:text-green-400 uppercase mb-3 flex items-center"><i data-lucide="trending-down" class="w-4 h-4 mr-1"></i> Payments Made</h3>
+                        
+                        <div class="mb-2 flex space-x-2">
+                            <div class="flex-1 text-sm text-gray-600 dark:text-gray-300 py-1.5">Money Paid to Supplier</div>
+                            <input type="number" id="new-payment-amount" placeholder="$ Amount" class="w-24 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-green-400">
+                            <button onclick="addSupplierPayment()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded font-medium transition shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                        </div>
+                        
+                        <!-- List of Payments -->
+                        <div id="list-payments" class="mb-3 space-y-1"></div>
+
+                        <div class="pt-2 flex justify-between items-center bg-white dark:bg-gray-800 p-2 rounded shadow-sm border border-green-100 dark:border-green-900/50">
+                            <span class="text-xs font-bold text-green-800 dark:text-green-300 uppercase tracking-wide">Total Paid Today</span>
+                            <span class="font-bold text-green-800 dark:text-green-400 text-lg" id="calc-total-payments">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Net Owed -->
+                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 mb-5 shadow-inner text-white flex justify-between items-center border border-gray-700">
+                        <div>
+                            <span class="text-sm text-gray-200 block font-bold uppercase tracking-wide">Net Amount Owed</span>
+                            <span class="text-[10px] text-gray-400">Total Debt minus Payments</span>
+                        </div>
+                        <span class="font-bold text-2xl text-blue-400" id="calc-net-owed">$0</span>
+                    </div>
+
+                    <!-- Funds Section -->
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Assets On Hand</h3>
+                            <div class="text-xs font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-100 dark:border-green-900/30" id="calc-total-assets">Combined: $0</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-gray-500 dark:text-gray-400 block mb-1">CASH AMOUNT</label>
+                                <input type="number" id="calc-cash" oninput="appData.calcCash = this.value; localStorage.setItem('salesAppData', JSON.stringify(appData)); calculateReconciliation();" placeholder="0" class="w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-green-700 dark:text-green-400 font-bold rounded-lg px-3 py-3 outline-none transition-colors">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-gray-500 dark:text-gray-400 block mb-1">BANK BALANCE</label>
+                                <input type="number" id="calc-bank" oninput="appData.calcBank = this.value; localStorage.setItem('salesAppData', JSON.stringify(appData)); calculateReconciliation();" placeholder="0" class="w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-green-700 dark:text-green-400 font-bold rounded-lg px-3 py-3 outline-none transition-colors">
+                            </div>
+                        </div>
+                        <button onclick="transferBankToCash()" class="w-full mt-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg text-sm font-bold transition flex items-center justify-center shadow-sm">
+                            <i data-lucide="arrow-left-right" class="w-4 h-4 mr-2"></i> Transfer Bank to Cash
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium" id="calc-status-label">Status</span>
+                            <span class="font-bold text-2xl" id="calc-status-value">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Advisor Section -->
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-10">
+                            <i data-lucide="sparkles" class="w-24 h-24 text-indigo-500"></i>
+                        </div>
+                        <div class="flex justify-between items-center mb-3 relative z-10">
+                            <h3 class="text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase flex items-center">
+                                <i data-lucide="bot" class="w-4 h-4 mr-1.5"></i> AI Financial Advisor
+                            </h3>
+                            <button id="btn-ai-advisor" onclick="generateAIFinancialAdvice()" class="text-[10px] font-bold bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-2.5 py-1.5 rounded shadow-sm transition flex items-center disabled:opacity-70 disabled:cursor-not-allowed">
+                                ✨ Get Insight
                             </button>
                         </div>
-                    </div>
-                    <div class="text-right">
-                        <h2 class="text-gray-500 text-xs uppercase tracking-wide">Total Debt Owed</h2>
-                        <span class="text-2xl font-bold text-red-500" id="display-debt">$0</span>
+                        <p id="ai-advisor-output" class="text-sm text-gray-700 dark:text-gray-300 italic relative z-10 leading-relaxed">
+                            Click the button above to get AI-powered insights on your current ledger balance, debt, and cash flow.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- New Sale Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center"><i data-lucide="tag" class="w-3 h-3 mr-1 text-green-500"></i> Standard Price ($80/ea)</h2>
-                <div class="grid grid-cols-4 gap-2 mb-4">
-                    <button onclick="window.sellItem(1, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
-                    <button onclick="window.sellItem(2, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">2</div><div class="text-[10px] text-gray-500">$160</div></button>
-                    <button onclick="window.sellItem(3, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">3</div><div class="text-[10px] text-gray-500">$240</div></button>
-                    <button onclick="window.sellItem(4, 'full')" class="p-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-green-700 dark:text-green-400">4</div><div class="text-[10px] text-gray-500">$320</div></button>
+            <!-- TAB 4: SETTINGS -->
+            <div id="tab-settings" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 border border-gray-100 dark:border-gray-700 transition-colors">
+                    <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-4 flex items-center">
+                        <i data-lucide="database" class="w-5 h-5 mr-2"></i> Data Management
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Save a backup of all your sales data to your device.</p>
+                            <button onclick="exportData()" class="w-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 py-3 rounded-lg font-medium active:bg-blue-100 dark:active:bg-blue-900/50 transition flex justify-center items-center">
+                                <i data-lucide="download" class="w-5 h-5 mr-2"></i> Export Data (JSON)
+                            </button>
+                        </div>
+                        
+                        <hr class="border-gray-100 dark:border-gray-700">
+                        
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Restore data from a previously exported file.</p>
+                            <label class="w-full bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 py-3 rounded-lg font-medium active:bg-gray-100 dark:active:bg-gray-600 transition flex justify-center items-center cursor-pointer">
+                                <i data-lucide="upload" class="w-5 h-5 mr-2"></i> Import Data
+                                <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <h2 class="text-gray-500 text-xs uppercase tracking-wide mb-2 flex items-center"><i data-lucide="percent" class="w-3 h-3 mr-1 text-orange-500"></i> Deal Price (Discount)</h2>
-                <div class="grid grid-cols-4 gap-2">
-                    <button onclick="window.sellItem(1, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">1</div><div class="text-[10px] text-gray-500">$80</div></button>
-                    <button onclick="window.sellItem(2, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">2</div><div class="text-[10px] text-gray-500">$150</div></button>
-                    <button onclick="window.sellItem(3, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">3</div><div class="text-[10px] text-gray-500">$220</div></button>
-                    <button onclick="window.sellItem(4, 'deal')" class="p-2 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/10 active:scale-95 transition hover:shadow-md btn-interactive"><div class="text-sm font-bold text-orange-600 dark:text-orange-400">4</div><div class="text-[10px] text-gray-500">$280</div></button>
+
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-xl shadow-sm p-4 border border-red-100 dark:border-red-900/50 mt-8 transition-colors">
+                    <h2 class="font-semibold text-red-700 dark:text-red-500 mb-2 flex items-center">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> Danger Zone
+                    </h2>
+                    <p class="text-xs text-red-600 dark:text-red-400 mb-3">This will permanently delete all stock and sales history. Export your data first!</p>
+                    <button onclick="resetApp()" class="w-full bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-bold shadow-sm active:bg-red-700 transition">
+                        Factory Reset App
+                    </button>
                 </div>
             </div>
 
-            <!-- Today's Stats -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-gray-500 text-xs uppercase tracking-wide">Today's Shift</h2>
-                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold" id="today-profit-badge">$0 Profit</span>
-                </div>
-                <div id="transaction-list" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar text-sm">
-                    <div class="text-center text-gray-400 py-2">No sales yet today</div>
-                </div>
-                <button onclick="window.endDay()" class="mt-4 w-full bg-gray-900 dark:bg-gray-700 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition btn-interactive">End Shift & Save</button>
-            </div>
         </main>
-    </div>
 
-    <!-- ADMIN UI -->
-    <div id="admin-app" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-        <header class="bg-gray-900 text-white p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
-                <p class="text-xs text-gray-400" id="admin-date-display"></p>
-            </div>
-            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
-                <i data-lucide="settings" class="w-5 h-5"></i>
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 w-full max-w-md bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around pb-safe pt-2 px-2 z-50 transition-colors">
+            <button onclick="switchTab('sales')" id="nav-sales" class="flex flex-col items-center p-2 text-blue-600 dark:text-blue-400 w-1/4">
+                <i data-lucide="layout-dashboard" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Sales</span>
             </button>
-        </header>
+            <button onclick="switchTab('reports')" id="nav-reports" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/4 transition">
+                <i data-lucide="pie-chart" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Reports</span>
+            </button>
+            <button onclick="switchTab('calculator')" id="nav-calculator" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/4 transition">
+                <i data-lucide="calculator" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Calculator</span>
+            </button>
+            <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 w-1/4 transition">
+                <i data-lucide="settings" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Settings</span>
+            </button>
+        </nav>
+        
+        <!-- Toast Element -->
+        <div id="toast">Message here</div>
 
-        <main class="p-4 max-w-2xl mx-auto">
-            
-            <!-- Admin Navigation -->
-            <div class="flex space-x-1 mb-6 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm overflow-x-auto hide-scrollbar">
-                <button onclick="window.switchAdminTab('team')" id="adm-tab-team" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 transition bg-gray-100 dark:bg-gray-700 text-blue-600">Team Sales</button>
-                <button onclick="window.switchAdminTab('transfer')" id="adm-tab-transfer" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Manage</button>
-                <button onclick="window.switchAdminTab('schedule')" id="adm-tab-schedule" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Schedule</button>
-                <button onclick="window.switchAdminTab('employees')" id="adm-tab-employees" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Employees</button>
-                <button onclick="window.switchAdminTab('reports')" id="adm-tab-reports" class="flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap px-2 text-gray-500 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
-            </div>
-
-            <!-- TAB: TEAM OVERVIEW -->
-            <div id="admin-view-team" class="admin-tab-content">
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase">Total Team Profit</div>
-                        <div class="text-2xl font-bold text-green-600" id="admin-total-profit">$0</div>
+        <!-- End of Day Summary Modal -->
+        <div id="end-day-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
+                <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                        <i data-lucide="file-text" class="w-5 h-5 mr-2 text-blue-500"></i> Shift Summary
+                    </h2>
+                    <button onclick="closeEndDaySummary()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="p-4 overflow-y-auto flex-1 hide-scrollbar">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Items Sold Breakdown</h3>
+                    <div id="summary-breakdown-list" class="mb-5 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <!-- Injected via JS -->
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div class="text-gray-500 text-xs uppercase">Items Sold Today</div>
-                        <div class="text-2xl font-bold text-blue-600" id="admin-total-sold">0</div>
-                    </div>
-                </div>
 
-                <div class="flex justify-between items-center mb-3 ml-1">
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300">Driver Status & Debt</h3>
-                    <div class="text-xs text-gray-400">Green = Online</div>
-                </div>
-                <div id="admin-driver-list" class="space-y-3">
-                    <div class="text-center py-8 text-gray-400 animate-pulse">Loading team data...</div>
-                </div>
-            </div>
-
-            <!-- TAB: TRANSFERS -->
-            <div id="admin-view-transfer" class="admin-tab-content hidden">
-                <div id="admin-stock-requests" class="hidden mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
-                    <h3 class="font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-3 flex items-center"><i data-lucide="bell" class="w-4 h-4 mr-2"></i> Pending Stock Requests</h3>
-                    <div id="admin-stock-requests-list" class="space-y-2"></div>
-                </div>
-                <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 text-white mb-6 shadow-lg flex justify-between items-center">
-                     <div><div class="text-xs uppercase text-gray-400">Warehouse Stock</div><div class="text-2xl font-bold" id="admin-master-stock">--</div></div>
-                     <div class="space-x-2"><button onclick="window.adminAddMasterStock()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-600">+ Restock</button><button onclick="window.adminDistributeStock()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Distribute</button></div>
-                </div>
-                <!-- P2P Transfer -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide"><i data-lucide="arrow-right-left" class="w-4 h-4 mr-2 text-purple-600"></i> Driver to Driver Transfer</h3>
-                    <div class="space-y-4">
-                        <div class="flex space-x-2 items-start">
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">From</label><select id="transfer-from" onchange="window.updateTransferStats('from')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="transfer-stats-from" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
-                            <div class="pt-7 text-gray-400"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">To</label><select id="transfer-to" onchange="window.updateTransferStats('to')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="transfer-stats-to" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Final Financials</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                            <span class="text-gray-600 dark:text-gray-300 font-medium">Gross Total (Cash)</span>
+                            <span class="font-bold text-gray-900 dark:text-white text-lg" id="summary-total-gross">$0</span>
                         </div>
-                        <div class="flex space-x-2">
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Items</label><input type="number" id="p2p-stock" placeholder="0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold"></div>
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Debt ($)</label><input type="number" id="p2p-debt" placeholder="$0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold"></div>
+                        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
+                            <span class="text-red-700 dark:text-red-400 font-medium flex items-center"><i data-lucide="corner-down-right" class="w-4 h-4 mr-1"></i> Owed to Supplier</span>
+                            <span class="font-bold text-red-700 dark:text-red-400 text-lg" id="summary-total-supplier">$0</span>
                         </div>
-                        <button onclick="window.adminP2PTransfer()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-purple-700 active:scale-95 transition">Transfer Assets</button>
-                    </div>
-                </div>
-                <!-- Manager Actions -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide"><i data-lucide="download" class="w-4 h-4 mr-2 text-green-600"></i> Manager Collection / Returns</h3>
-                    <div class="space-y-4">
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Select Target Driver</label><select id="collect-driver" onchange="window.updateTransferStats('collect')" class="w-full mt-1 p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select><div id="collect-stats" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 pl-1 min-h-[15px]"></div></div>
-                        <div class="flex space-x-2">
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Return Stock</label><input type="number" id="collect-stock" placeholder="0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold text-blue-600"></div>
-                            <div class="flex-1"><label class="text-[10px] font-bold text-gray-500 uppercase">Collect Debt ($)</label><input type="number" id="collect-debt" placeholder="$0" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg font-bold text-green-600"></div>
-                        </div>
-                        <button onclick="window.adminManageDriver()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-lg shadow-md hover:bg-gray-700 active:scale-95 transition">Process Collection</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB: SCHEDULE -->
-            <div id="admin-view-schedule" class="admin-tab-content hidden">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 text-sm uppercase tracking-wide">Assign Shift</h3>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <select id="sched-driver" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm admin-driver-select"></select>
-                        <input type="date" id="sched-date" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm dark:text-white">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <input type="time" id="sched-start" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm dark:text-white">
-                        <input type="time" id="sched-end" class="w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm dark:text-white">
-                    </div>
-                    <button onclick="window.adminAssignShift()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">Add to Schedule</button>
-                </div>
-                <div class="mb-6">
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Cover Requests</h3>
-                    <div id="admin-cover-list" class="space-y-2"><div class="text-center text-gray-400 text-sm py-2">No active cover requests.</div></div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-2">Team Schedule (Upcoming)</h3>
-                    <div id="admin-calendar-controls" class="flex justify-between items-center mb-2">
-                        <button onclick="window.changeCalendarMonth(-1, 'admin')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                        <span id="admin-calendar-month" class="font-bold text-sm dark:text-white">Month Year</span>
-                        <button onclick="window.changeCalendarMonth(1, 'admin')" class="p-1 bg-gray-200 dark:bg-gray-700 rounded"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    </div>
-                    <div id="admin-calendar-grid" class="calendar-grid bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-1"></div>
-                    <div id="admin-selected-day-details" class="mt-2 bg-white dark:bg-gray-800 p-2 rounded hidden shadow-sm text-sm space-y-1"></div>
-                </div>
-            </div>
-
-            <!-- TAB: EMPLOYEES -->
-            <div id="admin-view-employees" class="admin-tab-content hidden">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center"><i data-lucide="users" class="w-5 h-5 mr-2 text-blue-600"></i> Employee Management</h3>
-                    <div id="admin-employee-list" class="space-y-3"><div class="text-center text-gray-400 text-sm">Loading...</div></div>
-                </div>
-            </div>
-
-            <!-- TAB: REPORTS -->
-            <div id="admin-view-reports" class="admin-tab-content hidden">
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6"><h3 class="font-bold text-gray-800 dark:text-white mb-4">Team Performance</h3><div class="h-64"><canvas id="adminTeamChart"></canvas></div></div>
-                <div class="grid grid-cols-2 gap-4">
-                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"><div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (7d)</div><div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-week-gross">$0</div><div class="text-sm text-green-600 font-bold" id="adm-report-week-profit">$0 Profit</div></div>
-                     <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"><div class="text-gray-500 text-xs uppercase mb-1">Gross Revenue (Mo)</div><div class="text-xl font-bold text-gray-800 dark:text-white" id="adm-report-month-gross">$0</div><div class="text-sm text-blue-600 font-bold" id="adm-report-month-profit">$0 Profit</div></div>
-                </div>
-            </div>
-
-            <!-- VIEW: USER DETAIL -->
-            <div id="admin-user-detail" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 overflow-y-auto hidden">
-                <div class="bg-white dark:bg-gray-800 p-4 sticky top-0 shadow-md flex items-center justify-between z-10">
-                    <button onclick="document.getElementById('admin-user-detail').classList.add('hidden')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
-                    <h2 class="font-bold text-lg dark:text-white" id="detail-user-name">Driver Stats</h2>
-                    <button onclick="window.adminViewAsDriver()" class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded font-bold hover:bg-orange-200">View Dashboard</button>
-                </div>
-                <div class="p-4 max-w-2xl mx-auto space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div class="flex justify-between items-center"><div class="text-xs text-gray-500 uppercase">Stock</div><button onclick="window.adminEditValue('stock')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button></div>
-                            <div class="text-xl font-bold dark:text-white" id="detail-stock">0</div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div class="flex justify-between items-center"><div class="text-xs text-gray-500 uppercase">Debt</div><button onclick="window.adminEditValue('debt')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button></div>
-                            <div class="text-xl font-bold text-red-500" id="detail-debt">$0</div>
+                        <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-900/50 shadow-sm mt-2">
+                            <span class="text-green-700 dark:text-green-400 font-bold flex items-center"><i data-lucide="wallet" class="w-4 h-4 mr-2"></i> Your Final Profit</span>
+                            <span class="font-bold text-green-700 dark:text-green-400 text-2xl" id="summary-total-profit">$0</span>
                         </div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700"><h3 class="font-bold text-sm mb-3 border-b pb-2 dark:border-gray-700 dark:text-white">Recent Transactions</h3><div id="detail-log-list" class="space-y-2 text-sm max-h-60 overflow-y-auto"></div></div>
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-bold text-sm mb-2 border-b pb-2 dark:border-gray-700 dark:text-white">History</h3>
-                        <div class="flex space-x-2 mb-2 border-b dark:border-gray-700"><button onclick="window.renderHistory('daily')" id="hist-tab-daily" class="pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500">Daily</button><button onclick="window.renderHistory('weekly')" id="hist-tab-weekly" class="pb-1 text-sm font-bold text-gray-400">Weekly</button><button onclick="window.renderHistory('monthly')" id="hist-tab-monthly" class="pb-1 text-sm font-bold text-gray-400">Monthly</button></div>
-                        <div id="detail-history-list" class="space-y-2 text-sm"></div>
-                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex space-x-3">
+                    <button onclick="closeEndDaySummary()" class="flex-1 py-3 rounded-lg font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 active:bg-gray-100 dark:active:bg-gray-700 transition">Go Back</button>
+                    <button onclick="confirmEndDay()" class="flex-1 py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Confirm Save
+                    </button>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- History Detail Modal -->
+        <div id="history-detail-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-out]">
+                <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                            <i data-lucide="calendar" class="w-5 h-5 mr-2 text-blue-500"></i> Day Record
+                        </h2>
+                        <p id="history-modal-date" class="text-xs text-gray-500 dark:text-gray-400 mt-1"></p>
+                    </div>
+                    <button onclick="closeHistoryDetail()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="p-4 overflow-y-auto flex-1 hide-scrollbar">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Items Sold Breakdown</h3>
+                    <div id="history-breakdown-list" class="mb-5 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <!-- Injected via JS -->
+                    </div>
+
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Final Financials</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                            <span class="text-gray-600 dark:text-gray-300 font-medium">Gross Total (Cash)</span>
+                            <span class="font-bold text-gray-900 dark:text-white text-lg" id="history-total-gross">$0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
+                            <span class="text-red-700 dark:text-red-400 font-medium flex items-center"><i data-lucide="corner-down-right" class="w-4 h-4 mr-1"></i> Owed to Supplier</span>
+                            <span class="font-bold text-red-700 dark:text-red-400 text-lg" id="history-total-supplier">$0</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-900/50 shadow-sm mt-2">
+                            <span class="text-green-700 dark:text-green-400 font-bold flex items-center"><i data-lucide="wallet" class="w-4 h-4 mr-2"></i> Total Profit</span>
+                            <span class="font-bold text-green-700 dark:text-green-400 text-2xl" id="history-total-profit">$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <button onclick="closeHistoryDetail()" class="w-full py-3 rounded-lg font-medium text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 transition">Close Record</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Toast -->
-    <div id="toast"></div>
-
-    <!-- MAIN LOGIC -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, getDocs, addDoc, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
+        // Initialize Icons
         lucide.createIcons();
 
-        // --- CONFIGURATION ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU",
-            authDomain: "salesonwheels-f6eec.firebaseapp.com",
-            projectId: "salesonwheels-f6eec",
-            storageBucket: "salesonwheels-f6eec.firebasestorage.app",
-            messagingSenderId: "432785821226",
-            appId: "1:432785821226:web:96b34cc3d0526160b0bd53"
+        // Advanced Pricing Model
+        // Supplier amount is LOCKED to the deal amount, any overpayment from "full" goes strictly to your profit.
+        const PRICING = {
+            '1_full': { qty: 1, label: '1 Item', price: 80, profit: 20, supplier: 60 },
+            '2_deal': { qty: 2, label: '2 Items (Deal)', price: 150, profit: 40, supplier: 110 },
+            '2_full': { qty: 2, label: '2 Items (Full)', price: 160, profit: 50, supplier: 110 },
+            '3_deal': { qty: 3, label: '3 Items (Deal)', price: 220, profit: 60, supplier: 160 },
+            '3_full': { qty: 3, label: '3 Items (Full)', price: 240, profit: 80, supplier: 160 },
+            '4_deal': { qty: 4, label: '4 Items (Deal)', price: 280, profit: 80, supplier: 200 },
+            '4_full': { qty: 4, label: '4 Items (Full)', price: 320, profit: 120, supplier: 200 }
         };
-        const appId = "sales-tracker-v1"; 
+        const SUPPLIER_COST_PER_ITEM = 60; // Base inventory value cost
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
-
-        // --- GLOBAL STATE ---
-        let currentUser = null;
-        let userRole = 'driver'; 
-        let appData = { stock: 0, debt: 0, onlineStatus: 'offline', currentTransactions: [], history: [], stockLogs: [] };
-        let currentDetailUid = null;
-        let currentDriverData = null; 
-        let globalRoster = []; 
-        let driverShifts = [];
-        let calendarDate = new Date(); 
-        let viewMode = false; // Is Admin viewing driver dashboard?
-        
-        let driverChartInstance = null;
-        let adminChartInstance = null;
-
-        // Listeners
-        let unsubUserData = null;
-        let unsubProfile = null;
-        let unsubRoster = null; 
-        let unsubMasterStock = null; 
-        let unsubStockReqs = null;
-        let unsubCoverReqs = null;
-        let unsubMyShifts = null;
-        let unsubAuthCheck = null;
-
-        // --- UTILS ---
-        window.showToast = (msg) => { const t = document.getElementById('toast'); t.innerText = msg; t.className = "show"; setTimeout(() => t.className = "", 3000); };
-        window.toggleTheme = () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); };
-
-        // --- AUTH ---
-        window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (e) { window.showToast("Login Failed: " + e.message); } };
-        window.logout = async () => { 
-            if(unsubUserData) unsubUserData(); 
-            if(unsubProfile) unsubProfile(); 
-            if(unsubRoster) unsubRoster(); 
-            if(unsubAuthCheck) unsubAuthCheck();
-            await signOut(auth); window.location.reload(); 
+        // State Management
+        let appData = {
+            stock: 0,
+            currentTransactions: [],
+            history: [],
+            carriedDebt: 0,
+            customDebts: [],
+            supplierPayments: [],
+            calcCash: '',
+            calcBank: ''
         };
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('loading-overlay').classList.remove('hidden');
-                
-                const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
-                let profileSnap = await getDoc(profileRef);
-                let knownRole = 'driver';
-                
-                if (!profileSnap.exists()) {
-                    await setDoc(profileRef, { name: user.displayName || user.email, email: user.email, role: 'driver', accessStatus: 'pending', createdAt: Date.now() });
-                } else { knownRole = profileSnap.data().role || 'driver'; }
+        let chartInstance = null;
+        let hourlyChartInstance = null;
 
-                const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
-                // Sync role but preserve existing accessStatus if present, default to 'pending' if not
-                await setDoc(rosterRef, { 
-                    name: user.displayName || user.email, 
-                    email: user.email, 
-                    uid: user.uid, 
-                    role: knownRole, 
-                    lastLogin: Date.now() 
-                }, { merge: true });
-
-                unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
-                    const data = snap.data();
-                    const accessStatus = data.accessStatus || 'pending';
-                    const role = data.role || knownRole || 'driver';
-                    
-                    userRole = role;
-                    document.getElementById('loading-overlay').classList.add('hidden');
-
-                    if (role === 'admin') {
-                        initAdminDashboard();
-                    } else if (accessStatus === 'active' || accessStatus === 'approved') {
-                        document.getElementById('approval-modal').classList.add('hidden');
-                        initDriverApp(user);
-                    } else {
-                        // Pending or Suspended
-                        document.getElementById('approval-modal').classList.remove('hidden');
-                        document.getElementById('driver-app').classList.add('hidden');
-                        document.getElementById('admin-app').classList.add('hidden');
-                        
-                        const title = document.getElementById('approval-title');
-                        const msg = document.getElementById('approval-msg');
-                        if(accessStatus === 'suspended') {
-                            title.innerText = "Account Suspended";
-                            msg.innerText = "Your access has been restricted by the Administrator.";
-                        } else {
-                            title.innerText = "Access Pending";
-                            msg.innerText = "Sign in Pending, please contact an administrator for help";
-                        }
-                    }
-                });
-            } else {
-                document.getElementById('login-modal').classList.remove('hidden');
-                document.getElementById('loading-overlay').classList.add('hidden');
-                document.getElementById('driver-app').classList.add('hidden');
-                document.getElementById('admin-app').classList.add('hidden');
+        // Initialize App
+        function initApp() {
+            const savedData = localStorage.getItem('salesAppData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                appData = { ...appData, ...parsed }; // Merge to preserve defaults
+                if (!appData.currentTransactions) appData.currentTransactions = [];
+                if (appData.carriedDebt === undefined) appData.carriedDebt = 0;
+                if (!appData.customDebts) appData.customDebts = [];
+                if (!appData.supplierPayments) appData.supplierPayments = [];
             }
-        });
-
-        // --- DRIVER LOGIC ---
-        function initDriverApp(user) {
-            document.getElementById('driver-app').classList.remove('hidden');
-            document.getElementById('driver-name-display').innerText = user.displayName ? user.displayName.split(' ')[0] : 'Driver';
             
-            // If view mode, we don't listen to real-time updates for *me*, we use passed data
-            if(viewMode) return;
+            // Set Header Date
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('current-date-header').innerText = new Date().toLocaleDateString('en-US', options);
 
-            unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if(data.json) appData = JSON.parse(data.json);
-                    appData.stock = appData.stock || 0; appData.debt = appData.debt || 0; 
-                    appData.onlineStatus = appData.onlineStatus || 'offline';
-                    appData.currentTransactions = appData.currentTransactions || []; appData.history = appData.history || [];
-                    renderDriverUI();
-                } else { saveDriverData(); }
-            });
+            // Restore Calc Inputs
+            if (appData.calcCash !== undefined) document.getElementById('calc-cash').value = appData.calcCash;
+            if (appData.calcBank !== undefined) document.getElementById('calc-bank').value = appData.calcBank;
 
-            unsubMyShifts = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => {
-                if(snap.exists()) { driverShifts = snap.data().shifts || []; window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); }
-            });
+            const isDark = document.documentElement.classList.contains('dark');
+            const themeIcon = document.getElementById('theme-icon');
+            if(themeIcon) {
+                themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                lucide.createIcons();
+            }
 
-            const coverRef = collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests');
-            onSnapshot(coverRef, (snap) => {
-                const list = document.getElementById('drv-ot-list'); const badge = document.getElementById('drv-ot-count'); const dot = document.getElementById('sched-notify-dot');
-                list.innerHTML = ''; let count = 0;
-                snap.forEach(d => {
-                    const req = d.data();
-                    if(req.status === 'open' && req.requesterUid !== currentUser.uid) {
-                        count++;
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 flex justify-between items-center"><div><div class="font-bold text-sm dark:text-white">${req.date} (${req.coverStart}-${req.coverEnd})</div><div class="text-xs text-gray-500">${req.requesterName} needs cover</div></div><button onclick="window.driverAcceptCover('${d.id}')" class="bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-green-700 btn-interactive">Take Shift</button></div>`;
-                    }
-                });
-                badge.innerText = count; if(count > 0) dot.classList.remove('hidden'); else dot.classList.add('hidden');
-                if(count === 0) list.innerHTML = '<div class="text-center text-gray-400 text-xs py-2">No overtime available.</div>';
-            });
+            updateUI();
         }
 
-        function renderDriverUI() {
-            // Status UI
-            const dot = document.getElementById('status-dot'); const txt = document.getElementById('status-text'); const hdr = document.getElementById('driver-header');
-            if(appData.onlineStatus === 'online') { dot.className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"; txt.innerText="Online"; hdr.className="bg-green-600 dark:bg-green-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
-            else { dot.className="w-2 h-2 rounded-full bg-gray-400 mr-1.5"; txt.innerText="Offline"; hdr.className="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center transition-colors duration-300"; }
+        function saveData() {
+            localStorage.setItem('salesAppData', JSON.stringify(appData));
+            updateUI();
+        }
+
+        function getTodayTotals() {
+            return appData.currentTransactions.reduce((acc, t) => {
+                acc.gross += t.price;
+                acc.profit += t.profit;
+                acc.supplier += t.supplier;
+                acc.itemsSold += t.qty;
+                return acc;
+            }, { gross: 0, profit: 0, supplier: 0, itemsSold: 0 });
+        }
+
+        function updateUI() {
+            const totals = getTodayTotals();
 
             document.getElementById('display-stock').innerText = appData.stock;
-            document.getElementById('display-debt').innerText = `$${appData.debt.toLocaleString()}`;
-            document.getElementById('setting-stat-debt').innerText = `$${appData.debt.toLocaleString()}`;
-            const totalSales = appData.history.reduce((a,b) => a + (b.sold || 0), 0) + appData.currentTransactions.reduce((a,b) => a + b.qty, 0);
-            document.getElementById('setting-stat-total').innerText = totalSales;
-            const todayTotals = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit + t.profit }), {profit:0});
-            document.getElementById('today-profit-badge').innerText = `+$${todayTotals.profit} Profit`;
+            document.getElementById('display-stock-value').innerText = `$${(appData.stock * SUPPLIER_COST_PER_ITEM).toLocaleString()}`;
+            
+            document.getElementById('today-gross').innerText = `$${totals.gross.toLocaleString()}`;
+            document.getElementById('today-profit').innerText = `$${totals.profit.toLocaleString()}`;
+            document.getElementById('today-supplier').innerText = `$${totals.supplier.toLocaleString()}`;
+            document.getElementById('txn-count-badge').innerText = `${appData.currentTransactions.length} sales`;
 
-            const list = document.getElementById('transaction-list'); list.innerHTML = '';
-            appData.currentTransactions.map((t, i) => ({...t, originalIndex: i})).reverse().forEach(t => {
-                let badge = t.type === 'full' ? `<span class="text-[10px] text-green-500 font-bold ml-1">(STD)</span>` : `<span class="text-[10px] text-orange-500 font-bold ml-1">(DEAL)</span>`;
-                list.innerHTML += `<div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded group"><div><div class="text-sm dark:text-gray-200"><span class="font-bold">${t.qty}</span> items ${badge}</div><div class="text-xs text-gray-400">${t.time}</div></div><div class="flex items-center space-x-3"><span class="font-bold text-green-600">+$${t.profit}</span><button onclick="window.deleteSale(${t.originalIndex})" class="text-gray-400 hover:text-red-500 p-1 btn-interactive"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+            renderTransactionList();
+            calculatePredictions(totals);
+            renderHistoryList();
+            calculateReconciliation();
+        }
+
+        // --- Transaction Management ---
+
+        function renderTransactionList() {
+            const list = document.getElementById('current-transactions-list');
+            list.innerHTML = '';
+
+            if (appData.currentTransactions.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 text-sm py-4">No sales yet today.</div>';
+                return;
+            }
+
+            const reversedTxns = [...appData.currentTransactions].reverse();
+
+            reversedTxns.forEach(t => {
+                const label = t.label || `${t.qty} Item(s)`; // Fallback for older saved data
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700';
+                item.id = `txn-${t.id}`;
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 p-2 rounded-lg mr-3 flex-shrink-0">
+                            <span class="font-bold text-lg">${t.qty}</span>
+                        </div>
+                        <div>
+                            <div class="font-medium dark:text-gray-200 text-sm leading-tight">${label}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Profit: <span class="text-green-600 dark:text-green-400">+$${t.profit}</span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="text-right mr-3">
+                            <div class="font-bold text-gray-800 dark:text-gray-100">$${t.price}</div>
+                            <div class="text-[10px] text-gray-400">${t.time}</div>
+                        </div>
+                        <button onclick="deleteTransaction(${t.id})" class="text-red-400 hover:text-red-600 p-1 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
             });
-            if(appData.currentTransactions.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-2">No sales yet today</div>';
             lucide.createIcons();
         }
 
-        async function saveDriverData() {
-            if(!currentUser || viewMode) return;
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { json: JSON.stringify(appData), lastUpdated: Date.now() });
-            let todaySold = 0, todayProfit = 0, todayGross = 0;
-            appData.currentTransactions.forEach(t => { todaySold += t.qty; todayProfit += t.profit; todayGross += t.price; });
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), {
-                    stock: appData.stock, debt: appData.debt, onlineStatus: appData.onlineStatus,
-                    todaySold, todayProfit, todayGross, recentLogs: appData.currentTransactions.slice(-20).reverse(), 
-                    history: appData.history.slice(-30), lastSync: Date.now()
-                }, { merge: true });
-            } catch(e) { console.log("Public sync failed", e); }
+        function deleteTransaction(id) {
+            const index = appData.currentTransactions.findIndex(t => t.id === id);
+            if (index > -1) {
+                const t = appData.currentTransactions[index];
+                const el = document.getElementById(`txn-${id}`);
+                if (el) el.classList.add('slide-out');
+
+                setTimeout(() => {
+                    appData.stock += t.qty;
+                    appData.currentTransactions.splice(index, 1);
+                    saveData();
+                    showToast("Sale deleted. Stock restored.");
+                }, 300);
+            }
         }
 
-        window.toggleDriverStatus = async () => {
-            if(viewMode) return;
-            appData.onlineStatus = appData.onlineStatus === 'online' ? 'offline' : 'online';
-            renderDriverUI(); await saveDriverData();
-        };
+        // --- Actions ---
 
-        window.sellItem = async (qty, type) => {
-            if(viewMode) return;
-            if(appData.stock < qty) { window.showToast("Not enough stock!"); return; }
-            if(appData.onlineStatus !== 'online') { if(!confirm("You are Offline. Sell anyway?")) return; window.toggleDriverStatus(); }
+        function toggleStockEdit() {
+            const displayMode = document.getElementById('stock-display-mode');
+            const editMode = document.getElementById('stock-edit-mode');
+            const input = document.getElementById('stock-set-input');
+
+            if (editMode.classList.contains('hidden')) {
+                displayMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+                input.value = appData.stock;
+                input.focus();
+            } else {
+                displayMode.classList.remove('hidden');
+                editMode.classList.add('hidden');
+            }
+        }
+
+        function saveStockEdit() {
+            const input = document.getElementById('stock-set-input');
+            const qty = parseInt(input.value);
+            if (isNaN(qty) || qty < 0) {
+                showToast("Please enter a valid stock number.");
+                return;
+            }
+            appData.stock = qty;
+            saveData();
+            toggleStockEdit();
+            showToast("Stock updated manually.");
+        }
+
+        function addStock() {
+            const input = document.getElementById('stock-add-input');
+            const qty = parseInt(input.value);
+            if (isNaN(qty) || qty <= 0) {
+                showToast("Please enter a valid quantity.");
+                return;
+            }
+            appData.stock += qty;
+            input.value = '';
+            saveData();
+            showToast(`Added ${qty} items to stock.`);
+        }
+
+        function sellItem(key) {
+            const tier = PRICING[key];
+            if (appData.stock < tier.qty) {
+                showToast(`Not enough stock! You only have ${appData.stock} left.`);
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             
-            let price=0, profit=0, owed=0;
-            if (type === 'full') { price = 80*qty; profit = 20*qty; owed = 60*qty; }
-            else { const tiers = {1:{p:80,prof:20},2:{p:150,prof:40},3:{p:220,prof:60},4:{p:280,prof:80}}; const t=tiers[qty]; price=t.p; profit=t.prof; owed=price-profit; }
-            
-            appData.stock -= qty; appData.debt += owed;
-            appData.currentTransactions.push({ date: Date.now(), qty, price, profit, owed, type, time: new Date().toLocaleTimeString() });
-            await saveDriverData(); renderDriverUI(); window.showToast(`Sold ${qty}`);
-        };
-
-        window.deleteSale = async (idx) => {
-            if(viewMode) return;
-            if(!confirm("Undo?")) return;
-            const t = appData.currentTransactions[idx]; appData.stock += t.qty; appData.debt -= t.owed;
-            appData.currentTransactions.splice(idx, 1);
-            await saveDriverData(); renderDriverUI();
-        };
-
-        window.endDay = async () => {
-            if(viewMode) return;
-            if(appData.currentTransactions.length === 0) { window.showToast("No sales."); return; }
-            const stats = appData.currentTransactions.reduce((acc, t) => ({ profit: acc.profit+t.profit, sold: acc.sold+t.qty, revenue: acc.price+acc.revenue }), {profit:0, sold:0, revenue:0});
-            const d = new Date().toISOString().split('T')[0];
-            const exists = appData.history.findIndex(h => h.date === d);
-            let dayRev=0, dayProf=0, daySold=0;
-            appData.currentTransactions.forEach(t => { dayRev += t.price; dayProf += t.profit; daySold += t.qty; });
-            if(exists >= 0) { appData.history[exists].profit += dayProf; appData.history[exists].sold += daySold; appData.history[exists].revenue += dayRev; } 
-            else { appData.history.push({ date: d, profit: dayProf, sold: daySold, revenue: dayRev }); }
-            appData.currentTransactions = []; appData.onlineStatus = 'offline';
-            await saveDriverData(); renderDriverUI(); window.showToast("Saved!");
-        };
-
-        // --- CALENDAR LOGIC ---
-        window.changeCalendarMonth = (offset, type) => {
-            calendarDate.setMonth(calendarDate.getMonth() + offset);
-            if(type === 'driver') window.renderCalendar('driver-calendar-grid', driverShifts, 'driver');
-            else window.renderCalendar('admin-calendar-grid', null, 'admin'); 
-        };
-
-        window.renderCalendar = (elementId, shiftsData, mode) => {
-            const grid = document.getElementById(elementId);
-            const monthLabel = document.getElementById(mode === 'driver' ? 'driver-calendar-month' : 'admin-calendar-month');
-            grid.innerHTML = '';
-            
-            const year = calendarDate.getFullYear(); const month = calendarDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const startDay = new Date(year, month, 1).getDay(); // 0 = Sun
-            
-            monthLabel.innerText = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-            for(let i=0; i<startDay; i++) grid.innerHTML += `<div></div>`;
-
-            const getShiftsForDay = (day) => {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                if (mode === 'driver') return shiftsData.filter(s => s.date === dateStr);
-                let adminShifts = [];
-                globalRoster.forEach(drv => { (drv.shifts || []).forEach(s => { if(s.date === dateStr) adminShifts.push({...s, name: drv.name, uid: drv.id}); }); });
-                return adminShifts;
+            const transaction = {
+                id: Date.now(),
+                timestamp: now.getTime(),
+                hour: now.getHours(), 
+                time: timeStr,
+                key: key,
+                qty: tier.qty,
+                price: tier.price,
+                profit: tier.profit,
+                supplier: tier.supplier,
+                label: tier.label
             };
 
-            for(let d=1; d<=daysInMonth; d++) {
-                const shifts = getShiftsForDay(d);
-                let bars = '';
-                shifts.forEach(s => {
-                    const color = mode === 'driver' ? 'bg-blue-500' : 'bg-purple-500';
-                    const text = mode === 'driver' ? `${s.start}-${s.end}` : `${s.name.substr(0,3)} ${s.start}`;
-                    bars += `<div class="${color} text-white shift-bar">${text}</div>`;
-                });
-                grid.innerHTML += `<div class="calendar-day bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-600 rounded p-1" onclick="window.selectCalendarDay(${d}, '${mode}')"><div class="text-xs font-bold text-gray-400 mb-1">${d}</div>${bars}</div>`;
-            }
-        };
+            appData.stock -= tier.qty;
+            appData.currentTransactions.push(transaction);
 
-        window.selectCalendarDay = (day, mode) => {
-            const year = calendarDate.getFullYear(); const month = calendarDate.getMonth();
-            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            const detailEl = document.getElementById(mode === 'driver' ? 'driver-selected-day-details' : 'admin-selected-day-details');
-            detailEl.innerHTML = `<strong>${dateStr}</strong><br>`; detailEl.classList.remove('hidden');
-
-            let shifts = [];
-            if(mode === 'driver') {
-                shifts = driverShifts.filter(s => s.date === dateStr);
-                const select = document.getElementById('drv-cover-select'); select.innerHTML = '<option value="">Select Shift...</option>';
-                shifts.forEach(s => { const opt = document.createElement('option'); opt.value = JSON.stringify(s); opt.innerText = `${s.start} - ${s.end}`; select.appendChild(opt); });
-                document.getElementById('drv-cover-times').classList.add('hidden');
-            } else {
-                globalRoster.forEach(drv => { (drv.shifts || []).forEach(s => { if(s.date === dateStr) shifts.push({...s, name: drv.name, uid: drv.id}); }); });
-            }
-
-            if(shifts.length === 0) detailEl.innerHTML += `<span class="text-gray-400">No shifts.</span>`;
-            else shifts.forEach(s => {
-                let action = '';
-                if(mode === 'admin') action = `<button onclick="window.adminDeleteShift('${s.uid}', '${s.date}', '${s.start}')" class="ml-2 text-red-500 text-xs hover:underline">Delete</button>`;
-                detailEl.innerHTML += `<div class="text-xs flex justify-between">${mode==='admin'?s.name+': ':''}${s.start} - ${s.end} ${action}</div>`;
-            });
-        };
-
-        // --- DRIVER UTILS ---
-        window.driverRequestStock = async () => {
-            if(viewMode) return; if(!confirm("Notify admin you need stock?")) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), { requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, timestamp: Date.now(), status: 'pending' });
-            window.showToast("Request Sent");
-        };
-        window.openSchedule = () => { document.getElementById('driver-schedule-modal').classList.remove('hidden'); window.renderCalendar('driver-calendar-grid', driverShifts, 'driver'); };
-        window.updateCoverTimeInputs = () => {
-            const val = document.getElementById('drv-cover-select').value;
-            if(val) { const s = JSON.parse(val); document.getElementById('drv-cover-start').value = s.start; document.getElementById('drv-cover-end').value = s.end; document.getElementById('drv-cover-times').classList.remove('hidden'); }
-            else document.getElementById('drv-cover-times').classList.add('hidden');
-        };
-        window.driverRequestCover = async () => {
-            if(viewMode) return;
-            const val = document.getElementById('drv-cover-select').value; const start = document.getElementById('drv-cover-start').value; const end = document.getElementById('drv-cover-end').value;
-            if(!val || !start || !end) return window.showToast("Select shift & times");
-            const originalShift = JSON.parse(val); 
-            if(!confirm(`Request cover for ${originalShift.date} from ${start} to ${end}?`)) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), { requesterUid: currentUser.uid, requesterName: document.getElementById('driver-name-display').innerText, date: originalShift.date, originalStart: originalShift.start, originalEnd: originalShift.end, coverStart: start, coverEnd: end, status: 'open', timestamp: Date.now() });
-            window.showToast("Cover Requested"); document.getElementById('drv-cover-select').value = ""; document.getElementById('drv-cover-times').classList.add('hidden');
-        };
-        window.driverAcceptCover = async (reqId) => {
-            if(viewMode) return;
-            if(!confirm("Accept this overtime shift?")) return;
-            const reqRef = doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', reqId);
-            const reqSnap = await getDoc(reqRef); if(!reqSnap.exists()) return;
-            const req = reqSnap.data();
-
-            // 1. Split Requester Shift
-            const requesterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', req.requesterUid);
-            const reqRosterSnap = await getDoc(requesterRef);
-            if(reqRosterSnap.exists()) {
-                let shifts = reqRosterSnap.data().shifts || [];
-                let newShifts = [];
-                shifts.forEach(s => {
-                    if(s.date === req.date && s.start === req.originalStart && s.end === req.originalEnd) {
-                        if(s.start < req.coverStart) newShifts.push({ date: s.date, start: s.start, end: req.coverStart }); // Pre-cover part
-                        if(s.end > req.coverEnd) newShifts.push({ date: s.date, start: req.coverEnd, end: s.end }); // Post-cover part
-                    } else newShifts.push(s);
-                });
-                await updateDoc(requesterRef, { shifts: newShifts });
-            }
-            // 2. Add to Accepter
-            const accepterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid);
-            const accSnap = await getDoc(accepterRef);
-            let myShifts = accSnap.exists() ? (accSnap.data().shifts || []) : [];
-            myShifts.push({ date: req.date, start: req.coverStart, end: req.coverEnd });
-            await updateDoc(accepterRef, { shifts: myShifts });
-            // 3. Close
-            await updateDoc(reqRef, { status: 'filled', filledByUid: currentUser.uid, filledByName: document.getElementById('driver-name-display').innerText });
-            window.showToast("Shift Accepted!");
-        };
-        window.openDriverStats = () => { document.getElementById('driver-stats-modal').classList.remove('hidden'); renderDriverCharts(); };
-        function renderDriverCharts() { 
-            const ctx = document.getElementById('driverProfitChart').getContext('2d'); if(driverChartInstance) driverChartInstance.destroy();
-            const data = appData.history.slice(-7);
-            driverChartInstance = new Chart(ctx, { type: 'bar', data: { labels: data.map(d=>d.date.slice(5)), datasets: [{ label:'Profit', data: data.map(d=>d.profit), backgroundColor:'#3B82F6', borderRadius:4 }] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:'#374151'}}, x:{grid:{display:false}}}}});
-            const list = document.getElementById('drv-stat-list'); list.innerHTML=''; [...appData.history].reverse().slice(0,7).forEach(h=> list.innerHTML+=`<div class="flex justify-between text-xs py-1 border-b dark:border-gray-700"><span class="text-gray-500">${h.date}</span><span class="text-green-600 font-bold">+$${h.profit}</span></div>`);
+            saveData();
+            showToast(`Sold ${tier.label} for $${tier.price}`);
         }
 
-        // --- ADMIN LOGIC ---
-        function initAdminDashboard() {
-            document.getElementById('admin-app').classList.remove('hidden');
-            document.getElementById('admin-date-display').innerText = new Date().toDateString();
-            unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
-                const list = document.getElementById('admin-driver-list'); const selects = document.querySelectorAll('.admin-driver-select');
-                list.innerHTML=''; selects.forEach(s=>s.innerHTML='<option value="">Select Driver...</option>');
-                globalRoster=[]; let sold=0, prof=0;
-                snap.forEach(d => {
-                    const drv = { id: d.id, ...d.data() };
-                    globalRoster.push(drv);
-                    if(drv.role !== 'admin') {
-                        sold += (drv.todaySold||0); prof += (drv.todayProfit||0);
-                        const statusColor = (drv.onlineStatus==='online') ? 'border-green-500' : 'border-gray-300';
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onclick="window.viewDriverDetails('${drv.id}')"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3 border-2 ${statusColor}">${drv.name?drv.name[0]:'U'}</div><div><div class="font-bold text-gray-800 dark:text-white">${drv.name}</div><div class="text-xs text-gray-500">Stock: ${drv.stock||0} • Debt: <span class="text-red-500">$${drv.debt||0}</span></div></div></div><div class="font-bold text-green-600">+$${drv.todayProfit||0}</div></div>`;
-                        if(drv.accessStatus !== 'suspended') { const opt = document.createElement('option'); opt.value=drv.id; opt.innerText=drv.name; selects.forEach(s=>s.appendChild(opt.cloneNode(true))); }
+        // --- End of Day Summary Modal Logic ---
+
+        function showEndDaySummary() {
+            if (appData.currentTransactions.length === 0) {
+                showToast("No sales to save today.");
+                return;
+            }
+
+            const totals = getTodayTotals();
+
+            // Group transactions by their exact label for the breakdown
+            const grouped = {};
+            appData.currentTransactions.forEach(t => {
+                const label = t.label || `${t.qty} Item(s)`; // fallback
+                if (!grouped[label]) {
+                    grouped[label] = { count: 0, gross: 0, supplier: 0, profit: 0, unitPrice: t.price };
+                }
+                grouped[label].count += 1;
+                grouped[label].gross += t.price;
+                grouped[label].supplier += t.supplier;
+                grouped[label].profit += t.profit;
+            });
+
+            // Build Breakdown DOM
+            const listEl = document.getElementById('summary-breakdown-list');
+            listEl.innerHTML = '';
+            
+            for (const [label, data] of Object.entries(grouped)) {
+                listEl.innerHTML += `
+                    <div class="py-3 border-b border-gray-200 dark:border-gray-700 last:border-0 last:pb-0">
+                        <div class="flex items-center mb-2">
+                            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center flex-wrap gap-1.5">
+                                <span>${label}</span>
+                                <span class="text-gray-500 dark:text-gray-400 font-normal">x${data.count}</span>
+                                <span class="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded ml-1 border border-blue-200 dark:border-blue-800">$${data.unitPrice} each</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded border border-gray-200 dark:border-gray-700">
+                                <div class="text-gray-500 dark:text-gray-400 uppercase text-[9px] font-bold tracking-wider mb-0.5">Gross</div>
+                                <div class="font-bold text-gray-800 dark:text-gray-200">$${data.gross.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-red-50 dark:bg-red-900/20 p-1.5 rounded border border-red-100 dark:border-red-900/30">
+                                <div class="text-red-500 dark:text-red-400 uppercase text-[9px] font-bold tracking-wider mb-0.5">Owed</div>
+                                <div class="font-bold text-red-700 dark:text-red-400">$${data.supplier.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-1.5 rounded border border-green-100 dark:border-green-900/30">
+                                <div class="text-green-600 dark:text-green-500 uppercase text-[9px] font-bold tracking-wider mb-0.5">Profit</div>
+                                <div class="font-bold text-green-700 dark:text-green-400">$${data.profit.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Populate Totals
+            document.getElementById('summary-total-gross').innerText = `$${totals.gross.toLocaleString()}`;
+            document.getElementById('summary-total-supplier').innerText = `$${totals.supplier.toLocaleString()}`;
+            document.getElementById('summary-total-profit').innerText = `$${totals.profit.toLocaleString()}`;
+
+            // Show Modal
+            const modal = document.getElementById('end-day-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEndDaySummary() {
+            const modal = document.getElementById('end-day-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmEndDay() {
+            closeEndDaySummary();
+
+            const totals = getTodayTotals();
+            const todayDate = new Date().toISOString().split('T')[0]; 
+            
+            const hourlyDist = {};
+            const groupedBreakdown = {};
+
+            appData.currentTransactions.forEach(t => {
+                const h = t.hour || new Date(t.timestamp).getHours();
+                hourlyDist[h] = (hourlyDist[h] || 0) + t.qty;
+
+                // Group the breakdown for historical saving
+                const label = t.label || `${t.qty} Item(s)`; 
+                if (!groupedBreakdown[label]) {
+                    groupedBreakdown[label] = { count: 0, gross: 0, supplier: 0, profit: 0, unitPrice: t.price };
+                }
+                groupedBreakdown[label].count += 1;
+                groupedBreakdown[label].gross += t.price;
+                groupedBreakdown[label].supplier += t.supplier;
+                groupedBreakdown[label].profit += t.profit;
+            });
+
+            // Handle Rolling Debt Logic
+            let customDebtTotal = 0;
+            appData.customDebts.forEach(d => customDebtTotal += d.amount);
+            
+            let paymentTotal = 0;
+            appData.supplierPayments.forEach(p => paymentTotal += p.amount);
+
+            // Calculate the finalized new rolling debt going into tomorrow
+            appData.carriedDebt = (appData.carriedDebt || 0) + totals.supplier + customDebtTotal - paymentTotal;
+
+            const existingRecordIndex = appData.history.findIndex(h => h.date === todayDate);
+            
+            if (existingRecordIndex >= 0) {
+                const rec = appData.history[existingRecordIndex];
+                rec.gross += totals.gross;
+                rec.profit += totals.profit;
+                rec.supplier += totals.supplier;
+                rec.itemsSold += totals.itemsSold;
+                
+                for (const [hour, count] of Object.entries(hourlyDist)) {
+                    rec.hourlyDistribution = rec.hourlyDistribution || {};
+                    rec.hourlyDistribution[hour] = (rec.hourlyDistribution[hour] || 0) + count;
+                }
+
+                // Merge breakdown into existing record
+                rec.breakdown = rec.breakdown || {};
+                for (const [label, data] of Object.entries(groupedBreakdown)) {
+                    if (!rec.breakdown[label]) {
+                        rec.breakdown[label] = { count: 0, gross: 0, supplier: 0, profit: 0, unitPrice: data.unitPrice };
+                    }
+                    rec.breakdown[label].count += data.count;
+                    rec.breakdown[label].gross += data.gross;
+                    rec.breakdown[label].supplier += data.supplier;
+                    rec.breakdown[label].profit += data.profit;
+                }
+            } else {
+                appData.history.push({
+                    date: todayDate,
+                    ...totals,
+                    hourlyDistribution: hourlyDist,
+                    breakdown: groupedBreakdown
+                });
+            }
+
+            appData.currentTransactions = [];
+            appData.customDebts = [];
+            appData.supplierPayments = [];
+            
+            saveData();
+            showToast("Shift confirmed and saved successfully!");
+            
+            if (document.getElementById('tab-reports').classList.contains('active')) {
+                updateChart('daily');
+                updateHourlyChart();
+            }
+        }
+
+        // --- Reports & Predictions ---
+
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay() || 7; 
+            if (day !== 1) d.setHours(-24 * (day - 1));
+            return d.toISOString().split('T')[0];
+        }
+
+        function calculatePredictions(currentTotals) {
+            const totalProfitToday = currentTotals.profit;
+            
+            if (appData.history.length === 0 && totalProfitToday === 0) {
+                document.getElementById('predicted-earnings').innerText = "$0";
+                return;
+            }
+
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const startOfWeek = getStartOfWeek(today);
+
+            let profitThisWeek = 0;
+            
+            appData.history.forEach(record => {
+                if (record.date >= startOfWeek && record.date <= todayStr) {
+                    profitThisWeek += record.profit;
+                }
+            });
+
+            profitThisWeek += totalProfitToday;
+
+            let daysElapsed = today.getDay() || 7; 
+            daysElapsed = Math.max(1, daysElapsed);
+
+            const dailyAverage = profitThisWeek / daysElapsed;
+            const predictedWeekly = Math.round(dailyAverage * 7);
+
+            document.getElementById('predicted-earnings').innerText = `$${predictedWeekly.toLocaleString()}`;
+            document.getElementById('prediction-context').innerText = `Based on $${Math.round(dailyAverage)}/day average this week`;
+        }
+
+        function renderHistoryList() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            
+            if (appData.history.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No saved records yet.</p>';
+                return;
+            }
+
+            const sortedHistory = [...appData.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedHistory.slice(0, 10).forEach(record => {
+                const dateObj = new Date(record.date);
+                dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+                
+                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-[0.98]';
+                div.onclick = () => showHistoryDetail(record.date);
+                div.innerHTML = `
+                    <div>
+                        <div class="font-medium text-gray-800 dark:text-gray-200 text-sm">${dateStr}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${record.itemsSold} items sold</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="text-right mr-3">
+                            <div class="font-bold text-green-600 dark:text-green-400 text-sm">+$${record.profit}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Gross: $${record.gross}</div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // --- History Modal Detail View ---
+
+        function showHistoryDetail(dateString) {
+            const record = appData.history.find(h => h.date === dateString);
+            if (!record) return;
+
+            // Set Title/Date
+            const dateObj = new Date(record.date);
+            dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+            const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('history-modal-date').innerText = dateStr;
+
+            // Populate Breakdown
+            const listEl = document.getElementById('history-breakdown-list');
+            listEl.innerHTML = '';
+            
+            if (record.breakdown && Object.keys(record.breakdown).length > 0) {
+                for (const [label, data] of Object.entries(record.breakdown)) {
+                    listEl.innerHTML += `
+                        <div class="py-3 border-b border-gray-200 dark:border-gray-700 last:border-0 last:pb-0">
+                            <div class="flex items-center mb-2">
+                                <div class="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center flex-wrap gap-1.5">
+                                    <span>${label}</span>
+                                    <span class="text-gray-500 dark:text-gray-400 font-normal">x${data.count}</span>
+                                    <span class="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded ml-1 border border-blue-200 dark:border-blue-800">$${data.unitPrice} each</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded border border-gray-200 dark:border-gray-700">
+                                    <div class="text-gray-500 dark:text-gray-400 uppercase text-[9px] font-bold tracking-wider mb-0.5">Gross</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">$${data.gross.toLocaleString()}</div>
+                                </div>
+                                <div class="bg-red-50 dark:bg-red-900/20 p-1.5 rounded border border-red-100 dark:border-red-900/30">
+                                    <div class="text-red-500 dark:text-red-400 uppercase text-[9px] font-bold tracking-wider mb-0.5">Owed</div>
+                                    <div class="font-bold text-red-700 dark:text-red-400">$${data.supplier.toLocaleString()}</div>
+                                </div>
+                                <div class="bg-green-50 dark:bg-green-900/20 p-1.5 rounded border border-green-100 dark:border-green-900/30">
+                                    <div class="text-green-600 dark:text-green-500 uppercase text-[9px] font-bold tracking-wider mb-0.5">Profit</div>
+                                    <div class="font-bold text-green-700 dark:text-green-400">$${data.profit.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                listEl.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">Detailed breakdown not available for this older record.</div>';
+            }
+
+            // Populate Totals
+            document.getElementById('history-total-gross').innerText = `$${record.gross.toLocaleString()}`;
+            document.getElementById('history-total-supplier').innerText = `$${record.supplier.toLocaleString()}`;
+            document.getElementById('history-total-profit').innerText = `$${record.profit.toLocaleString()}`;
+
+            // Show Modal
+            const modal = document.getElementById('history-detail-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeHistoryDetail() {
+            const modal = document.getElementById('history-detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // --- Charts ---
+
+        function updateHourlyChart() {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            if (hourlyChartInstance) hourlyChartInstance.destroy();
+
+            const hourlyTotals = new Array(24).fill(0);
+
+            appData.history.forEach(rec => {
+                if (rec.hourlyDistribution) {
+                    for (const [hour, count] of Object.entries(rec.hourlyDistribution)) {
+                        hourlyTotals[parseInt(hour)] += count;
+                    }
+                }
+            });
+
+            appData.currentTransactions.forEach(t => {
+                const h = t.hour || new Date(t.timestamp).getHours();
+                hourlyTotals[h] += t.qty;
+            });
+
+            const labels = hourlyTotals.map((_, i) => {
+                const d = new Date(); d.setHours(i);
+                return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+            });
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); 
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            hourlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Items Sold',
+                        data: hourlyTotals,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 8 } }
+                    }
+                }
+            });
+        }
+
+        function updateChart(viewMode) {
+            ['daily', 'weekly', 'monthly'].forEach(mode => {
+                const btn = document.getElementById(`btn-chart-${mode}`);
+                if (mode === viewMode) {
+                    btn.className = 'flex-1 py-1 text-sm rounded-md bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-medium transition';
+                } else {
+                    btn.className = 'flex-1 py-1 text-sm rounded-md text-gray-500 dark:text-gray-400 font-medium transition';
+                }
+            });
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            let labels = [];
+            let profitData = [];
+            let grossData = [];
+            
+            const todayTotals = getTodayTotals();
+
+            if (viewMode === 'daily') {
+                const last7Days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    last7Days.push(d.toISOString().split('T')[0]);
+                }
+
+                labels = last7Days.map(d => {
+                    let date = new Date(d);
+                    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                });
+
+                last7Days.forEach(dateStr => {
+                    const record = appData.history.find(h => h.date === dateStr);
+                    let profit = record ? record.profit : 0;
+                    let gross = record ? record.gross : 0;
+                    
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (dateStr === todayStr) {
+                        profit += todayTotals.profit;
+                        gross += todayTotals.gross;
+                    }
+
+                    profitData.push(profit);
+                    grossData.push(gross);
+                });
+
+            } else if (viewMode === 'weekly') {
+                labels = ['Week -3', 'Week -2', 'Last Week', 'This Week'];
+                profitData = [0, 0, 0, 0];
+                grossData = [0, 0, 0, 0];
+
+                const today = new Date();
+                
+                const allData = [...appData.history];
+                if (todayTotals.gross > 0) {
+                    allData.push({ date: today.toISOString().split('T')[0], ...todayTotals });
+                }
+
+                allData.forEach(record => {
+                    const rDate = new Date(record.date);
+                    const diffTime = Math.abs(today - rDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays <= 7) {
+                        profitData[3] += record.profit; grossData[3] += record.gross;
+                    } else if (diffDays <= 14) {
+                        profitData[2] += record.profit; grossData[2] += record.gross;
+                    } else if (diffDays <= 21) {
+                        profitData[1] += record.profit; grossData[1] += record.gross;
+                    } else if (diffDays <= 28) {
+                        profitData[0] += record.profit; grossData[0] += record.gross;
                     }
                 });
-                document.getElementById('admin-total-profit').innerText = `$${prof}`; document.getElementById('admin-total-sold').innerText = sold;
-                updateAdminReports(globalRoster); window.renderCalendar('admin-calendar-grid', null, 'admin'); renderEmployeeList();
+            } else if (viewMode === 'monthly') {
+                labels = [];
+                profitData = [0, 0, 0, 0, 0, 0];
+                grossData = [0, 0, 0, 0, 0, 0];
+
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+                }
+
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+
+                const allData = [...appData.history];
+                if (todayTotals.gross > 0) {
+                    allData.push({ date: new Date().toISOString().split('T')[0], ...todayTotals });
+                }
+
+                allData.forEach(record => {
+                    const rDate = new Date(record.date);
+                    rDate.setMinutes(rDate.getMinutes() + rDate.getTimezoneOffset());
+                    
+                    const monthDiff = (currentYear - rDate.getFullYear()) * 12 + (currentMonth - rDate.getMonth());
+                    
+                    if (monthDiff >= 0 && monthDiff <= 5) {
+                        const index = 5 - monthDiff;
+                        profitData[index] += record.profit;
+                        grossData[index] += record.gross;
+                    }
+                });
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Profit',
+                            data: profitData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            borderRadius: 4,
+                            order: 1
+                        },
+                        {
+                            label: 'Gross',
+                            data: grossData,
+                            backgroundColor: isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.6)',
+                            borderRadius: 4,
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, color: textColor } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
             });
-            unsubStockReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'stock_requests'), (snap) => {
-                const div = document.getElementById('admin-stock-requests'); const list = document.getElementById('admin-stock-requests-list'); list.innerHTML = ''; let count = 0;
-                snap.forEach(docSnap => { const req = docSnap.data(); if(req.status === 'pending') { count++; list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded flex justify-between items-center text-sm"><span class="dark:text-white">${req.requesterName} <span class="text-xs text-gray-400">needs stock</span></span><div class="space-x-1"><button onclick="window.fulfillStockReq('${docSnap.id}', '${req.requesterUid}')" class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Fulfill</button><button onclick="window.dismissStockReq('${docSnap.id}')" class="text-gray-400 text-xs px-2">Dismiss</button></div></div>`; }});
-                if(count > 0) div.classList.remove('hidden'); else div.classList.add('hidden');
-            });
-            unsubCoverReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'cover_requests'), (snap) => {
-                const list = document.getElementById('admin-cover-list'); list.innerHTML = ''; let hasReqs = false;
-                snap.forEach(d => { const req = d.data(); if(req.status === 'open') { hasReqs = true; list.innerHTML += `<div class="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-900 flex justify-between items-center"><div class="text-sm"><span class="font-bold text-red-600">OPEN:</span> ${req.requesterName} on ${req.date} (${req.coverStart}-${req.coverEnd})</div><button onclick="window.adminForceCover('${d.id}')" class="text-xs bg-red-600 text-white px-2 py-1 rounded">Close/Assign</button></div>`; }});
-                if(!hasReqs) list.innerHTML = '<div class="text-center text-gray-400 text-sm py-2">No active cover requests.</div>';
-            });
-            unsubMasterStock = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => document.getElementById('admin-master-stock').innerText = s.exists()?s.data().qty:0);
         }
 
-        // --- NEW: EMPLOYEE MANAGEMENT TAB ---
-        function renderEmployeeList() {
-            const list = document.getElementById('admin-employee-list'); list.innerHTML = '';
-            const employees = globalRoster.filter(u => u.id !== currentUser.uid);
-            if(employees.length === 0) { list.innerHTML = '<div class="text-center text-gray-400">No employees found.</div>'; return; }
-            employees.forEach(u => {
-                const status = u.accessStatus || 'pending'; 
-                let actions = '';
-                if (u.role === 'admin') { actions = `<span class="bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded font-bold uppercase mr-2">Admin</span><button onclick="window.adminSetRole('${u.id}','driver')" class="text-xs underline text-gray-500">Demote</button>`; } 
-                else {
-                    actions = `<button onclick="window.adminSetRole('${u.id}','admin')" class="text-xs underline text-blue-500 mr-2">Promote</button>`;
-                    if(status === 'pending') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Approve</button>`;
-                    else if (status === 'active' || status === 'approved') actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'suspended')" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Suspend</button>`;
-                    else actions += `<button onclick="window.adminUpdateStatus('${u.id}', 'active')" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded mr-2">Re-Activate</button>`;
-                    actions += `<button onclick="window.adminDeleteUser('${u.id}')" class="text-red-400 hover:text-red-600 p-1 ml-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                }
-                const badge = status === 'pending' ? '<span class="ml-2 bg-orange-100 text-orange-800 text-[10px] px-1 rounded uppercase font-bold">NEW</span>' : '';
-                list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 mr-3 text-xs">${u.name?u.name[0]:'U'}</div><div><div class="font-bold text-sm dark:text-white flex items-center">${u.name}${badge}</div><div class="text-[10px] uppercase font-bold ${status==='pending'?'text-orange-500':(status==='active'?'text-green-500':'text-red-500')}">${status}</div></div></div><div class="flex items-center">${actions}</div></div>`;
+        // --- Utilities ---
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
             });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            const navIds = ['sales', 'reports', 'calculator', 'settings'];
+            navIds.forEach(id => {
+                const el = document.getElementById(`nav-${id}`);
+                if (id === tabName) {
+                    el.classList.remove('text-gray-400', 'dark:text-gray-500');
+                    el.classList.add('text-blue-600', 'dark:text-blue-400');
+                } else {
+                    el.classList.remove('text-blue-600', 'dark:text-blue-400');
+                    el.classList.add('text-gray-400', 'dark:text-gray-500');
+                }
+            });
+
+            if (tabName === 'reports') {
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
+                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn);
+                updateHourlyChart();
+            }
+            if (tabName === 'calculator') {
+                calculateReconciliation();
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            const icon = document.getElementById('theme-icon');
+            if(icon) {
+                icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                lucide.createIcons();
+            }
+
+            if (document.getElementById('tab-reports').classList.contains('active')) {
+                const activeBtn = document.getElementById('btn-chart-daily').classList.contains('text-blue-600') ? 'daily' : 
+                                  document.getElementById('btn-chart-weekly').classList.contains('text-blue-600') ? 'weekly' : 'monthly';
+                updateChart(activeBtn);
+                updateHourlyChart();
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- Calculator Logic ---
+
+        function addCustomDebt() {
+            const amountEl = document.getElementById('new-custom-debt-amount');
+            const descEl = document.getElementById('new-custom-debt-desc');
+            const amount = parseFloat(amountEl.value);
+            if (isNaN(amount) || amount <= 0) return showToast("Enter a valid debt amount");
+            
+            appData.customDebts.push({
+                id: Date.now(),
+                amount: amount,
+                desc: descEl.value || 'Custom Debt'
+            });
+            amountEl.value = '';
+            descEl.value = '';
+            saveData();
+        }
+
+        function removeCustomDebt(id) {
+            appData.customDebts = appData.customDebts.filter(d => d.id !== id);
+            saveData();
+        }
+
+        function addSupplierPayment() {
+            const amountEl = document.getElementById('new-payment-amount');
+            const amount = parseFloat(amountEl.value);
+            if (isNaN(amount) || amount <= 0) return showToast("Enter a valid payment amount");
+            
+            appData.supplierPayments.push({
+                id: Date.now(),
+                amount: amount
+            });
+            amountEl.value = '';
+            saveData();
+        }
+
+        function removeSupplierPayment(id) {
+            appData.supplierPayments = appData.supplierPayments.filter(p => p.id !== id);
+            saveData();
+        }
+
+        function updateInputBorderColors(el, state) {
+            el.classList.remove('border-red-500', 'border-orange-500', 'border-green-500', 'border-gray-200', 'dark:border-gray-600');
+            if (state === 'red') el.classList.add('border-red-500');
+            else if (state === 'orange') el.classList.add('border-orange-500');
+            else if (state === 'green') el.classList.add('border-green-500');
+            else el.classList.add('border-gray-200', 'dark:border-gray-600');
+        }
+
+        function calculateReconciliation() {
+            const totals = getTodayTotals();
+            const autoOwed = totals.supplier;
+            const expectedProfit = totals.profit;
+            
+            const carriedDebt = appData.carriedDebt || 0;
+            
+            let customDebtTotal = 0;
+            appData.customDebts.forEach(d => customDebtTotal += d.amount);
+            
+            let paymentTotal = 0;
+            appData.supplierPayments.forEach(p => paymentTotal += p.amount);
+            
+            const totalGrossDebt = carriedDebt + autoOwed + customDebtTotal;
+            const netOwedSigned = totalGrossDebt - paymentTotal;
+            
+            const cashEl = document.getElementById('calc-cash');
+            const bankEl = document.getElementById('calc-bank');
+            const cash = parseFloat(cashEl.value) || 0;
+            const bank = parseFloat(bankEl.value) || 0;
+
+            const totalFunds = cash + bank;
+            
+            // Render Combined Assets
+            const totalAssetsEl = document.getElementById('calc-total-assets');
+            if (totalAssetsEl) totalAssetsEl.innerText = `Combined: $${totalFunds.toLocaleString()}`;
+
+            // Render Text Displays
+            document.getElementById('calc-carried-debt').innerText = `$${carriedDebt.toLocaleString()}`;
+            document.getElementById('calc-auto-owed').innerText = `$${autoOwed.toLocaleString()}`;
+            document.getElementById('calc-total-gross-debt').innerText = `$${totalGrossDebt.toLocaleString()}`;
+            document.getElementById('calc-total-payments').innerText = `$${paymentTotal.toLocaleString()}`;
+            document.getElementById('calc-net-owed').innerText = `$${netOwedSigned.toLocaleString()}`;
+
+            // Render Lists
+            const debtList = document.getElementById('list-custom-debts');
+            debtList.innerHTML = appData.customDebts.map(d => `
+                <div class="flex justify-between items-center text-sm py-2 px-3 bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <span class="text-gray-600 dark:text-gray-300 font-medium">${d.desc}</span>
+                    <div class="flex items-center">
+                        <span class="font-bold text-red-600 dark:text-red-400 mr-3">+$${d.amount}</span>
+                        <button onclick="removeCustomDebt(${d.id})" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const payList = document.getElementById('list-payments');
+            payList.innerHTML = appData.supplierPayments.map(p => `
+                <div class="flex justify-between items-center text-sm py-2 px-3 bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <span class="text-gray-600 dark:text-gray-300 font-medium flex items-center"><i data-lucide="check-circle" class="w-3 h-3 mr-1 text-green-500"></i> Payment</span>
+                    <div class="flex items-center">
+                        <span class="font-bold text-green-600 dark:text-green-400 mr-3">-$${p.amount}</span>
+                        <button onclick="removeSupplierPayment(${p.id})" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+
+            // Status Logic & Colors
+            const statusLabel = document.getElementById('calc-status-label');
+            const statusValue = document.getElementById('calc-status-value');
+
+            if (totalFunds < netOwedSigned) {
+                // Short on Supplier Debt
+                updateInputBorderColors(cashEl, 'red');
+                updateInputBorderColors(bankEl, 'red');
+                statusLabel.innerText = "Short for Supplier";
+                statusLabel.className = "text-sm font-medium text-red-600 dark:text-red-400";
+                statusValue.innerText = `-$${(netOwedSigned - totalFunds).toLocaleString()}`;
+                statusValue.className = "font-bold text-2xl text-red-600 dark:text-red-400";
+            } else {
+                const surplus = totalFunds - netOwedSigned;
+                if (surplus < expectedProfit) {
+                    // Supplier Paid, but missing some expected profit
+                    updateInputBorderColors(cashEl, 'orange');
+                    updateInputBorderColors(bankEl, 'orange');
+                    statusLabel.innerText = `Covered (Target Profit: $${expectedProfit.toLocaleString()})`;
+                    statusLabel.className = "text-sm font-medium text-orange-600 dark:text-orange-400";
+                    statusValue.innerText = `+$${surplus.toLocaleString()}`;
+                    statusValue.className = "font-bold text-2xl text-orange-600 dark:text-orange-400";
+                } else {
+                    // Supplier Paid AND Profiting perfectly
+                    updateInputBorderColors(cashEl, 'green');
+                    updateInputBorderColors(bankEl, 'green');
+                    statusLabel.innerText = "Surplus / Full Profit";
+                    statusLabel.className = "text-sm font-medium text-green-600 dark:text-green-500";
+                    statusValue.innerText = `+$${surplus.toLocaleString()}`;
+                    statusValue.className = "font-bold text-2xl text-green-600 dark:text-green-500";
+                }
+            }
+        }
+
+        function transferBankToCash() {
+            const bankInput = document.getElementById('calc-bank');
+            const cashInput = document.getElementById('calc-cash');
+            
+            const bankVal = parseFloat(bankInput.value) || 0;
+            const cashVal = parseFloat(cashInput.value) || 0;
+            
+            if (bankVal > 0) {
+                cashInput.value = cashVal + bankVal;
+                bankInput.value = '';
+                appData.calcCash = cashInput.value;
+                appData.calcBank = bankInput.value;
+                calculateReconciliation();
+                saveData();
+                showToast("Bank funds transferred to Cash.");
+            }
+        }
+
+        // --- Gemini AI Logic ---
+
+        const apiKey = ""; // Provided by execution environment
+
+        async function generateAIFinancialAdvice() {
+            const outputEl = document.getElementById('ai-advisor-output');
+            const btnEl = document.getElementById('btn-ai-advisor');
+            
+            // Set loading state
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 mr-1 animate-spin"></i> Thinking...';
+            lucide.createIcons();
+            outputEl.classList.remove('italic');
+            outputEl.innerHTML = '<span class="animate-pulse text-indigo-600 dark:text-indigo-400">Analyzing your ledger and cash assets...</span>';
+
+            // Gather context from the UI
+            const totalAssets = document.getElementById('calc-total-assets').innerText;
+            const cash = document.getElementById('calc-cash').value || "0";
+            const bank = document.getElementById('calc-bank').value || "0";
+            const grossDebt = document.getElementById('calc-total-gross-debt').innerText;
+            const netOwed = document.getElementById('calc-net-owed').innerText;
+            const statusLabel = document.getElementById('calc-status-label').innerText;
+            const statusValue = document.getElementById('calc-status-value').innerText;
+
+            const prompt = `
+                You are an expert, encouraging financial advisor for a small retail supplier/reseller. 
+                Here is my current financial standing for today:
+                - ${totalAssets}
+                - Cash on hand: $${cash}
+                - Bank balance: $${bank}
+                - Total Gross Debt owed to Supplier: ${grossDebt}
+                - Net Amount Owed (after any payments made today): ${netOwed}
+                - Current Health Status: ${statusLabel} (${statusValue})
+
+                Provide a short, 2 to 3 sentence financial insight based ONLY on these numbers. 
+                Tell me exactly what my immediate priority should be (e.g., paying down the supplier, safe to bank profit, or transferring funds). 
+                Be highly concise, professional, and encouraging. Do not use markdown formatting.
+            `;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: "You are a concise, helpful financial AI assistant for a small business owner." }] }
+            };
+
+            let delay = 1000;
+            
+            // Exponential backoff retry mechanism
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    
+                    const data = await response.json();
+                    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights available right now.";
+                    
+                    outputEl.innerHTML = `<span class="text-gray-800 dark:text-gray-200 font-medium">${aiText}</span>`;
+                    break;
+                } catch (error) {
+                    if (i === 4) {
+                        outputEl.innerHTML = `<span class="text-red-500">Error reaching AI advisor. Please try again later.</span>`;
+                    }
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+            
+            // Reset button state
+            btnEl.disabled = false;
+            btnEl.innerHTML = '✨ Get Insight';
             lucide.createIcons();
         }
 
-        window.adminUpdateStatus = async (uid, newStatus) => { if(!confirm(`Change status?`)) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { accessStatus: newStatus }); window.showToast("Status Updated"); };
-        window.adminSetRole = async (uid, newRole) => { if(!confirm(`Change role to ${newRole}?`)) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { role: newRole }); await updateDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'), { role: newRole }); window.showToast("Role Updated"); };
-        window.adminDeleteUser = async (uid) => { if(!confirm("Permanently delete?")) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); window.showToast("User Removed"); };
+        // --- Data Management ---
 
-        // --- ADMIN HELPERS ---
-        window.fulfillStockReq = async (reqId, uid) => { document.getElementById('distribute-select-driver').value = uid; window.updateTransferStats('collect'); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', reqId), { status: 'completed' }); window.showToast("Driver Selected below"); };
-        window.dismissStockReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stock_requests', id)); };
-        
-        window.adminAssignShift = async () => { 
-            const uid=document.getElementById('sched-driver').value; const date=document.getElementById('sched-date').value; const start=document.getElementById('sched-start').value; const end=document.getElementById('sched-end').value; 
-            if(!uid||!date||!start||!end) return window.showToast("Fill all fields"); 
-            const ref=doc(db,'artifacts',appId,'public','data','roster',uid); const snap=await getDoc(ref); 
-            let shifts=snap.exists()?(snap.data().shifts||[]):[]; shifts.push({date,start,end}); 
-            await updateDoc(ref,{shifts}); window.showToast("Shift Assigned"); window.renderCalendar('admin-calendar-grid', null, 'admin'); 
-        };
-        
-        window.adminDeleteShift = async (uid, date, start) => {
-            if(!confirm("Delete this shift?")) return;
-            const ref=doc(db,'artifacts',appId,'public','data','roster',uid); const snap=await getDoc(ref);
-            if(snap.exists()) {
-                let shifts = snap.data().shifts || [];
-                shifts = shifts.filter(s => !(s.date === date && s.start === start));
-                await updateDoc(ref, { shifts });
-                window.showToast("Shift Deleted"); window.renderCalendar('admin-calendar-grid', null, 'admin');
-            }
-        };
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `Sales_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast("Data exported successfully.");
+        }
 
-        window.adminForceCover = async (id) => { if(confirm("Mark resolved?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'cover_requests', id), { status: 'filled', filledByUid: 'admin', filledByName: 'Admin Assigned' }); };
-        window.updateTransferStats = (type) => { let uid,elId; if(type==='from'){uid=document.getElementById('transfer-from').value;elId='transfer-stats-from';} if(type==='to'){uid=document.getElementById('transfer-to').value;elId='transfer-stats-to';} if(type==='collect'){uid=document.getElementById('collect-driver').value;elId='collect-stats';} const drv=globalRoster.find(d=>d.id===uid); const el=document.getElementById(elId); if(drv) el.innerHTML=`<span class="text-blue-500 font-bold">Stock: ${drv.stock||0}</span> <span class="mx-1">|</span> <span class="text-red-500 font-bold">Debt: $${drv.debt||0}</span>`; else el.innerText=''; };
-        window.adminDistributeStock = async () => { const l=globalRoster.filter(d=>d.role!=='admin').map((d,i)=>`${i+1}. ${d.name}`).join('\n'); const s=prompt(`Driver Num:\n${l}`); if(!s) return; const drvs=globalRoster.filter(d=>d.role!=='admin'); const d=drvs[parseInt(s)-1]; if(!d) return; const q=parseInt(prompt(`Qty for ${d.name}?`)); if(!q) return; await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(-q)},{merge:true}); await updateDriverAssets(d.id,q,0); window.showToast("Sent"); };
-        window.adminP2PTransfer = async () => { const f=document.getElementById('transfer-from').value; const t=document.getElementById('transfer-to').value; const s=parseInt(document.getElementById('p2p-stock').value)||0; const d=parseInt(document.getElementById('p2p-debt').value)||0; if(!f||!t||(s<=0&&d<=0)) return; await updateDriverAssets(f,-s,-d); await updateDriverAssets(t,s,d); window.showToast("Transferred"); };
-        window.adminManageDriver = async () => { const u=document.getElementById('collect-driver').value; const s=parseInt(document.getElementById('collect-stock').value)||0; const d=parseInt(document.getElementById('collect-debt').value)||0; if(!u||(s<=0&&d<=0)) return; await updateDriverAssets(u,-s,-d); if(s>0) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(s)},{merge:true}); window.showToast("Processed"); };
-        async function updateDriverAssets(uid,s,d) { const r=doc(db,'artifacts',appId,'users',uid,'data','app_state'); const sn=await getDoc(r); let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]}; dat.stock=(dat.stock||0)+s; dat.debt=(dat.debt||0)+d; if(dat.debt<0) dat.debt=0; await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid),{stock:dat.stock,debt:dat.debt},{merge:true}); }
-        
-        window.viewDriverDetails = (uid) => { if(typeof uid==='object') uid=uid.id; const d=globalRoster.find(x=>x.id===uid); if(!d) return; currentDetailUid=uid; currentDriverData=d; document.getElementById('admin-user-detail').classList.remove('hidden'); document.getElementById('detail-user-name').innerText=d.name; document.getElementById('detail-stock').innerText=d.stock||0; document.getElementById('detail-debt').innerText=`$${d.debt||0}`; document.getElementById('detail-profit').innerText=`$${d.todayProfit||0}`; const l=document.getElementById('detail-log-list'); l.innerHTML=''; (d.recentLogs||[]).forEach(x=>{ l.innerHTML+=`<div class="flex justify-between border-b dark:border-gray-700 pb-1 mb-1 text-xs"><span>Sold ${x.qty} (${x.type})</span> <span class="text-green-600">+$${x.profit}</span></div>`; }); window.renderHistory('daily'); };
-        window.adminEditValue = async (field) => {
-            if(!currentDetailUid) return;
-            const currentVal = field === 'stock' ? document.getElementById('detail-stock').innerText : document.getElementById('detail-debt').innerText.replace('$','');
-            const newVal = prompt(`Enter new value for ${field}:`, currentVal);
-            if(newVal === null) return;
-            const numVal = parseFloat(newVal);
-            if(isNaN(numVal)) return window.showToast("Invalid number");
-            
-            const r=doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); const sn=await getDoc(r); 
-            let dat=sn.exists()?JSON.parse(sn.data().json):{stock:0,debt:0,history:[],currentTransactions:[]};
-            dat[field] = numVal;
-            await setDoc(r,{json:JSON.stringify(dat),lastUpdated:Date.now()}); 
-            await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid),{[field]:numVal},{merge:true});
-            window.showToast("Value Updated");
-            if(field === 'stock') document.getElementById('detail-stock').innerText = numVal;
-            else document.getElementById('detail-debt').innerText = `$${numVal}`;
-        };
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        window.adminViewAsDriver = () => {
-            if(!currentDriverData) return;
-            viewMode = true;
-            document.getElementById('admin-app').classList.add('hidden');
-            document.getElementById('driver-app').classList.remove('hidden');
-            document.getElementById('view-only-banner').classList.remove('hidden');
-            document.getElementById('admin-user-detail').classList.add('hidden'); // Close detail modal
-            
-            // Populate Driver UI with currentDriverData
-            // Note: We need deep data (history, transactions) which might not be fully in roster if truncated
-            // But we sync history (slice-30) and recentLogs (slice-20) to roster, so we can use that for view
-            appData = {
-                stock: currentDriverData.stock || 0,
-                debt: currentDriverData.debt || 0,
-                onlineStatus: currentDriverData.onlineStatus || 'offline',
-                currentTransactions: currentDriverData.recentLogs ? [...currentDriverData.recentLogs].reverse() : [], // reverse back to normal order if needed? renderUI reverses it again
-                history: currentDriverData.history || []
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.stock !== undefined) {
+                        appData = importedData;
+                        if (!appData.currentTransactions) appData.currentTransactions = [];
+                        
+                        saveData();
+                        showToast("Data imported successfully!");
+                        updateUI();
+                    } else {
+                        showToast("Invalid data format.");
+                    }
+                } catch (err) {
+                    showToast("Error reading file.");
+                }
             };
-            
-            // Adjust currentTransactions logic: recentLogs is stored reversed (newest first). 
-            // renderDriverUI reverses appData.currentTransactions (expects oldest first)
-            // So we need to reverse recentLogs back to chronological order
-            if(currentDriverData.recentLogs) appData.currentTransactions = [...currentDriverData.recentLogs].reverse();
+            reader.readAsText(file);
+            event.target.value = '';
+        }
 
-            document.getElementById('driver-name-display').innerText = currentDriverData.name + " (View)";
-            renderDriverUI();
-            
-            // Disable interactive buttons
-            document.querySelectorAll('.btn-interactive').forEach(b => b.disabled = true);
-        };
+        function resetApp() {
+            if (confirm("Are you sure? This cannot be undone unless you have exported a backup!")) {
+                localStorage.removeItem('salesAppData');
+                appData = { stock: 0, currentTransactions: [], history: [] };
+                updateUI();
+                showToast("App data has been reset.");
+            }
+        }
 
-        window.exitViewMode = () => {
-            viewMode = false;
-            document.getElementById('driver-app').classList.add('hidden');
-            document.getElementById('admin-app').classList.remove('hidden');
-            document.getElementById('view-only-banner').classList.add('hidden');
-            // Buttons auto re-enabled by simple page logic next refresh, but better reload or just reset
-            document.querySelectorAll('.btn-interactive').forEach(b => b.disabled = false);
-        };
+        // Boot the app
+        window.onload = initApp;
 
-        window.renderHistory = (mode) => { if(!currentDriverData||!currentDriverData.history) return; ['daily','weekly','monthly'].forEach(m=>document.getElementById(`hist-tab-${m}`).className=m===mode?"pb-1 text-sm font-bold border-b-2 border-blue-500 text-blue-500":"pb-1 text-sm font-bold text-gray-400 hover:text-gray-600"); const list=document.getElementById('detail-history-list'); list.innerHTML=''; let d=[]; if(mode==='daily') d=[...currentDriverData.history].reverse().map(h=>({l:new Date(h.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}),s:h.sold,b:(h.revenue||0)-(h.profit||0),v:h.profit||0})); else { let agg={}; currentDriverData.history.forEach(h=>{ const dt=new Date(h.date); const k=mode==='weekly'?`Week ${Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7)}`:dt.toLocaleDateString(undefined,{month:'long'}); if(!agg[k]) agg[k]={s:0,b:0,v:0}; agg[k].s+=h.sold; agg[k].b+=((h.revenue||0)-(h.profit||0)); agg[k].v+=(h.profit||0); }); d=Object.keys(agg).map(k=>({l:k,s:agg[k].s,b:agg[k].b,v:agg[k].v})).reverse(); } d.forEach(i=>{ list.innerHTML+=`<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-2 rounded mb-1 text-sm"><div><div class="font-bold dark:text-gray-200">${i.l}</div><div class="text-xs text-gray-500">${i.s} items</div></div><div class="text-right"><div class="text-xs text-gray-500">Boss: <b>$${i.b}</b></div><div class="text-xs text-green-600">Driver: <b>+$${i.v}</b></div></div></div>`; }); };
-        window.switchAdminTab = (tab) => { ['team','transfer','schedule','employees','reports'].forEach(t => { document.getElementById(`admin-view-${t}`).classList.add('hidden'); document.getElementById(`adm-tab-${t}`).classList.remove('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${t}`).classList.add('text-gray-500','dark:text-gray-400'); }); document.getElementById(`admin-view-${tab}`).classList.remove('hidden'); document.getElementById(`adm-tab-${tab}`).classList.add('bg-gray-100','dark:bg-gray-700','text-blue-600'); document.getElementById(`adm-tab-${tab}`).classList.remove('text-gray-500','dark:text-gray-400'); };
-        function updateAdminReports(roster) { let m={}; let wG=0,wP=0,mG=0,mP=0; const now=new Date(); const sW=new Date(now.setDate(now.getDate()-7)); const sM=new Date(new Date().getFullYear(),new Date().getMonth(),1); roster.forEach(d=>{ (d.history||[]).forEach(h=>{ const dt=new Date(h.date); if(!m[h.date]) m[h.date]={p:0,r:0}; m[h.date].p+=(h.profit||0); m[h.date].r+=(h.revenue||0); if(dt>=sW){wG+=(h.revenue||0);wP+=(h.profit||0);} if(dt>=sM){mG+=(h.revenue||0);mP+=(h.profit||0);} }); if(d.todaySold>0){wG+=d.todayGross;wP+=d.todayProfit;mG+=d.todayGross;mP+=d.todayProfit;} }); document.getElementById('adm-report-week-gross').innerText=`$${wG}`; document.getElementById('adm-report-week-profit').innerText=`$${wP} Profit`; document.getElementById('adm-report-month-gross').innerText=`$${mG}`; document.getElementById('adm-report-month-profit').innerText=`$${mP} Profit`; const d=Object.keys(m).sort().slice(-7); const ctx=document.getElementById('adminTeamChart').getContext('2d'); if(adminChartInstance) adminChartInstance.destroy(); adminChartInstance=new Chart(ctx,{type:'line',data:{labels:d.map(x=>x.slice(5)),datasets:[{label:'Gross',data:d.map(x=>m[x].r),borderColor:'#3B82F6',fill:false},{label:'Profit',data:d.map(x=>m[x].p),borderColor:'#10B981',fill:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#374151'}},x:{grid:{display:false}}}}}); }
-        window.adminAddMasterStock = async () => { const q=prompt("Qty:"); if(q) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{qty:increment(parseInt(q))},{merge:true}); };
     </script>
 </body>
 </html>
