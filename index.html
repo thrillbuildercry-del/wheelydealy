@@ -188,6 +188,15 @@
             </button>
         </header>
 
+        <!-- Notification Banner -->
+        <div id="push-setup-banner" class="hidden bg-indigo-600 text-white p-3 text-xs flex justify-between items-center shadow-inner">
+            <div class="flex-1">
+                <span class="font-bold"><i data-lucide="bell-ring" class="w-3 h-3 inline mr-1"></i> Notifications Off</span><br>
+                <span class="text-[10px] text-indigo-200">For iPhone: Add app to Home Screen first, then click Enable.</span>
+            </div>
+            <button onclick="window.enableNotifications()" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition">Enable</button>
+        </div>
+
         <main class="p-4 max-w-md mx-auto space-y-4">
             
             <!-- Stock Card -->
@@ -214,6 +223,16 @@
                         <span class="text-2xl font-black" id="staff-stock-usual">0</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Action Hub (NEW) -->
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="window.undoLastTransaction()" class="bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800/50 p-3 rounded-xl font-bold text-xs flex flex-col justify-center items-center hover:bg-red-100 transition btn-interactive shadow-sm">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5 mb-1"></i> Void Last Entry
+                </button>
+                <button onclick="window.staffDropCash()" class="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 p-3 rounded-xl font-bold text-xs flex flex-col justify-center items-center hover:bg-green-100 transition btn-interactive shadow-sm">
+                    <i data-lucide="hand-coins" class="w-5 h-5 mb-1"></i> Log Cash Drop-off
+                </button>
             </div>
 
             <!-- Terminal Card -->
@@ -351,7 +370,7 @@
                 </div>
 
                 <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-4 flex justify-between items-center shadow-inner">
-                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Net Cash<br>to Return</div>
+                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Current Cash<br>On Hand</div>
                     <div class="text-3xl font-black text-blue-700 dark:text-blue-400" id="staff-stat-net">$0</div>
                 </div>
 
@@ -383,10 +402,19 @@
             </button>
         </header>
 
+        <!-- Notification Banner Admin -->
+        <div id="admin-push-setup-banner" class="hidden bg-indigo-600 text-white p-3 text-xs flex justify-between items-center shadow-inner">
+            <div class="flex-1">
+                <span class="font-bold"><i data-lucide="bell-ring" class="w-3 h-3 inline mr-1"></i> Notifications Off</span><br>
+                <span class="text-[10px] text-indigo-200">For iPhone: Add app to Home Screen first, then click Enable.</span>
+            </div>
+            <button onclick="window.enableNotifications()" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition">Enable</button>
+        </div>
+
         <main class="p-4 max-w-2xl mx-auto">
             
             <!-- Admin Navigation -->
-            <div class="grid grid-cols-5 gap-1 mb-6 text-[10px] sm:text-xs">
+            <div class="grid grid-cols-5 gap-1 mb-6 text-[10px] sm:text-xs mt-2">
                 <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="py-2 px-1 rounded-xl font-bold bg-gray-800 text-white shadow transition flex flex-col justify-center items-center"><i data-lucide="database" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Vault</span></button>
                 <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center"><i data-lucide="calculator" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Sell</span></button>
                 <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative"><i data-lucide="users" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Team</span></button>
@@ -881,9 +909,13 @@
                     <span class="text-sm font-bold dark:text-gray-300">Gross Cash Collected</span>
                     <span class="text-lg font-bold text-green-600" id="det-collected">$0</span>
                 </div>
-                <div class="flex justify-between items-center mb-4 text-xs text-orange-600 dark:text-orange-400">
+                <div class="flex justify-between items-center mb-2 text-xs text-orange-600 dark:text-orange-400">
                     <span class="font-bold flex items-center"><i data-lucide="fuel" class="w-3 h-3 mr-1"></i> Logged Expenses</span>
                     <span class="font-bold" id="det-expenses">-$0</span>
+                </div>
+                <div class="flex justify-between items-center mb-4 text-xs text-blue-600 dark:text-blue-400">
+                    <span class="font-bold flex items-center"><i data-lucide="hand-coins" class="w-3 h-3 mr-1"></i> Cash Dropped Off</span>
+                    <span class="font-bold" id="det-cash-dropped">-$0</span>
                 </div>
 
                 <!-- Earnings and Debt Settlement -->
@@ -913,7 +945,7 @@
                 </div>
                 
                 <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-3 flex justify-between items-center shadow-inner">
-                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Net Cash<br>from Staff</div>
+                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Current Cash<br>On Hand</div>
                     <div class="text-3xl font-black text-blue-700 dark:text-blue-400" id="det-net-cash">$0</div>
                 </div>
 
@@ -945,6 +977,21 @@
     <div id="toast"></div>
 
     <script type="module">
+        // Inject PWA Manifest for iPhone iOS 16.4+ Web Push Support
+        const manifestJSON = {
+            "name": "WeightOps POS",
+            "short_name": "WeightOps",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#111827",
+            "theme_color": "#2563eb",
+            "icons": [{"src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY3jP4PgfAAWpA5k1I2QWAAAAAElFTkSuQmCC", "sizes": "192x192", "type": "image/png"}]
+        };
+        const manifestTag = document.createElement('link');
+        manifestTag.rel = 'manifest';
+        manifestTag.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
+        document.head.appendChild(manifestTag);
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -975,13 +1022,13 @@
         let userRole = 'staff'; 
         
         // Staff State
-        let appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [] };
+        let appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, cashDropped: 0, transactions: [] };
         let currentQty = 1;
         let currentType = 'full';
 
         // Admin State
         let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, adminDiscount: 20, staffDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [] };
-        let adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [] };
+        let adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, cashDropped: 0, transactions: [] };
         let globalRoster = []; 
         let currentDetailUid = null;
 
@@ -996,12 +1043,72 @@
         let adminTerminalChartInst = null;
         let financePredictionChartInst = null;
 
+        // Listeners
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts;
+
         // Chart Default Styling
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.borderColor = '#374151';
 
-        // Listeners
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck;
+        // ---------------------------------------------------------
+        // NOTIFICATIONS API (iOS Workaround)
+        // ---------------------------------------------------------
+        window.checkPushSetup = () => {
+            if ("Notification" in window && Notification.permission !== "granted") {
+                const banner = userRole === 'admin' ? document.getElementById('admin-push-setup-banner') : document.getElementById('push-setup-banner');
+                if(banner) banner.classList.remove('hidden');
+            }
+        };
+
+        window.enableNotifications = async () => {
+            if (!("Notification" in window)) {
+                alert("This browser does not support desktop notification");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                window.showToast("Notifications already enabled!");
+                document.getElementById('push-setup-banner').classList.add('hidden');
+                document.getElementById('admin-push-setup-banner').classList.add('hidden');
+                return;
+            }
+            if (Notification.permission !== "denied") {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    window.showToast("Notifications enabled!");
+                    document.getElementById('push-setup-banner').classList.add('hidden');
+                    document.getElementById('admin-push-setup-banner').classList.add('hidden');
+                    
+                    // Register dummy Service Worker for mobile notification handling in background
+                    const swCode = `
+                        self.addEventListener('push', function(event) {
+                            const data = event.data ? event.data.json() : {title: 'WeightOps', body: 'New Alert'};
+                            event.waitUntil(self.registration.showNotification(data.title, {body: data.body}));
+                        });
+                        self.addEventListener('notificationclick', function(event) {
+                            event.notification.close();
+                            event.waitUntil(clients.openWindow('/'));
+                        });
+                    `;
+                    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                    const swUrl = URL.createObjectURL(swBlob);
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register(swUrl).then(reg => {
+                            window.swRegistration = reg;
+                        });
+                    }
+                }
+            }
+        };
+
+        window.fireLocalNotification = (title, body) => {
+            if ("Notification" in window && Notification.permission === "granted") {
+                if (window.swRegistration) {
+                    window.swRegistration.showNotification(title, { body: body });
+                } else {
+                    new Notification(title, { body: body });
+                }
+            }
+        };
 
         // ---------------------------------------------------------
         // UTILS
@@ -1039,7 +1146,7 @@
         };
 
         window.logout = async () => { 
-            if(unsubUserData) unsubUserData(); if(unsubRoster) unsubRoster(); if(unsubMaster) unsubMaster(); if(unsubAuthCheck) unsubAuthCheck();
+            if(unsubUserData) unsubUserData(); if(unsubRoster) unsubRoster(); if(unsubMaster) unsubMaster(); if(unsubAuthCheck) unsubAuthCheck(); if(unsubAlerts) unsubAlerts();
             
             document.getElementById('staff-app').classList.add('hidden');
             document.getElementById('admin-app').classList.add('hidden');
@@ -1067,10 +1174,12 @@
                         document.getElementById('approval-modal').classList.add('hidden');
                         document.getElementById('staff-app').classList.add('hidden');
                         initAdminDashboard(user);
+                        window.checkPushSetup();
                     } else if (status === 'active') {
                         document.getElementById('approval-modal').classList.add('hidden');
                         document.getElementById('admin-app').classList.add('hidden');
                         initStaffApp(user);
+                        window.checkPushSetup();
                     } else {
                         // Pending or Suspended
                         document.getElementById('approval-modal').classList.remove('hidden');
@@ -1093,11 +1202,10 @@
                     window.showToast("Permission denied. Check Firebase Rules.");
                 });
 
-                // Always listen to master data for calculations
+                // Listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         const dat = s.data();
-                        // Backward compatibility for separated discount rates
                         masterData = { 
                             rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, 
                             adminDiscount: dat.adminDiscount ?? dat.personalUseDiscount ?? 20, 
@@ -1115,11 +1223,34 @@
                     }
                 });
 
+                // Listen to personal alerts
+                unsubAlerts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), (snap) => {
+                    snap.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const alert = change.doc.data();
+                            if (alert.target === user.uid || (alert.target === 'admin' && userRole === 'admin')) {
+                                // Prevent firing on old loaded alerts by checking timestamp within last 10 seconds
+                                if (Date.now() - alert.timestamp < 10000) {
+                                    window.fireLocalNotification("WeightOps Notification", alert.message);
+                                }
+                            }
+                        }
+                    });
+                });
+
             } else {
                 document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('login-modal').classList.remove('hidden');
             }
         });
+
+        window.sendNotificationAlert = async (targetUid, message) => {
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), {
+                target: targetUid,
+                message: message,
+                timestamp: Date.now()
+            });
+        };
 
         function updateMasterLabels() {
             // Staff Pricing Labels
@@ -1189,7 +1320,7 @@
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
-                    appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [], ...d };
+                    appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, cashDropped: 0, transactions: [], ...d };
                     renderStaffUI(); 
                 } else { saveStaffData(); } 
             });
@@ -1224,11 +1355,12 @@
             document.getElementById('staff-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
             document.getElementById('staff-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
-            // Net Cash calculation for Boss (Gross - Expenses - Net Commission)
-            const netCash = (appData.collected || 0) - (appData.expenses || 0) - netComm;
-            document.getElementById('staff-stat-net').innerText = `$${netCash.toFixed(2)}`;
+            // EXACT Cash On Hand calculation
+            // Gross Cash - Logged Expenses - Net Commission to Keep - Cash Already Dropped to Boss
+            const cashOnHand = (appData.collected || 0) - (appData.expenses || 0) - netComm - (appData.cashDropped || 0);
+            document.getElementById('staff-stat-net').innerText = `$${cashOnHand.toFixed(2)}`;
 
-            // Shortage checking (Expected includes the discounted personal debt & borrowings)
+            // Shortage checking
             const diff = (appData.expected || 0) - (appData.collected || 0);
             const warn = document.getElementById('staff-shortage-warning');
             if(diff > 0) {
@@ -1273,6 +1405,15 @@
                         </div>
                         <div class="text-right"><div class="font-black text-red-600 dark:text-red-400">+$${t.expected} Owed</div></div>
                     </div>`;
+                } else if (t.type === 'dropoff') {
+                    list.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl mb-2 border border-green-100 dark:border-green-800">
+                        <div>
+                            <div class="font-bold text-green-800 dark:text-green-300"><i data-lucide="hand-coins" class="inline w-3 h-3 mr-1"></i> Handed Cash to Boss</div>
+                            <div class="text-xs text-gray-500">${t.time} • ${t.desc}</div>
+                        </div>
+                        <div class="text-right"><div class="font-black text-green-600 dark:text-green-400">-$${t.amt}</div></div>
+                    </div>`;
                 } else {
                     const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
                     const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
@@ -1296,7 +1437,7 @@
             const ctx = document.getElementById('staffChart');
             if(!ctx) return;
             
-            const sales = transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing').reverse(); 
+            const sales = transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
             const labels = sales.map(t => t.time);
             const data = sales.map(t => t.money);
 
@@ -1340,6 +1481,7 @@
                     personalUseWeight: appData.personalUseWeight || 0,
                     personalUseOwed: appData.personalUseOwed || 0,
                     borrowings: appData.borrowings || 0,
+                    cashDropped: appData.cashDropped || 0,
                     collected: appData.collected,
                     expected: appData.expected,
                     expenses: appData.expenses || 0,
@@ -1434,6 +1576,7 @@
             appData.transactions.push({
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                source: source,
                 qty: currentQty,
                 type: currentType,
                 actualWeight: actualWeightDeducted,
@@ -1479,6 +1622,7 @@
             appData.transactions.push({
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                source: source,
                 qty: currentQty,
                 type: 'personal',
                 actualWeight: actualWeightDeducted,
@@ -1506,6 +1650,64 @@
             window.showToast("Expense Logged.");
         };
 
+        window.staffDropCash = async () => {
+            const amt = parseFloat(prompt("How much physical cash are you dropping off/handing to the Boss? ($)"));
+            if(isNaN(amt) || amt <= 0) return;
+            
+            appData.cashDropped = (appData.cashDropped || 0) + amt;
+            appData.transactions.push({
+                id: Date.now(),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                qty: 0, type: 'dropoff', actualWeight: 0, money: 0, expected: 0, amt: amt, desc: 'Dropped off cash'
+            });
+            await saveStaffData();
+            window.showToast(`Logged $${amt} dropped off.`);
+            window.sendNotificationAlert('admin', `${currentUser.displayName} dropped off $${amt} cash.`);
+        };
+
+        window.undoLastTransaction = async () => {
+            if(!appData.transactions || appData.transactions.length === 0) return window.showToast("No transactions to undo.");
+            if(!confirm("Are you SURE you want to completely VOID your last entry? This will reverse the math perfectly.")) return;
+            
+            const t = appData.transactions.pop();
+            
+            if(t.type === 'expense') {
+                appData.expenses -= Math.abs(t.money);
+            } else if (t.type === 'dropoff') {
+                appData.cashDropped -= t.amt;
+            } else if (t.type === 'borrowing') {
+                appData.borrowings -= t.expected;
+                appData.expected -= t.expected;
+            } else if (t.type === 'personal') {
+                appData.personalUseWeight -= t.actualWeight;
+                appData.expected -= t.expected;
+                appData.personalUseOwed -= t.expected;
+                
+                if (t.source === 'raw') appData.weight += t.actualWeight;
+                else if (t.source === 'processed' && t.actualWeight === t.qty * 1.0) appData.unitsFull += t.qty;
+                else if (t.source === 'processed' && t.actualWeight !== t.qty * 1.0) appData.unitsUsual += t.qty;
+                
+            } else {
+                // Sale Reversal
+                appData.collected -= t.money;
+                appData.expected -= t.expected;
+                
+                if (t.source === 'raw') {
+                    appData.weight += t.actualWeight;
+                    appData.soldWeight -= t.actualWeight;
+                } else if (t.source === 'processed' && t.type === 'full') {
+                    appData.unitsFull += t.qty;
+                    appData.soldUnitsFull -= t.qty;
+                } else if (t.source === 'processed' && t.type === 'usual') {
+                    appData.unitsUsual += t.qty;
+                    appData.soldUnitsUsual -= t.qty;
+                }
+            }
+
+            await saveStaffData();
+            window.showToast("Last transaction successfully voided.");
+        };
+
         window.submitStaffBillReq = async () => {
             const desc = document.getElementById('req-bill-desc').value;
             const amt = parseFloat(document.getElementById('req-bill-amt').value);
@@ -1518,7 +1720,8 @@
             document.getElementById('staff-bill-modal').classList.add('hidden');
             document.getElementById('req-bill-desc').value = '';
             document.getElementById('req-bill-amt').value = '';
-            window.showToast("Bill Request Sent to Admin"); 
+            window.showToast("Bill Request Sent to Admin");
+            window.sendNotificationAlert('admin', `New bill request from ${currentUser.displayName}: $${amt}`);
         };
 
         window.requestWeight = async () => { 
@@ -1527,6 +1730,7 @@
                     uid: currentUser.uid, name: currentUser.displayName || 'Staff', timestamp: Date.now(), status: 'pending', type: 'weight'
                 }); 
                 window.showToast("Request Sent"); 
+                window.sendNotificationAlert('admin', `${currentUser.displayName} is requesting more inventory.`);
             } 
         };
 
@@ -1551,7 +1755,7 @@
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
-                    adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [], ...d };
+                    adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, cashDropped: 0, transactions: [], ...d };
                     renderAdminTerminalUI(); 
                 } else { saveAdminData(); } 
             });
@@ -2059,6 +2263,7 @@
             adminData.transactions.push({
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                source: source,
                 qty: admCurrentQty,
                 type: admCurrentType,
                 actualWeight: actualWeightDeducted,
@@ -2108,6 +2313,7 @@
             adminData.transactions.push({
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                source: source,
                 qty: admCurrentQty,
                 type: 'personal',
                 actualWeight: actualWeightDeducted,
@@ -2130,6 +2336,7 @@
                     personalUseWeight: adminData.personalUseWeight || 0,
                     personalUseOwed: adminData.personalUseOwed || 0,
                     borrowings: adminData.borrowings || 0,
+                    cashDropped: adminData.cashDropped || 0,
                     collected: adminData.collected,
                     expected: adminData.expected,
                     recentLogs: adminData.transactions.slice(-10).reverse(),
@@ -2158,7 +2365,7 @@
             // Chart
             const ctx = document.getElementById('adminTerminalChart');
             if(ctx) {
-                const sales = adminData.transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing').reverse(); 
+                const sales = adminData.transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
                 const labels = sales.map(t => t.time);
                 const data = sales.map(t => t.money);
 
@@ -2232,7 +2439,7 @@
             
             const r = doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn = await getDoc(r); 
-            let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, transactions:[]}; 
+            let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, cashDropped: 0, transactions:[]}; 
 
             // Map keys
             let adminKey = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
@@ -2246,12 +2453,14 @@
                 await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(-amt)},{merge:true}); 
                 dat[staffKey] = (dat[staffKey]||0) + amt;
                 window.showToast(`Sent ${amt} to staff.`);
+                window.sendNotificationAlert(uid, `Admin sent you ${amt} units of inventory.`);
             } else if (action === 'reclaim') {
                 if((dat[staffKey] || 0) < amt) return window.showToast("Staff does not have that much inventory to reclaim!");
                 // Add to Master, Deduct from Staff
                 await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(amt)},{merge:true}); 
                 dat[staffKey] = (dat[staffKey]||0) - amt;
                 window.showToast(`Reclaimed ${amt} from staff.`);
+                window.sendNotificationAlert(uid, `Admin reclaimed ${amt} units of inventory.`);
             }
             
             // Save private
@@ -2294,6 +2503,7 @@
                 }, {merge:true}); 
                 
                 window.showToast("Debt added to staff member.");
+                window.sendNotificationAlert(currentDetailUid, `Admin logged a $${amt} cash advance/debt to your account.`);
                 window.viewDriverDetails(currentDetailUid); // Refresh view
             }
         };
@@ -2322,6 +2532,7 @@
             
             document.getElementById('det-collected').innerText = `$${(d.collected||0).toFixed(2)}`;
             document.getElementById('det-expenses').innerText = `-$${(d.expenses||0).toFixed(2)}`;
+            document.getElementById('det-cash-dropped').innerText = `-$${(d.cashDropped||0).toFixed(2)}`;
             
             // Commission & Debt Calculation
             const grossComm = (d.collected || 0) * ((masterData.staffCommission || 0) / 100);
@@ -2337,7 +2548,7 @@
             document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
             document.getElementById('det-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
-            const netCash = (d.collected||0) - (d.expenses||0) - netComm;
+            const netCash = (d.collected||0) - (d.expenses||0) - netComm - (d.cashDropped||0);
             document.getElementById('det-net-cash').innerText = `$${netCash.toFixed(2)}`;
 
             const diff = (d.expected||0) - (d.collected||0);
@@ -2358,7 +2569,7 @@
             // Update Detail Chart
             const ctx = document.getElementById('adminDetailChart');
             if(ctx && d.recentLogs) {
-                const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing').reverse();
+                const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
                 const labels = sales.map(t => t.time);
                 const data = sales.map(t => t.money);
 
@@ -2392,10 +2603,11 @@
             const sn = await getDoc(r); 
             if(sn.exists()) {
                 let dat = JSON.parse(sn.data().json);
-                dat.soldWeight = 0; dat.soldUnitsFull = 0; dat.soldUnitsUsual = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.borrowings = 0; dat.expenses = 0; dat.transactions = [];
+                dat.soldWeight = 0; dat.soldUnitsFull = 0; dat.soldUnitsUsual = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.borrowings = 0; dat.expenses = 0; dat.cashDropped = 0; dat.transactions = [];
                 await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, collected:0, expected:0, personalUseOwed:0, borrowings: 0, expenses:0, recentLogs:[]}, {merge:true}); 
+                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, collected:0, expected:0, personalUseOwed:0, borrowings: 0, cashDropped: 0, expenses:0, recentLogs:[]}, {merge:true}); 
                 window.showToast("Data Cleared.");
+                window.sendNotificationAlert(currentDetailUid, "Admin has cleared your shift and settled balances.");
                 document.getElementById('admin-user-detail').classList.add('hidden');
             }
         };
@@ -2413,11 +2625,11 @@
             // 2. Reset All Staff & Admin self
             for(const u of globalRoster) {
                 const r = doc(db,'artifacts',appId,'users',u.id,'data','app_state');
-                const emptyData = { weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, borrowings:0, collected:0, expected:0, expenses:0, transactions:[] };
+                const emptyData = { weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, borrowings:0, cashDropped: 0, collected:0, expected:0, expenses:0, transactions:[] };
                 await setDoc(r, { json: JSON.stringify(emptyData), lastUpdated: Date.now() });
 
                 await setDoc(doc(db,'artifacts',appId,'public','data','roster',u.id), {
-                    weight: 0, unitsFull:0, unitsUsual:0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, borrowings: 0, collected: 0, expected: 0, expenses: 0, recentLogs: []
+                    weight: 0, unitsFull:0, unitsUsual:0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, borrowings: 0, cashDropped: 0, collected: 0, expected: 0, expenses: 0, recentLogs: []
                 }, {merge: true});
             }
 
