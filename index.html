@@ -310,28 +310,47 @@
                             <span class="text-xs font-bold uppercase tracking-wider">Custom</span>
                         </button>
                     </div>
-                    <div class="flex justify-between items-center text-sm border-t dark:border-gray-700 pt-3">
-                        <span class="font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide text-xs">Total Stock Expenses:</span>
-                        <span class="font-black text-lg text-red-500" id="admin-total-expenses">$0</span>
-                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Potential Vault Value</h3>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Financial Projection</h3>
+                    
+                    <div class="mb-4 flex justify-between items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-800/50">
+                        <span class="font-bold text-red-700 dark:text-red-400 text-sm">Total Expenses</span>
+                        <span class="font-black text-lg text-red-600 dark:text-red-400" id="admin-total-expenses">-$0</span>
+                    </div>
+
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-bold text-sm dark:text-gray-200">If sold at Full Weight</div>
-                                <div class="text-xs text-gray-500">Every 1.0 unit = 1 Sale</div>
+                        <!-- Full Weight -->
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <div class="flex justify-between items-center mb-2 border-b dark:border-gray-600 pb-2">
+                                <div class="font-bold text-sm dark:text-gray-200">Full Weight (1.0)</div>
+                                <div class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-bold" id="admin-units-full">0 units</div>
                             </div>
-                            <div class="text-xl font-black text-green-600" id="admin-pot-full">$0</div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-gray-500">Expected Revenue:</span>
+                                <span class="font-bold text-gray-800 dark:text-gray-300" id="admin-rev-full">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-bold dark:text-gray-300">Projected Profit:</span>
+                                <span class="font-black text-green-600" id="admin-prof-full">$0</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-bold text-sm dark:text-gray-200">If sold at Usual Weight</div>
-                                <div class="text-xs text-gray-500">Every <span id="hint-ratio-txt">0.8</span> unit = 1 Sale</div>
+
+                        <!-- Usual Weight -->
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <div class="flex justify-between items-center mb-2 border-b dark:border-gray-600 pb-2">
+                                <div class="font-bold text-sm dark:text-gray-200">Usual Weight (<span id="hint-ratio-txt">0.8</span>)</div>
+                                <div class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-bold" id="admin-units-usual">0 units</div>
                             </div>
-                            <div class="text-xl font-black text-orange-500" id="admin-pot-usual">$0</div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-gray-500">Expected Revenue:</span>
+                                <span class="font-bold text-gray-800 dark:text-gray-300" id="admin-rev-usual">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-bold dark:text-gray-300">Projected Profit:</span>
+                                <span class="font-black text-orange-500" id="admin-prof-usual">$0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -664,24 +683,51 @@
             const wRaw = document.getElementById('admin-master-weight');
             const pDisp = document.getElementById('admin-price-display');
             const rDisp = document.getElementById('admin-ratio-display');
-            const pFull = document.getElementById('admin-pot-full');
-            const pUsual = document.getElementById('admin-pot-usual');
-            const hRat = document.getElementById('hint-ratio-txt');
-            const expDisp = document.getElementById('admin-total-expenses');
-
-            // Safe fallback to 0 if rawWeight is somehow missing
-            if(wRaw) wRaw.innerText = (masterData.rawWeight || 0).toFixed(1);
-            if(pDisp) pDisp.innerText = `$${masterData.pricePerUnit || 0}`;
-            if(rDisp) rDisp.innerText = `${masterData.usualRatio || 1}x`;
-            if(expDisp) expDisp.innerText = `$${masterData.totalExpenses || 0}`;
             
-            // Calculate potential value of raw vault
-            if(pFull) pFull.innerText = `$${((masterData.rawWeight || 0) * (masterData.pricePerUnit || 0)).toLocaleString()}`;
-            if(pUsual) {
-                const usualSales = Math.floor((masterData.rawWeight || 0) / (masterData.usualRatio || 1));
-                pUsual.innerText = `$${(usualSales * (masterData.pricePerUnit || 0)).toLocaleString()}`;
+            const expDisp = document.getElementById('admin-total-expenses');
+            const uFull = document.getElementById('admin-units-full');
+            const rFull = document.getElementById('admin-rev-full');
+            const pFull = document.getElementById('admin-prof-full');
+            const uUsual = document.getElementById('admin-units-usual');
+            const rUsual = document.getElementById('admin-rev-usual');
+            const pUsual = document.getElementById('admin-prof-usual');
+            const hRat = document.getElementById('hint-ratio-txt');
+
+            const rawW = masterData.rawWeight || 0;
+            const price = masterData.pricePerUnit || 0;
+            const ratio = masterData.usualRatio || 1;
+            const expenses = masterData.totalExpenses || 0;
+
+            if(wRaw) wRaw.innerText = rawW.toFixed(1);
+            if(pDisp) pDisp.innerText = `$${price}`;
+            if(rDisp) rDisp.innerText = `${ratio}x`;
+            if(expDisp) expDisp.innerText = `-$${expenses}`;
+            
+            // Calculate potential value and units
+            const fullUnits = Math.floor(rawW / 1.0);
+            const usualUnits = Math.floor(rawW / ratio);
+            
+            const fullRev = fullUnits * price;
+            const usualRev = usualUnits * price;
+            
+            const fullProfit = fullRev - expenses;
+            const usualProfit = usualRev - expenses;
+
+            if(uFull) uFull.innerText = `${fullUnits} units`;
+            if(rFull) rFull.innerText = `$${fullRev.toLocaleString()}`;
+            if(pFull) {
+                pFull.innerText = `${fullProfit >= 0 ? '+' : '-'}$${Math.abs(fullProfit).toLocaleString()}`;
+                pFull.className = `font-black ${fullProfit >= 0 ? 'text-green-600' : 'text-red-500'}`;
             }
-            if(hRat) hRat.innerText = masterData.usualRatio || 1;
+
+            if(uUsual) uUsual.innerText = `${usualUnits} units`;
+            if(rUsual) rUsual.innerText = `$${usualRev.toLocaleString()}`;
+            if(pUsual) {
+                pUsual.innerText = `${usualProfit >= 0 ? '+' : '-'}$${Math.abs(usualProfit).toLocaleString()}`;
+                pUsual.className = `font-black ${usualProfit >= 0 ? 'text-orange-500' : 'text-red-500'}`;
+            }
+            
+            if(hRat) hRat.innerText = ratio;
         }
 
         // ---------------------------------------------------------
