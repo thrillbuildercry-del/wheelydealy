@@ -75,18 +75,11 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-overlay hidden">
+    <div id="settings-modal" class="modal-overlay hidden z-[120]">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold dark:text-white">Settings</h2>
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            
-            <div id="settings-vehicle-section" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 hidden">
-                <h3 class="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase mb-2">My Vehicle</h3>
-                <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
-                <input type="text" id="set-vehicle-desc" placeholder="Make & Model (e.g. Toyota Camry)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
-                <button onclick="window.saveVehicleInfo()" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700 btn-interactive">Save Vehicle Details</button>
             </div>
 
             <!-- Admin Factory Reset Area -->
@@ -107,6 +100,41 @@
                 <button onclick="window.logout()" class="w-full flex justify-center items-center p-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold btn-interactive">
                     <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Log Out
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Inventory Adjustment Modal -->
+    <div id="admin-adjust-modal" class="modal-overlay hidden z-[110]">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
+            <h2 class="text-lg font-bold dark:text-white mb-1 flex items-center"><i data-lucide="edit" class="w-5 h-5 mr-2 text-blue-500"></i> Adjust / Fix Inventory</h2>
+            <p class="text-xs text-gray-500 mb-4">Add processed items, remove mistakes, or overwrite balances directly.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">1. Select Asset</label>
+                    <select id="adj-item-type" class="w-full mt-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+                        <option value="rawWeight">Raw Weight</option>
+                        <option value="unitsFull">Full Units (1.0)</option>
+                        <option value="unitsUsual">Usual Units</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">2. Select Action</label>
+                    <select id="adj-action" class="w-full mt-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+                        <option value="add">Add (+)</option>
+                        <option value="remove">Remove (-)</option>
+                        <option value="set">Overwrite (Set Exact)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">3. Amount</label>
+                    <input type="number" step="0.1" id="adj-amt" placeholder="Enter number..." class="w-full mt-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-lg font-black outline-none">
+                </div>
+            </div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="document.getElementById('admin-adjust-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
+                <button onclick="window.saveInventoryAdjustment()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">Save Adjustment</button>
             </div>
         </div>
     </div>
@@ -370,7 +398,7 @@
             <div id="admin-view-storage" class="admin-tab-content active">
                 
                 <div class="bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-xl mb-6 text-white relative overflow-hidden">
-                    <div class="relative z-10 flex justify-between items-end mb-6">
+                    <div class="relative z-10 flex justify-between items-end mb-4">
                         <div>
                             <h2 class="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">Master Vault Weight</h2>
                             <div class="flex items-baseline">
@@ -378,9 +406,14 @@
                                 <span class="text-gray-400 font-bold">units</span>
                             </div>
                         </div>
-                        <button onclick="window.adminAddWeight()" class="bg-white/10 hover:bg-white/20 p-3 rounded-full transition border border-white/20 backdrop-blur-sm btn-interactive">
-                            <i data-lucide="plus" class="w-5 h-5 text-white"></i>
+                        <button onclick="document.getElementById('admin-adjust-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-xl transition flex items-center text-xs shadow-md btn-interactive">
+                            <i data-lucide="edit" class="w-3 h-3 mr-1"></i> Adjust/Fix
                         </button>
+                    </div>
+
+                    <div class="bg-white/10 rounded-xl p-3 mb-4 flex justify-between items-center text-sm border border-white/5">
+                        <span class="text-gray-300">Total Combined Weight:</span>
+                        <span class="font-bold text-xl text-blue-300" id="admin-master-eq-weight">0.0 u</span>
                     </div>
 
                     <!-- Processing Tool -->
@@ -417,7 +450,7 @@
                         <i data-lucide="globe" class="w-4 h-4 mr-1 text-blue-500"></i> Global Network Assets
                     </h3>
                     <p class="text-[10px] text-gray-400 mb-3">Includes Master Vault AND all units currently held by Staff.</p>
-                    <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="grid grid-cols-3 gap-2 text-center mb-3">
                         <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
                             <div class="text-[9px] text-gray-500 uppercase font-bold">Total Raw</div>
                             <div class="text-lg font-black dark:text-white" id="global-stock-raw">0</div>
@@ -431,36 +464,52 @@
                             <div class="text-lg font-black text-orange-700 dark:text-orange-400" id="global-stock-usual">0</div>
                         </div>
                     </div>
+                    <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 flex justify-between items-center text-sm border border-gray-200 dark:border-gray-700">
+                        <span class="text-gray-600 dark:text-gray-400 font-bold">Total Global Combined Weight:</span>
+                        <span class="font-black text-xl text-gray-800 dark:text-white" id="global-eq-weight">0.0 u</span>
+                    </div>
                 </div>
 
-                <!-- Rates and Percentages -->
-                <div class="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
-                    <div>
-                        <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Price per 1.0 Unit</div>
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-green-400 mr-2" id="admin-price-display">$0</span>
-                            <button onclick="window.adminSetVariable('pricePerUnit', 'Price per 1.0 Unit ($)')" class="text-gray-500 hover:text-gray-700 dark:hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                <!-- Rates and Percentages (Expanded Settings) -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                        <i data-lucide="sliders" class="w-5 h-5 mr-2 text-blue-500"></i> Custom Pricing & Rates
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Price per 1.0 Unit</div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-green-500 mr-2" id="admin-price-display">$0</span>
+                                <button onclick="window.adminSetVariable('pricePerUnit', 'Price per 1.0 Unit ($)')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">"Usual" Ratio</div>
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-orange-400 mr-2" id="admin-ratio-display">0.8x</span>
-                            <button onclick="window.adminSetVariable('usualRatio', 'Usual Ratio (e.g. 0.8 for 80%)')" class="text-gray-500 hover:text-gray-700 dark:hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                        <div>
+                            <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">"Usual" Ratio</div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-orange-500 mr-2" id="admin-ratio-display">0.8x</span>
+                                <button onclick="window.adminSetVariable('usualRatio', 'Usual Ratio (e.g. 0.8 for 80%)')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-purple-400 uppercase font-bold mb-1">Personal Use Discount %</div>
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-purple-600 dark:text-purple-400 mr-2" id="admin-discount-display">20% Off</span>
-                            <button onclick="window.adminSetVariable('personalUseDiscount', 'Personal Use Discount %')" class="text-gray-500 hover:text-gray-700 dark:hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                        <div>
+                            <div class="text-[10px] text-blue-400 uppercase font-bold mb-1">Staff Commission %</div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-blue-600 dark:text-blue-400 mr-2" id="admin-commission-display">0%</span>
+                                <button onclick="window.adminSetVariable('staffCommission', 'Staff Commission %')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-blue-400 uppercase font-bold mb-1">Staff Commission %</div>
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-blue-600 dark:text-blue-400 mr-2" id="admin-commission-display">0%</span>
-                            <button onclick="window.adminSetVariable('staffCommission', 'Staff Commission %')" class="text-gray-500 hover:text-gray-700 dark:hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                        <div>
+                            <div class="text-[10px] text-purple-400 uppercase font-bold mb-1">Boss Discount %</div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-purple-600 dark:text-purple-400 mr-2" id="admin-boss-discount-display">20% Off</span>
+                                <button onclick="window.adminSetVariable('adminDiscount', 'Boss Personal Discount %')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-indigo-400 uppercase font-bold mb-1">Staff Discount %</div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mr-2" id="admin-staff-discount-display">20% Off</span>
+                                <button onclick="window.adminSetVariable('staffDiscount', 'Staff Personal Discount %')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -931,7 +980,7 @@
         let currentType = 'full';
 
         // Admin State
-        let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [] };
+        let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, adminDiscount: 20, staffDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [] };
         let adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [] };
         let globalRoster = []; 
         let currentDetailUid = null;
@@ -1047,7 +1096,14 @@
                 // Always listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
-                        masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], ...s.data() };
+                        const dat = s.data();
+                        // Backward compatibility for separated discount rates
+                        masterData = { 
+                            rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, 
+                            adminDiscount: dat.adminDiscount ?? dat.personalUseDiscount ?? 20, 
+                            staffDiscount: dat.staffDiscount ?? dat.personalUseDiscount ?? 20, 
+                            staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], ...dat 
+                        };
                         updateMasterLabels();
                         if(userRole === 'admin') {
                             window.admUpdateMasterLabels();
@@ -1088,14 +1144,14 @@
             const wRaw = document.getElementById('admin-master-weight');
             const pDisp = document.getElementById('admin-price-display');
             const rDisp = document.getElementById('admin-ratio-display');
-            const discDisp = document.getElementById('admin-discount-display');
+            const admDiscDisp = document.getElementById('admin-boss-discount-display');
+            const staffDiscDisp = document.getElementById('admin-staff-discount-display');
             const commDisp = document.getElementById('admin-commission-display');
             
             const expDisp = document.getElementById('admin-total-expenses');
             const uFull = document.getElementById('admin-units-full');
             const uUsual = document.getElementById('admin-units-usual');
             
-            const hRat = document.getElementById('hint-ratio-txt');
             const stockFull = document.getElementById('admin-stock-full');
             const stockUsual = document.getElementById('admin-stock-usual');
 
@@ -1107,13 +1163,20 @@
             if(wRaw) wRaw.innerText = rawW.toFixed(1);
             if(pDisp) pDisp.innerText = `$${price}`;
             if(rDisp) rDisp.innerText = `${ratio}x`;
-            if(discDisp) discDisp.innerText = `${masterData.personalUseDiscount}% Off`;
+            if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`;
+            if(staffDiscDisp) staffDiscDisp.innerText = `${masterData.staffDiscount}% Off`;
             if(commDisp) commDisp.innerText = `${masterData.staffCommission}%`;
             if(expDisp) expDisp.innerText = `-$${expenses}`;
             
             if(stockFull) stockFull.innerText = masterData.unitsFull || 0;
             if(stockUsual) stockUsual.innerText = masterData.unitsUsual || 0;
-            if(hRat) hRat.innerText = ratio;
+
+            // Total Equivalent Weight for Master Vault
+            const masterEqWeight = document.getElementById('admin-master-eq-weight');
+            if (masterEqWeight) {
+                const totalEq = rawW + ((masterData.unitsFull || 0) * 1.0) + ((masterData.unitsUsual || 0) * ratio);
+                masterEqWeight.innerText = `${totalEq.toFixed(1)} u`;
+            }
         }
 
         // ---------------------------------------------------------
@@ -1188,7 +1251,7 @@
                     <div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800">
                         <div>
                             <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use (${t.qty} units)</div>
-                            <div class="text-xs text-gray-500">${t.time} • ${masterData.personalUseDiscount}% Discount Applied</div>
+                            <div class="text-xs text-gray-500">${t.time} • ${masterData.staffDiscount}% Discount Applied</div>
                         </div>
                         <div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div>
                     </div>`;
@@ -1387,7 +1450,7 @@
             const source = document.getElementById('staff-sale-source').value;
             const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             
-            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.personalUseDiscount}% discount.`)) return;
+            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.staffDiscount}% discount.`)) return;
 
             let actualWeightDeducted = 0;
             let standardCost = currentQty * unitPrice;
@@ -1406,7 +1469,7 @@
                 actualWeightDeducted = currentQty * masterData.usualRatio;
             }
 
-            const discountMultiplier = 1 - (masterData.personalUseDiscount / 100);
+            const discountMultiplier = 1 - (masterData.staffDiscount / 100);
             const discountedDebt = standardCost * discountMultiplier;
             
             appData.personalUseWeight = (appData.personalUseWeight || 0) + actualWeightDeducted;
@@ -1579,6 +1642,15 @@
                 document.getElementById('global-stock-full').innerText = ((masterData.unitsFull || 0) + globalFull);
                 document.getElementById('global-stock-usual').innerText = ((masterData.unitsUsual || 0) + globalUsual);
                 
+                const globalEqEl = document.getElementById('global-eq-weight');
+                if (globalEqEl) {
+                    const totalGlobalRaw = (masterData.rawWeight || 0) + globalRaw;
+                    const totalGlobalFull = (masterData.unitsFull || 0) + globalFull;
+                    const totalGlobalUsual = (masterData.unitsUsual || 0) + globalUsual;
+                    const globalEq = totalGlobalRaw + (totalGlobalFull * 1.0) + (totalGlobalUsual * masterData.usualRatio);
+                    globalEqEl.innerText = `${globalEq.toFixed(1)} u`;
+                }
+
                 // Update Charts
                 updateAdminOverallChart(globalRoster);
                 updateFinanceUI(); 
@@ -1815,10 +1887,31 @@
         };
 
 
-        // Admin Master Controls
-        window.adminAddWeight = async () => { 
-            const q = prompt("Add weight to Master Vault (Units):"); 
-            if(q && !isNaN(q)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(parseFloat(q))},{merge:true}); 
+        // Admin Master Inventory Controls
+        window.saveInventoryAdjustment = async () => {
+            const type = document.getElementById('adj-item-type').value; // 'rawWeight', 'unitsFull', 'unitsUsual'
+            const action = document.getElementById('adj-action').value; // 'add', 'remove', 'set'
+            const amt = parseFloat(document.getElementById('adj-amt').value);
+
+            if(isNaN(amt) || amt < 0) return window.showToast("Please enter a valid amount.");
+
+            const currentVal = masterData[type] || 0;
+            let newVal = currentVal;
+
+            if (action === 'add') {
+                newVal = currentVal + amt;
+            } else if (action === 'remove') {
+                newVal = currentVal - amt;
+                if(newVal < 0) newVal = 0; // Prevent negative inventory via UI
+            } else if (action === 'set') {
+                newVal = amt;
+            }
+
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[type]: newVal}, {merge:true});
+            
+            document.getElementById('admin-adjust-modal').classList.add('hidden');
+            document.getElementById('adj-amt').value = '';
+            window.showToast("Inventory Adjusted Successfully");
         };
 
         window.adminPurchaseStock = async (weight, cost) => {
@@ -1982,7 +2075,7 @@
             const source = document.getElementById('adm-sale-source').value;
             const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             
-            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.personalUseDiscount}% discount.`)) return;
+            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
 
             let actualWeightDeducted = 0;
             let standardCost = admCurrentQty * unitPrice;
@@ -2005,7 +2098,7 @@
             // Deduct Master Vault
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
 
-            const discountMultiplier = 1 - (masterData.personalUseDiscount / 100);
+            const discountMultiplier = 1 - (masterData.adminDiscount / 100);
             const discountedDebt = standardCost * discountMultiplier;
             
             adminData.personalUseWeight = (adminData.personalUseWeight || 0) + actualWeightDeducted;
@@ -2092,7 +2185,7 @@
             const reversed = [...adminData.transactions].reverse();
             reversed.forEach(t => {
                 if(t.type === 'personal') {
-                    list.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800"><div><div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Debt</div><div class="text-xs text-gray-500">${t.time} • ${masterData.personalUseDiscount}% Discount</div></div><div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div></div>`;
+                    list.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800"><div><div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Debt</div><div class="text-xs text-gray-500">${t.time} • ${masterData.adminDiscount}% Discount</div></div><div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div></div>`;
                 } else {
                     const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
                     const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
@@ -2315,7 +2408,7 @@
             window.showToast("Resetting data...");
 
             // 1. Reset Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, personalUseDiscount: masterData.personalUseDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0, cashBalance: 0, liabilities: [] });
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, adminDiscount: masterData.adminDiscount, staffDiscount: masterData.staffDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0, cashBalance: 0, liabilities: [] });
 
             // 2. Reset All Staff & Admin self
             for(const u of globalRoster) {
