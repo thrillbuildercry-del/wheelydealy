@@ -206,8 +206,8 @@
                         <input type="number" id="money-input" placeholder="0.00" class="w-full bg-white dark:bg-gray-800 border-2 border-green-200 dark:border-green-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-green-500 dark:text-white transition">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('money-input').value = 80 * currentQty" class="flex-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100 py-2 rounded-lg font-bold text-sm hover:bg-green-300 btn-interactive transition shadow-sm">$80 / unit</button>
-                        <button onclick="document.getElementById('money-input').value = 100 * currentQty" class="flex-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100 py-2 rounded-lg font-bold text-sm hover:bg-green-300 btn-interactive transition shadow-sm">$100 / unit</button>
+                        <button id="btn-quick-usual" onclick="document.getElementById('money-input').value = (masterData.pricePerUnit * masterData.usualRatio) * currentQty" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800">$80 (Usual)</button>
+                        <button id="btn-quick-full" onclick="document.getElementById('money-input').value = masterData.pricePerUnit * currentQty" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800">$100 (Full)</button>
                     </div>
                 </div>
 
@@ -447,8 +447,8 @@
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label>
                                 <input type="number" id="adm-sell-raw-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white mb-2">
                                 <div class="flex gap-1">
-                                    <button onclick="document.getElementById('adm-sell-raw-m').value = 80" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive">$80</button>
-                                    <button onclick="document.getElementById('adm-sell-raw-m').value = 100" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive">$100</button>
+                                    <button onclick="document.getElementById('adm-sell-raw-m').value = masterData.pricePerUnit * masterData.usualRatio" class="flex-1 bg-orange-100 text-orange-700 text-xs py-1 rounded font-bold hover:bg-orange-200 btn-interactive border border-orange-200">Usual Base</button>
+                                    <button onclick="document.getElementById('adm-sell-raw-m').value = masterData.pricePerUnit" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive border border-green-200">Full Base</button>
                                 </div>
                             </div>
                         </div>
@@ -460,18 +460,18 @@
                         <h3 class="font-bold text-gray-800 dark:text-white mb-3 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wide">
                             <i data-lucide="package" class="w-4 h-4 inline mr-1 text-purple-500"></i> Sell Processed Units
                         </h3>
-                        <select id="adm-sell-unit-type" class="w-full p-3 mb-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
+                        <select id="adm-sell-unit-type" onchange="window.updateMasterLabels()" class="w-full p-3 mb-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
                             <option value="full">Full Unit (1.0)</option>
                             <option value="usual">Usual Unit</option>
                         </select>
                         <div class="flex space-x-2">
-                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Quantity</label><input type="number" id="adm-sell-unit-q" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
+                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Quantity</label><input type="number" id="adm-sell-unit-q" oninput="window.updateMasterLabels()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
                             <div class="w-1/2">
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label>
                                 <input type="number" id="adm-sell-unit-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white mb-2">
                                 <div class="flex gap-1">
-                                    <button onclick="document.getElementById('adm-sell-unit-m').value = 80 * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive">$80</button>
-                                    <button onclick="document.getElementById('adm-sell-unit-m').value = 100 * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive">$100</button>
+                                    <button id="adm-btn-quick-usual" onclick="document.getElementById('adm-sell-unit-m').value = (masterData.pricePerUnit * masterData.usualRatio) * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-orange-100 text-orange-700 text-xs py-1 rounded font-bold hover:bg-orange-200 btn-interactive border border-orange-200">$80 (Usual)</button>
+                                    <button id="adm-btn-quick-full" onclick="document.getElementById('adm-sell-unit-m').value = masterData.pricePerUnit * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200 btn-interactive border border-green-200">$100 (Full)</button>
                                 </div>
                             </div>
                         </div>
@@ -861,7 +861,24 @@
             
             if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`;
             if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
-            if(expHint) expHint.innerText = `Expected: $${currentQty * masterData.pricePerUnit}`;
+            
+            // Dynamic Expected Calculation
+            const source = document.getElementById('staff-sale-source') ? document.getElementById('staff-sale-source').value : 'raw';
+            const effectiveType = source === 'raw' ? currentType : source;
+            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            
+            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
+
+            // Sync Buttons
+            const btnUsual = document.getElementById('btn-quick-usual');
+            const btnFull = document.getElementById('btn-quick-full');
+            if(btnUsual) btnUsual.innerText = `$${masterData.pricePerUnit * masterData.usualRatio} (Usual)`;
+            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit} (Full)`;
+
+            const admBtnUsual = document.getElementById('adm-btn-quick-usual');
+            const admBtnFull = document.getElementById('adm-btn-quick-full');
+            if(admBtnUsual) admBtnUsual.innerText = `$${masterData.pricePerUnit * masterData.usualRatio} (Usual)`;
+            if(admBtnFull) admBtnFull.innerText = `$${masterData.pricePerUnit} (Full)`;
 
             // Admin Display Updates
             const wRaw = document.getElementById('admin-master-weight');
@@ -1069,6 +1086,7 @@
             } else {
                 typeSection.classList.add('hidden');
             }
+            updateMasterLabels();
         };
 
         window.selectQty = (q) => {
@@ -1092,6 +1110,8 @@
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
 
             let actualWeightDeducted = 0;
+            const effectiveType = source === 'raw' ? currentType : source;
+            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
 
             if (source === 'raw') {
                 actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
@@ -1107,7 +1127,7 @@
                 actualWeightDeducted = currentQty * masterData.usualRatio;
             }
 
-            const expectedMoney = currentQty * masterData.pricePerUnit;
+            const expectedMoney = currentQty * unitPrice;
 
             appData.soldWeight += actualWeightDeducted;
             appData.collected += money;
@@ -1117,7 +1137,7 @@
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 qty: currentQty,
-                type: source === 'raw' ? currentType : source,
+                type: effectiveType,
                 actualWeight: actualWeightDeducted,
                 money: money,
                 expected: expectedMoney
@@ -1130,17 +1150,18 @@
 
         window.staffPersonalUse = async () => {
             const source = document.getElementById('staff-sale-source').value;
+            const effectiveType = source === 'raw' ? currentType : source;
+            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             
             if(!confirm(`Log Personal Use for ${currentQty} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a 20% discount.`)) return;
 
             let actualWeightDeducted = 0;
-            let standardCost = currentQty * masterData.pricePerUnit;
+            let standardCost = currentQty * unitPrice;
 
             if (source === 'raw') {
-                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
+                actualWeightDeducted = effectiveType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
                 if(appData.weight < actualWeightDeducted) return window.showToast("Not enough raw weight!");
                 appData.weight -= actualWeightDeducted;
-                standardCost = (actualWeightDeducted / 1.0) * masterData.pricePerUnit; // Raw weight cost relative to 1.0 unit price
             } else if (source === 'full') {
                 if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
                 appData.unitsFull -= currentQty;
@@ -1517,7 +1538,9 @@
             
             // Log for Admin
             const actualW = type === 'full' ? q * 1.0 : q * masterData.usualRatio;
-            const expectedMoney = q * masterData.pricePerUnit;
+            const unitPrice = type === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const expectedMoney = q * unitPrice;
+            
             adminData.soldWeight += actualW;
             adminData.collected += m;
             adminData.expected += expectedMoney;
