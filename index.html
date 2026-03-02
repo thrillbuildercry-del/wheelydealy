@@ -82,7 +82,6 @@
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <!-- Driver Vehicle Info -->
             <div id="settings-vehicle-section" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 hidden">
                 <h3 class="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase mb-2">My Vehicle</h3>
                 <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
@@ -243,7 +242,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
                         <div class="text-[10px] text-green-700 dark:text-green-400 uppercase font-bold">Gross Cash</div>
                         <div class="text-xl font-bold text-green-600 dark:text-green-400" id="staff-stat-money">$0</div>
@@ -254,22 +253,35 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 mb-4 flex justify-between items-center">
-                    <div class="text-[10px] text-blue-700 dark:text-blue-400 uppercase font-bold tracking-widest">Net Cash to Return</div>
-                    <div class="text-2xl font-black text-blue-600 dark:text-blue-400" id="staff-stat-net">$0</div>
+                <!-- Earnings and Debt Settlement -->
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600 mb-4">
+                    <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b dark:border-gray-600 pb-1 flex items-center"><i data-lucide="calculator" class="w-3 h-3 mr-1"></i> Earnings & Debt Settlement</h4>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Gross Commission Earned:</span>
+                        <span class="font-bold text-green-600 dark:text-green-400" id="staff-calc-gross-comm">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Total Outstanding Debt:</span>
+                        <span class="font-bold text-red-500 dark:text-red-400" id="staff-calc-total-debt">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-3">
+                        <span class="text-gray-600 dark:text-gray-400">Commission Applied to Debt:</span>
+                        <span class="font-bold text-orange-500" id="staff-calc-applied">-$0.00</span>
+                    </div>
+                    <div class="border-t border-dashed dark:border-gray-600 my-2"></div>
+                    <div class="flex justify-between text-sm mb-1 font-bold">
+                        <span class="dark:text-white">Net Commission to Keep:</span>
+                        <span class="text-blue-600 dark:text-blue-400" id="staff-calc-net-comm">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold">
+                        <span class="dark:text-white">Remaining Debt Balance:</span>
+                        <span class="text-purple-600 dark:text-purple-400" id="staff-calc-rem-debt">$0.00</span>
+                    </div>
                 </div>
-                
-                <div class="flex justify-between items-center mb-2 text-sm px-2">
-                    <span class="font-bold text-gray-500">Personal Debt (Discounted):</span>
-                    <span class="font-black text-purple-600 dark:text-purple-400" id="staff-stat-debt">$0</span>
-                </div>
-                <div class="flex justify-between items-center mb-2 text-sm px-2">
-                    <span class="font-bold text-gray-500">Other Borrowings:</span>
-                    <span class="font-black text-red-500 dark:text-red-400" id="staff-stat-borrowings">$0</span>
-                </div>
-                <div class="flex justify-between items-center mb-4 text-sm px-2" id="staff-commission-row">
-                    <span class="font-bold text-gray-500">Earned Commission:</span>
-                    <span class="font-black text-green-500 dark:text-green-400" id="staff-stat-commission">$0</span>
+
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-4 flex justify-between items-center shadow-inner">
+                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Net Cash<br>to Return</div>
+                    <div class="text-3xl font-black text-blue-700 dark:text-blue-400" id="staff-stat-net">$0</div>
                 </div>
 
                 <div id="staff-shortage-warning" class="hidden mb-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-2 rounded-lg text-xs font-bold text-center border border-red-200 dark:border-red-800">
@@ -303,16 +315,12 @@
         <main class="p-4 max-w-2xl mx-auto">
             
             <!-- Admin Navigation -->
-            <div class="flex flex-wrap gap-2 mb-6">
-                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-gray-800 text-white shadow transition flex justify-center items-center"><i data-lucide="database" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Vault</span></button>
-                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center"><i data-lucide="calculator" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Sell</span></button>
-                <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center relative">
-                    <i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> Team
-                </button>
-                <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition relative flex justify-center items-center">
-                    <i data-lucide="arrow-right-left" class="w-4 h-4 sm:mr-1"></i> Move
-                    <div id="admin-req-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                </button>
+            <div class="grid grid-cols-5 gap-1 mb-6 text-[10px] sm:text-xs">
+                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="py-2 px-1 rounded-xl font-bold bg-gray-800 text-white shadow transition flex flex-col justify-center items-center"><i data-lucide="database" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Vault</span></button>
+                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center"><i data-lucide="calculator" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Sell</span></button>
+                <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative"><i data-lucide="users" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Team</span></button>
+                <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition relative flex flex-col justify-center items-center"><i data-lucide="arrow-right-left" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Move</span><div id="admin-req-badge" class="hidden absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></div></button>
+                <button onclick="window.switchAdminTab('finance')" id="adm-tab-finance" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center"><i data-lucide="pie-chart" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Finance</span></button>
             </div>
 
             <!-- TAB: MASTER STORAGE -->
@@ -425,48 +433,65 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Financial Projection</h3>
+            </div>
+
+            <!-- TAB: FINANCE & PROJECTIONS -->
+            <div id="admin-view-finance" class="admin-tab-content hidden">
+                
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                        <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-green-500"></i> Potential Earnings Projection
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-4">Calculates potential value from all processed units (Master Vault + Staff Holdings).</p>
                     
-                    <div class="mb-4 flex justify-between items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-800/50">
-                        <span class="font-bold text-red-700 dark:text-red-400 text-sm">Total Expenses</span>
-                        <span class="font-black text-lg text-red-600 dark:text-red-400" id="admin-total-expenses">-$0</span>
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 text-center">
+                            <div class="text-[10px] text-blue-600 uppercase font-bold tracking-widest">Total Full Units</div>
+                            <div class="text-2xl font-black text-blue-800 dark:text-blue-300" id="proj-full-count">0</div>
+                        </div>
+                        <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 text-center">
+                            <div class="text-[10px] text-orange-600 uppercase font-bold tracking-widest">Total Usual Units</div>
+                            <div class="text-2xl font-black text-orange-800 dark:text-orange-300" id="proj-usual-count">0</div>
+                        </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <!-- Full Weight -->
-                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div class="flex justify-between items-center mb-2 border-b dark:border-gray-600 pb-2">
-                                <div class="font-bold text-sm dark:text-gray-200">Full Weight (1.0)</div>
-                                <div class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-bold" id="admin-units-full">0 units</div>
-                            </div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-gray-500">Expected Revenue:</span>
-                                <span class="font-bold text-gray-800 dark:text-gray-300" id="admin-rev-full">$0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold dark:text-gray-300">Projected Profit:</span>
-                                <span class="font-black text-green-600" id="admin-prof-full">$0</span>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Standard Projection</h4>
+                            <div class="text-3xl font-black text-gray-800 dark:text-white mb-1" id="proj-std-total">$0</div>
+                            <p class="text-[10px] text-gray-500">Full units sold at Full Price, Usual units sold at Usual Price.</p>
                         </div>
-
-                        <!-- Usual Weight -->
-                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div class="flex justify-between items-center mb-2 border-b dark:border-gray-600 pb-2">
-                                <div class="font-bold text-sm dark:text-gray-200">Usual Weight (<span id="hint-ratio-txt">0.8</span>)</div>
-                                <div class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded font-bold" id="admin-units-usual">0 units</div>
-                            </div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-gray-500">Expected Revenue:</span>
-                                <span class="font-bold text-gray-800 dark:text-gray-300" id="admin-rev-usual">$0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold dark:text-gray-300">Projected Profit:</span>
-                                <span class="font-black text-orange-500" id="admin-prof-usual">$0</span>
-                            </div>
+                        <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                            <h4 class="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-widest mb-1">Maximum "What If"</h4>
+                            <div class="text-3xl font-black text-green-700 dark:text-green-400 mb-1" id="proj-whatif-total">$0</div>
+                            <p class="text-[10px] text-green-600/70 dark:text-green-500">Both Full and Usual units sold at the Maximum Full Price.</p>
                         </div>
                     </div>
                 </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                        <i data-lucide="landmark" class="w-5 h-5 mr-2 text-purple-500"></i> Balance Manager & Priority Payments
+                    </h3>
+                    
+                    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex justify-between items-center">
+                        <div>
+                            <div class="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-widest">Master Cash Balance</div>
+                            <div class="text-3xl font-black text-purple-800 dark:text-purple-300" id="finance-cash-balance">$0.00</div>
+                        </div>
+                        <button onclick="window.adminUpdateCash()" class="bg-purple-600 text-white p-3 rounded-full hover:bg-purple-700 transition btn-interactive shadow-md"><i data-lucide="plus-minus" class="w-5 h-5"></i></button>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Bills & Liabilities</h4>
+                        <button onclick="window.adminAddLiability()" class="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 btn-interactive flex items-center"><i data-lucide="plus" class="w-3 h-3 mr-1"></i> Add</button>
+                    </div>
+                    
+                    <div id="finance-liabilities-list" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB: ADMIN TERMINAL (Unified) -->
@@ -709,17 +734,9 @@
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4 border-b dark:border-gray-700 pb-2">Revenue Analysis</h3>
                 
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex justify-between items-center mb-3">
                     <span class="text-sm font-bold dark:text-gray-300">Total Expected Value</span>
                     <span class="text-lg font-bold dark:text-white" id="det-expected">$0</span>
-                </div>
-                <div class="flex justify-between items-center mb-1 text-xs text-purple-600 dark:text-purple-400">
-                    <span class="font-bold flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1"></i> Personal Debt (Incl. above)</span>
-                    <span class="font-bold" id="det-personal-owed">$0</span>
-                </div>
-                <div class="flex justify-between items-center mb-2 text-xs text-red-500 dark:text-red-400">
-                    <span class="font-bold flex items-center"><i data-lucide="banknote" class="w-3 h-3 mr-1"></i> Other Borrowings</span>
-                    <span class="font-bold" id="det-borrowings">$0</span>
                 </div>
                 
                 <div class="border-t border-gray-100 dark:border-gray-700 my-3"></div>
@@ -732,10 +749,36 @@
                     <span class="font-bold flex items-center"><i data-lucide="fuel" class="w-3 h-3 mr-1"></i> Logged Expenses</span>
                     <span class="font-bold" id="det-expenses">-$0</span>
                 </div>
+
+                <!-- Earnings and Debt Settlement -->
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600 mb-4">
+                    <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 border-b dark:border-gray-600 pb-1 flex items-center"><i data-lucide="calculator" class="w-3 h-3 mr-1"></i> Earnings & Debt Settlement</h4>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Gross Commission Earned:</span>
+                        <span class="font-bold text-green-600 dark:text-green-400" id="det-calc-gross-comm">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Total Outstanding Debt:</span>
+                        <span class="font-bold text-red-500 dark:text-red-400" id="det-calc-total-debt">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-3">
+                        <span class="text-gray-600 dark:text-gray-400">Commission Applied to Debt:</span>
+                        <span class="font-bold text-orange-500" id="det-calc-applied">-$0.00</span>
+                    </div>
+                    <div class="border-t border-dashed dark:border-gray-600 my-2"></div>
+                    <div class="flex justify-between text-sm mb-1 font-bold">
+                        <span class="dark:text-white">Net Commission to Pay Staff:</span>
+                        <span class="text-blue-600 dark:text-blue-400" id="det-calc-net-comm">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold">
+                        <span class="dark:text-white">Remaining Debt Balance:</span>
+                        <span class="text-purple-600 dark:text-purple-400" id="det-calc-rem-debt">$0.00</span>
+                    </div>
+                </div>
                 
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex justify-between items-center font-bold border border-blue-200 dark:border-blue-800 mb-3">
-                    <span class="text-sm text-blue-800 dark:text-blue-300 uppercase tracking-wide">Net Cash In Hand</span>
-                    <span class="text-xl text-blue-600 dark:text-blue-400" id="det-net-cash">$0</span>
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-3 flex justify-between items-center shadow-inner">
+                    <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Net Cash<br>from Staff</div>
+                    <div class="text-3xl font-black text-blue-700 dark:text-blue-400" id="det-net-cash">$0</div>
                 </div>
 
                 <div id="det-diff-box" class="p-3 rounded-lg flex justify-between items-center font-bold mb-4">
@@ -755,9 +798,9 @@
 
             <!-- Danger / Clear -->
             <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-3 rounded-xl border border-red-200 dark:border-red-800/50 btn-interactive">
-                Clear Staff Balances (Reset to 0)
+                Clear Shift / Settle Balances
             </button>
-            <p class="text-center text-[10px] text-gray-500 mt-2 pb-6">Use this after collecting money and zeroing out their stock.</p>
+            <p class="text-center text-[10px] text-gray-500 mt-2 pb-6">Use this after collecting money. Resets expected and collected, effectively finalizing the settlement.</p>
 
         </div>
     </div>
@@ -801,7 +844,7 @@
         let currentType = 'full';
 
         // Admin State
-        let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0 };
+        let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [] };
         let adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, transactions: [] };
         let globalRoster = []; 
         let currentDetailUid = null;
@@ -916,9 +959,12 @@
                 // Always listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
-                        masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0, ...s.data() };
+                        masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, personalUseDiscount: 20, staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], ...s.data() };
                         updateMasterLabels();
-                        if(userRole === 'admin') window.admUpdateMasterLabels();
+                        if(userRole === 'admin') {
+                            window.admUpdateMasterLabels();
+                            updateFinanceUI();
+                        }
                         if(userRole === 'staff' && typeof renderStaffUI === 'function') renderStaffUI();
                     } else {
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e));
@@ -962,13 +1008,9 @@
             
             const expDisp = document.getElementById('admin-total-expenses');
             const uFull = document.getElementById('admin-units-full');
-            const rFull = document.getElementById('admin-rev-full');
-            const pFull = document.getElementById('admin-prof-full');
             const uUsual = document.getElementById('admin-units-usual');
-            const rUsual = document.getElementById('admin-rev-usual');
-            const pUsual = document.getElementById('admin-prof-usual');
+            
             const hRat = document.getElementById('hint-ratio-txt');
-
             const stockFull = document.getElementById('admin-stock-full');
             const stockUsual = document.getElementById('admin-stock-usual');
 
@@ -986,31 +1028,6 @@
             
             if(stockFull) stockFull.innerText = masterData.unitsFull || 0;
             if(stockUsual) stockUsual.innerText = masterData.unitsUsual || 0;
-            
-            // Calculate potential value and units
-            const fullUnits = Math.floor(rawW / 1.0);
-            const usualUnits = Math.floor(rawW / ratio);
-            
-            const fullRev = fullUnits * price;
-            const usualRev = usualUnits * price;
-            
-            const fullProfit = fullRev - expenses;
-            const usualProfit = usualRev - expenses;
-
-            if(uFull) uFull.innerText = `${fullUnits} units`;
-            if(rFull) rFull.innerText = `$${fullRev.toLocaleString()}`;
-            if(pFull) {
-                pFull.innerText = `${fullProfit >= 0 ? '+' : '-'}$${Math.abs(fullProfit).toLocaleString()}`;
-                pFull.className = `font-black ${fullProfit >= 0 ? 'text-green-600' : 'text-red-500'}`;
-            }
-
-            if(uUsual) uUsual.innerText = `${usualUnits} units`;
-            if(rUsual) rUsual.innerText = `$${usualRev.toLocaleString()}`;
-            if(pUsual) {
-                pUsual.innerText = `${usualProfit >= 0 ? '+' : '-'}$${Math.abs(usualProfit).toLocaleString()}`;
-                pUsual.className = `font-black ${usualProfit >= 0 ? 'text-orange-500' : 'text-red-500'}`;
-            }
-            
             if(hRat) hRat.innerText = ratio;
         }
 
@@ -1044,20 +1061,24 @@
             document.getElementById('staff-stat-money').innerText = `$${appData.collected || 0}`;
             document.getElementById('staff-stat-expenses').innerText = `-$${appData.expenses || 0}`;
             
-            const netCash = (appData.collected || 0) - (appData.expenses || 0);
-            document.getElementById('staff-stat-net').innerText = `$${netCash}`;
-            document.getElementById('staff-stat-debt').innerText = `$${appData.personalUseOwed || 0}`;
-            document.getElementById('staff-stat-borrowings').innerText = `$${appData.borrowings || 0}`;
+            // Commission & Debt Calculation
+            const grossComm = (appData.collected || 0) * ((masterData.staffCommission || 0) / 100);
+            const totalDebt = (appData.personalUseOwed || 0) + (appData.borrowings || 0);
             
-            // Commission
-            const commRow = document.getElementById('staff-commission-row');
-            if (masterData.staffCommission > 0) {
-                commRow.classList.remove('hidden');
-                const earned = (appData.collected || 0) * (masterData.staffCommission / 100);
-                document.getElementById('staff-stat-commission').innerText = `$${earned.toFixed(2)}`;
-            } else {
-                commRow.classList.add('hidden');
-            }
+            // Apply Commission to Debt First
+            const appliedToDebt = Math.min(grossComm, totalDebt);
+            const netComm = grossComm - appliedToDebt;
+            const remainingDebt = totalDebt - appliedToDebt;
+
+            document.getElementById('staff-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+            document.getElementById('staff-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+            document.getElementById('staff-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+
+            // Net Cash calculation for Boss (Gross - Expenses - Net Commission)
+            const netCash = (appData.collected || 0) - (appData.expenses || 0) - netComm;
+            document.getElementById('staff-stat-net').innerText = `$${netCash.toFixed(2)}`;
 
             // Shortage checking (Expected includes the discounted personal debt & borrowings)
             const diff = (appData.expected || 0) - (appData.collected || 0);
@@ -1367,7 +1388,7 @@
         // ADMIN LOGIC
         // ---------------------------------------------------------
         window.switchAdminTab = (t) => { 
-            ['storage','terminal','staff','transfers'].forEach(x => { 
+            ['storage','terminal','staff','transfers','finance'].forEach(x => { 
                 document.getElementById(`admin-view-${x}`).classList.add('hidden'); 
                 document.getElementById(`adm-tab-${x}`).classList.remove('bg-gray-800','text-white','shadow'); 
                 document.getElementById(`adm-tab-${x}`).classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300');
@@ -1443,8 +1464,8 @@
                             </div>
                             <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
                                 <div class="text-xs text-gray-500">
-                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${u.expected||0}</span><br>
-                                    Col: <span class="font-bold text-green-600">$${u.collected||0}</span>
+                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
+                                    Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
                                 </div>
                                 <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
                                     Diff: ${diffSign}
@@ -1461,17 +1482,18 @@
                 });
                 
                 document.getElementById('admin-active-count').innerText = `${activeCount} Active`;
-                document.getElementById('admin-total-expected').innerText = `$${totExp}`;
-                document.getElementById('admin-total-collected').innerText = `$${totCol}`;
+                document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`;
+                document.getElementById('admin-total-collected').innerText = `$${totCol.toFixed(2)}`;
                 
                 // Update Admin Overall Chart
                 updateAdminOverallChart(globalRoster);
+                updateFinanceUI(); // Roster changed, update projections
                 
                 if(pendCount === 0) {
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Team</span>`;
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Team</span>`;
                 } else {
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Team</span> <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${pendCount}</span>`;
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span class="hidden sm:inline">Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`;
                 }
                 lucide.createIcons();
             });
@@ -1525,6 +1547,94 @@
                 }
             });
         }
+
+        // --- NEW FINANCE TAB LOGIC ---
+        function updateFinanceUI() {
+            if (!document.getElementById('admin-view-finance')) return;
+            
+            // 1. Gather Totals
+            let staffFull = 0, staffUsual = 0;
+            globalRoster.forEach(u => {
+                staffFull += (u.unitsFull || 0);
+                staffUsual += (u.unitsUsual || 0);
+            });
+
+            const totalFull = (masterData.unitsFull || 0) + staffFull;
+            const totalUsual = (masterData.unitsUsual || 0) + staffUsual;
+
+            // Display Unit Counts
+            document.getElementById('proj-full-count').innerText = totalFull;
+            document.getElementById('proj-usual-count').innerText = totalUsual;
+
+            // Calculations
+            const priceFull = masterData.pricePerUnit;
+            const priceUsual = masterData.pricePerUnit * masterData.usualRatio;
+            
+            // Standard Projection (Fullx100 + Usualx80)
+            const projFullStd = totalFull * priceFull;
+            const projUsualStd = totalUsual * priceUsual;
+            const totalProjStd = projFullStd + projUsualStd;
+
+            // What If Projection (Both x100)
+            const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
+            
+            // Update Projection DOM
+            document.getElementById('proj-std-total').innerText = `$${totalProjStd.toLocaleString()}`;
+            document.getElementById('proj-whatif-total').innerText = `$${totalWhatIf.toLocaleString()}`;
+
+            // Balance Manager DOM
+            document.getElementById('finance-cash-balance').innerText = `$${(masterData.cashBalance || 0).toFixed(2)}`;
+            
+            const liabList = document.getElementById('finance-liabilities-list');
+            liabList.innerHTML = '';
+            
+            if (masterData.liabilities && masterData.liabilities.length > 0) {
+                masterData.liabilities.forEach(l => {
+                    liabList.innerHTML += `
+                    <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
+                        <div class="flex items-center">
+                            <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 accent-purple-600">
+                            <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
+                            <button onclick="window.adminRemoveLiability(${l.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>';
+            }
+            lucide.createIcons();
+        }
+
+        window.adminUpdateCash = async () => {
+            const current = masterData.cashBalance || 0;
+            const amt = parseFloat(prompt(`Current Master Cash: $${current}\n\nEnter amount to add/subtract (use negative number to subtract):`, "0"));
+            if(isNaN(amt)) return;
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
+        };
+
+        window.adminAddLiability = async () => {
+            const name = prompt("Enter bill/liability name (e.g. Rent, Supplier):");
+            if(!name) return;
+            const amt = parseFloat(prompt(`Enter amount for ${name} ($):`));
+            if(isNaN(amt) || amt <= 0) return;
+            const newLiabs = [...(masterData.liabilities || []), { id: Date.now(), name, amount: amt, isPaid: false }];
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: newLiabs }, {merge:true});
+        };
+
+        window.adminToggleLiability = async (id) => {
+            const liabs = (masterData.liabilities || []).map(l => l.id === id ? { ...l, isPaid: !l.isPaid } : l);
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
+        };
+
+        window.adminRemoveLiability = async (id) => {
+            if(!confirm("Remove this liability from list?")) return;
+            const liabs = (masterData.liabilities || []).filter(l => l.id !== id);
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
+        };
+
 
         // Admin Master Controls
         window.adminAddWeight = async () => { 
@@ -1946,15 +2056,29 @@
             document.getElementById('det-sold-full').innerText = (d.soldUnitsFull||0);
             document.getElementById('det-sold-usual').innerText = (d.soldUnitsUsual||0);
             
-            document.getElementById('det-expected').innerText = `$${d.expected||0}`;
-            document.getElementById('det-personal-owed').innerText = `$${d.personalUseOwed||0}`;
-            document.getElementById('det-borrowings').innerText = `$${d.borrowings||0}`;
+            document.getElementById('det-expected').innerText = `$${(d.expected||0).toFixed(2)}`;
+            document.getElementById('det-personal-owed').innerText = `$${(d.personalUseOwed||0).toFixed(2)}`;
+            document.getElementById('det-borrowings').innerText = `$${(d.borrowings||0).toFixed(2)}`;
             
-            document.getElementById('det-collected').innerText = `$${d.collected||0}`;
-            document.getElementById('det-expenses').innerText = `-$${d.expenses||0}`;
+            document.getElementById('det-collected').innerText = `$${(d.collected||0).toFixed(2)}`;
+            document.getElementById('det-expenses').innerText = `-$${(d.expenses||0).toFixed(2)}`;
             
-            const netCash = (d.collected||0) - (d.expenses||0);
-            document.getElementById('det-net-cash').innerText = `$${netCash}`;
+            // Commission & Debt Calculation
+            const grossComm = (d.collected || 0) * ((masterData.staffCommission || 0) / 100);
+            const totalDebt = (d.personalUseOwed || 0) + (d.borrowings || 0);
+            
+            const appliedToDebt = Math.min(grossComm, totalDebt);
+            const netComm = grossComm - appliedToDebt;
+            const remainingDebt = totalDebt - appliedToDebt;
+
+            document.getElementById('det-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+            document.getElementById('det-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+            document.getElementById('det-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+            document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+            document.getElementById('det-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+
+            const netCash = (d.collected||0) - (d.expenses||0) - netComm;
+            document.getElementById('det-net-cash').innerText = `$${netCash.toFixed(2)}`;
 
             const diff = (d.expected||0) - (d.collected||0);
             const box = document.getElementById('det-diff-box');
@@ -2024,7 +2148,7 @@
             window.showToast("Resetting data...");
 
             // 1. Reset Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, personalUseDiscount: masterData.personalUseDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0 });
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, personalUseDiscount: masterData.personalUseDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0, cashBalance: 0, liabilities: [] });
 
             // 2. Reset All Staff & Admin self
             for(const u of globalRoster) {
