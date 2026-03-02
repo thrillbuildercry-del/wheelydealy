@@ -31,10 +31,6 @@
         .btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .btn-interactive:active { transform: scale(0.95); }
     </style>
-    <script>
-        if (localStorage.theme === 'light') { document.documentElement.classList.remove('dark'); } 
-        else { document.documentElement.classList.add('dark'); }
-    </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-6">
 
@@ -71,8 +67,8 @@
             <h2 id="approval-title" class="text-2xl font-bold dark:text-white">Access Pending</h2>
             <p id="approval-msg" class="text-gray-500 dark:text-gray-400 text-sm mt-2 mb-6">Sign in Pending, please contact an administrator for help.</p>
             <div class="flex flex-col gap-2">
-                <button onclick="window.location.reload()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">Refresh Status</button>
-                <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-xl text-gray-700 dark:text-gray-300">Sign Out</button>
+                <button onclick="window.location.reload()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition btn-interactive">Refresh Status</button>
+                <button onclick="window.logout()" class="w-full bg-gray-200 dark:bg-gray-700 font-bold py-3 rounded-xl text-gray-700 dark:text-gray-300 btn-interactive">Sign Out</button>
             </div>
         </div>
     </div>
@@ -81,15 +77,34 @@
     <div id="settings-modal" class="modal-overlay hidden">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold dark:text-white">Options</h2>
+                <h2 class="text-xl font-bold dark:text-white">Settings</h2>
                 <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
+            
+            <!-- Driver Vehicle Info -->
+            <div id="settings-vehicle-section" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 hidden">
+                <h3 class="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase mb-2">My Vehicle</h3>
+                <input type="text" id="set-vehicle-color" placeholder="Color (e.g. Red)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
+                <input type="text" id="set-vehicle-desc" placeholder="Make & Model (e.g. Toyota Camry)" class="w-full mb-2 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-600 text-sm dark:text-white">
+                <button onclick="window.saveVehicleInfo()" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700 btn-interactive">Save Vehicle Details</button>
+            </div>
+
+            <!-- Admin Factory Reset Area -->
+            <div id="admin-settings-section" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800 hidden">
+                <h3 class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex items-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Admin Danger Zone
+                </h3>
+                <button onclick="window.adminFactoryReset()" class="w-full bg-red-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-red-700 btn-interactive">Factory Reset Inventory</button>
+                <p class="text-[10px] text-gray-500 mt-2">Wipes all stock & sales to 0. Keeps user accounts.</p>
+            </div>
+
             <div class="space-y-3">
-                <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive">
                     <span class="font-medium dark:text-white">Toggle Dark Mode</span>
                     <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-                <button onclick="window.logout()" class="w-full flex justify-center items-center p-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold">
+                <hr class="border-gray-200 dark:border-gray-700 my-2">
+                <button onclick="window.logout()" class="w-full flex justify-center items-center p-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold btn-interactive">
                     <i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Log Out
                 </button>
             </div>
@@ -117,7 +132,7 @@
                         <h2 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-1">My Current Weight</h2>
                         <div class="flex items-baseline">
                             <span class="text-5xl font-black mr-2" id="staff-stock">0.0</span>
-                            <span class="text-gray-400 text-sm font-bold">g</span>
+                            <span class="text-gray-400 text-sm font-bold">units</span>
                         </div>
                     </div>
                     <button onclick="window.requestWeight()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded-xl shadow-md transition active:scale-95 flex items-center">
@@ -135,12 +150,12 @@
                 <!-- Qty Selection -->
                 <div class="mb-4">
                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Select Quantity</label>
-                    <div class="flex space-x-2">
-                        <button onclick="window.selectQty(0.5)" id="btn-qty-0.5" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white">.5</button>
-                        <button onclick="window.selectQty(1)" id="btn-qty-1" class="qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white">1</button>
-                        <button onclick="window.selectQty(2)" id="btn-qty-2" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white">2</button>
-                        <button onclick="window.selectQty(3)" id="btn-qty-3" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white">3</button>
-                        <button onclick="window.selectQty(4)" id="btn-qty-4" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white">4</button>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="window.selectQty(0.5)" id="btn-qty-0.5" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">.5</button>
+                        <button onclick="window.selectQty(1)" id="btn-qty-1" class="qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">1</button>
+                        <button onclick="window.selectQty(2)" id="btn-qty-2" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">2</button>
+                        <button onclick="window.selectQty(3)" id="btn-qty-3" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">3</button>
+                        <button onclick="window.selectQty(4)" id="btn-qty-4" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">4</button>
                     </div>
                 </div>
 
@@ -148,13 +163,13 @@
                 <div class="mb-5">
                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Select Weight Standard</label>
                     <div class="flex space-x-2">
-                        <button onclick="window.selectType('full')" id="btn-type-full" class="type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center">
+                        <button onclick="window.selectType('full')" id="btn-type-full" class="type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive">
                             <span class="dark:text-white">Full Weight</span>
-                            <span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-full-weight">(1.0g per unit)</span>
+                            <span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-full-weight">(1.0 units)</span>
                         </button>
-                        <button onclick="window.selectType('usual')" id="btn-type-usual" class="type-btn btn-select flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center">
+                        <button onclick="window.selectType('usual')" id="btn-type-usual" class="type-btn btn-select flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive">
                             <span class="dark:text-white">Usual Weight</span>
-                            <span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-usual-weight">(0.8g per unit)</span>
+                            <span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-usual-weight">(0.8 units)</span>
                         </button>
                     </div>
                 </div>
@@ -182,25 +197,18 @@
             </div>
 
             <!-- Stats/Logs -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Shift Performance</h3>
-                
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Shift Activity</h3>
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="text-[10px] text-gray-500 uppercase font-bold">Collected</div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold">Weight Sold</div>
+                        <div class="text-xl font-bold dark:text-white" id="staff-stat-weight">0</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold">Money Collected</div>
                         <div class="text-xl font-bold text-green-600" id="staff-stat-money">$0</div>
                     </div>
-                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="text-[10px] text-gray-500 uppercase font-bold">Expected</div>
-                        <div class="text-xl font-bold text-gray-800 dark:text-gray-200" id="staff-stat-expected">$0</div>
-                    </div>
                 </div>
-                
-                <!-- Shortage Warning -->
-                <div id="staff-shortage-warning" class="hidden mb-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-2 rounded-lg text-xs font-bold text-center border border-red-200 dark:border-red-800">
-                    Warning: You are short by <span id="staff-shortage-amount">$0</span>
-                </div>
-
                 <div id="staff-log-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm">
                     <div class="text-center text-gray-400 py-4 text-xs">No sales recorded yet.</div>
                 </div>
@@ -210,11 +218,11 @@
     </div>
 
     <!-- ADMIN UI -->
-    <div id="admin-app" class="hidden">
+    <div id="admin-app" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
         <header class="bg-gray-900 text-white p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
-                <p class="text-xs text-gray-400">Inventory & Revenue Command</p>
+                <p class="text-xs text-gray-400">Weight & Revenue Manager</p>
             </div>
             <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
                 <i data-lucide="settings" class="w-5 h-5"></i>
@@ -224,26 +232,28 @@
         <main class="p-4 max-w-2xl mx-auto">
             
             <!-- Admin Navigation -->
-            <div class="flex space-x-2 mb-6">
-                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="flex-1 py-2 rounded-xl font-bold text-sm bg-gray-800 text-white shadow transition flex justify-center items-center"><i data-lucide="database" class="w-4 h-4 mr-1"></i> Vault</button>
-                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="flex-1 py-2 rounded-xl font-bold text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center"><i data-lucide="calculator" class="w-4 h-4 mr-1"></i> Sell</button>
-                <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="flex-1 py-2 rounded-xl font-bold text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center relative">
-                    <i data-lucide="users" class="w-4 h-4 mr-1"></i> Team
-                    <div id="admin-req-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-gray-800 text-white shadow transition flex justify-center items-center"><i data-lucide="database" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Vault</span></button>
+                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center"><i data-lucide="calculator" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Sell</span></button>
+                <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex justify-center items-center relative">
+                    <i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> Team
+                </button>
+                <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="flex-1 py-2 px-1 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition relative flex justify-center items-center">
+                    <i data-lucide="arrow-right-left" class="w-4 h-4 sm:mr-1"></i> Move
+                    <div id="admin-req-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
                 </button>
             </div>
 
             <!-- TAB: MASTER STORAGE -->
             <div id="admin-view-storage" class="admin-tab-content active">
                 
-                <!-- Raw Weight Vault -->
-                <div class="bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-xl mb-4 text-white relative overflow-hidden">
-                    <div class="relative z-10 flex justify-between items-start mb-6">
+                <div class="bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-xl mb-6 text-white relative overflow-hidden">
+                    <div class="relative z-10 flex justify-between items-end mb-6">
                         <div>
-                            <h2 class="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">Master Raw Weight</h2>
+                            <h2 class="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">Master Vault Weight</h2>
                             <div class="flex items-baseline">
                                 <span class="text-5xl font-black mr-2" id="admin-master-weight">0.0</span>
-                                <span class="text-gray-400 font-bold">g</span>
+                                <span class="text-gray-400 font-bold">units</span>
                             </div>
                         </div>
                         <button onclick="window.adminAddWeight()" class="bg-white/10 hover:bg-white/20 p-3 rounded-full transition border border-white/20 backdrop-blur-sm btn-interactive">
@@ -251,57 +261,74 @@
                         </button>
                     </div>
 
-                    <!-- Processing Tool -->
-                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-sm font-bold text-blue-300 flex items-center"><i data-lucide="layers" class="w-4 h-4 mr-2"></i> Process into Units</h3>
-                        </div>
-                        <div class="flex space-x-2">
-                            <input type="number" id="process-qty" placeholder="# Units" class="w-1/2 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
-                            <input type="number" step="0.1" id="process-weight" placeholder="g per unit" class="w-1/2 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
-                            <button onclick="window.adminProcessUnits()" class="bg-blue-600 px-4 rounded-lg font-bold text-sm hover:bg-blue-500 btn-interactive">Make</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Processed Units Vault -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 mb-6 flex justify-between items-center">
-                    <div>
-                        <h2 class="text-blue-800 dark:text-blue-300 text-xs uppercase font-bold tracking-widest mb-1">Ready Units</h2>
-                        <div class="text-3xl font-black text-blue-900 dark:text-white" id="admin-processed-units">0</div>
-                    </div>
-                    <i data-lucide="package" class="w-10 h-10 text-blue-300 dark:text-blue-700 opacity-50"></i>
-                </div>
-
-                <!-- Configuration & Potential -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <div class="grid grid-cols-2 gap-4 border-b dark:border-gray-700 pb-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Price per 1.0 Unit</div>
                             <div class="flex items-center">
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400 mr-2" id="admin-price-display">$0</span>
-                                <button onclick="window.adminSetVariable('pricePerUnit', 'Price per 1.0 Unit ($)')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                                <span class="text-lg font-bold text-green-400 mr-2" id="admin-price-display">$0</span>
+                                <button onclick="window.adminSetVariable('pricePerUnit', 'Price per 1.0 Unit ($)')" class="text-gray-500 hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
                             </div>
                         </div>
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">"Usual" Ratio</div>
                             <div class="flex items-center">
-                                <span class="text-lg font-bold text-orange-500 mr-2" id="admin-ratio-display">0.8x</span>
-                                <button onclick="window.adminSetVariable('usualRatio', 'Usual Ratio (e.g. 0.8 for 80%)')" class="text-gray-400 hover:text-blue-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                                <span class="text-lg font-bold text-orange-400 mr-2" id="admin-ratio-display">0.8x</span>
+                                <button onclick="window.adminSetVariable('usualRatio', 'Usual Ratio (e.g. 0.8 for 80%)')" class="text-gray-500 hover:text-white"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-3">Potential Raw Vault Value</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div><div class="font-bold text-sm dark:text-gray-200">Sold at Full Weight</div></div>
-                            <div class="text-lg font-black text-green-600" id="admin-pot-full">$0</div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Potential Vault Value</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-sm dark:text-gray-200">If sold at Full Weight</div>
+                                <div class="text-xs text-gray-500">Every 1.0 unit = 1 Sale</div>
+                            </div>
+                            <div class="text-xl font-black text-green-600" id="admin-pot-full">$0</div>
                         </div>
-                        <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div><div class="font-bold text-sm dark:text-gray-200">Sold at Usual Weight</div></div>
-                            <div class="text-lg font-black text-orange-500" id="admin-pot-usual">$0</div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-sm dark:text-gray-200">If sold at Usual Weight</div>
+                                <div class="text-xs text-gray-500">Every <span id="hint-ratio-txt">0.8</span> unit = 1 Sale</div>
+                            </div>
+                            <div class="text-xl font-black text-orange-500" id="admin-pot-usual">$0</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: STAFF PERFORMANCE -->
+            <div id="admin-view-staff" class="admin-tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide">Team Summary</h3>
+                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300" id="admin-active-count">0 Active</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <div class="text-[10px] text-gray-500 uppercase font-bold">Total Expected $</div>
+                            <div class="text-lg font-bold dark:text-white" id="admin-total-expected">$0</div>
+                        </div>
+                        <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-200 dark:border-green-800">
+                            <div class="text-[10px] text-green-700 dark:text-green-400 uppercase font-bold">Total Collected $</div>
+                            <div class="text-lg font-bold text-green-600 dark:text-green-400" id="admin-total-collected">$0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1 text-sm uppercase">Staff List</h3>
+                <div id="admin-staff-list" class="space-y-3 mb-6">
+                    <div class="text-center py-8 text-gray-400 animate-pulse text-sm">Loading staff data...</div>
+                </div>
+
+                <!-- Pending Approvals in Staff Tab -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-3 text-sm uppercase">Pending Approvals</h3>
+                    <div id="admin-pending-users" class="space-y-2 text-sm">
+                        <div class="text-gray-400 italic text-xs">No pending users.</div>
                     </div>
                 </div>
             </div>
@@ -316,22 +343,10 @@
                             <i data-lucide="scale" class="w-4 h-4 inline mr-1 text-blue-500"></i> Sell Raw Weight
                         </h3>
                         <div class="flex space-x-2">
-                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Weight (g)</label><input type="number" step="0.1" id="adm-sell-raw-w" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
+                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Weight</label><input type="number" step="0.1" id="adm-sell-raw-w" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
                             <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label><input type="number" id="adm-sell-raw-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
                         </div>
                         <button onclick="window.adminSellRaw()" class="w-full mt-3 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 btn-interactive transition">Record Sale</button>
-                    </div>
-
-                    <!-- Sell Processed Units -->
-                    <div>
-                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wide">
-                            <i data-lucide="package" class="w-4 h-4 inline mr-1 text-purple-500"></i> Sell Processed Units
-                        </h3>
-                        <div class="flex space-x-2">
-                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Quantity</label><input type="number" id="adm-sell-unit-q" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
-                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label><input type="number" id="adm-sell-unit-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
-                        </div>
-                        <button onclick="window.adminSellUnit()" class="w-full mt-3 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 btn-interactive transition">Record Sale</button>
                     </div>
 
                     <!-- Admin Personal Use -->
@@ -340,68 +355,52 @@
                             <i data-lucide="user" class="w-4 h-4 inline mr-1"></i> Admin Personal Use
                         </h3>
                         <div class="flex space-x-2">
-                            <input type="number" step="0.1" id="adm-use-w" placeholder="Weight (g)" class="w-1/2 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white">
-                            <button onclick="window.adminPersonalUse('weight')" class="w-1/4 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive">Use Wgt</button>
-                            
-                            <input type="number" id="adm-use-u" placeholder="# Units" class="w-1/4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-center">
-                            <button onclick="window.adminPersonalUse('unit')" class="w-1/4 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive">Use Unit</button>
+                            <input type="number" step="0.1" id="adm-use-w" placeholder="Weight to use" class="w-2/3 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white">
+                            <button onclick="window.adminPersonalUse()" class="w-1/3 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive hover:bg-gray-900">Log Usage</button>
                         </div>
-                        <p class="text-[10px] text-gray-500 mt-2">Deducts from Master Storage without adding to expected revenue.</p>
+                        <p class="text-[10px] text-gray-500 mt-2">Deducts from Master Storage without tracking revenue.</p>
                     </div>
 
                 </div>
             </div>
 
-            <!-- TAB: STAFF / TRANSFERS -->
-            <div id="admin-view-staff" class="admin-tab-content hidden">
+            <!-- TAB: TRANSFERS -->
+            <div id="admin-view-transfers" class="admin-tab-content hidden">
                 
-                <!-- Stock Requests Alert -->
-                <div id="admin-requests-section" class="hidden mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-200 dark:border-blue-800 shadow-sm">
+                <!-- Stock Requests -->
+                <div id="admin-requests-section" class="hidden mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-200 dark:border-blue-800">
                     <h3 class="font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-3 flex items-center tracking-wide">
-                        <i data-lucide="bell" class="w-4 h-4 mr-2 animate-bounce"></i> Staff Requests
+                        <i data-lucide="bell" class="w-4 h-4 mr-2"></i> Weight Requests
                     </h3>
                     <div id="admin-requests-list" class="space-y-2"></div>
                 </div>
 
-                <!-- Transfer To Staff -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                <!-- Transfer Tool -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center text-sm uppercase tracking-wide border-b dark:border-gray-700 pb-2">
-                        <i data-lucide="truck" class="w-4 h-4 mr-2 text-blue-500"></i> Distribute Weight
+                        <i data-lucide="arrow-right-left" class="w-4 h-4 mr-2 text-purple-600"></i> Move Weight
                     </h3>
+                    
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Select Staff</label>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Staff Member</label>
                             <select id="transfer-staff-select" onchange="window.updateTransferPreview()" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl outline-none text-sm font-bold dark:text-white">
-                                <option value="">Select...</option>
+                                <option value="">Select Staff...</option>
                             </select>
                             <div id="transfer-preview" class="text-xs text-blue-600 dark:text-blue-400 mt-1 ml-1 h-4 font-medium"></div>
                         </div>
+
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Raw Weight to Send (g)</label>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Amount to Send (Units)</label>
                             <div class="flex space-x-2 mt-1">
                                 <input type="number" step="0.1" id="transfer-amount" placeholder="0.0" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl outline-none font-black text-lg dark:text-white">
-                                <button onclick="window.adminTransferWeight()" class="bg-blue-600 text-white font-bold px-6 rounded-xl shadow-md hover:bg-blue-700 active:scale-95 transition">Send</button>
+                                <button onclick="window.adminTransferWeight()" class="bg-purple-600 text-white font-bold px-6 rounded-xl shadow-md hover:bg-purple-700 active:scale-95 transition">Send</button>
                             </div>
+                            <p class="text-[10px] text-gray-400 mt-2">* Deducts from Master Vault and adds to Staff's holding weight.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Staff Performance List -->
-                <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1 text-sm uppercase flex justify-between">
-                    <span>Staff Analytics</span>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded" id="admin-active-count">0 Active</span>
-                </h3>
-                <div id="admin-staff-list" class="space-y-3 mb-8">
-                    <div class="text-center py-8 text-gray-400 animate-pulse text-sm">Loading staff data...</div>
-                </div>
-
-                <!-- Employee Approvals -->
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-3 text-sm uppercase">Access Management</h3>
-                    <div id="admin-pending-users" class="space-y-2 text-sm">
-                        <div class="text-gray-400 italic text-xs">No pending users.</div>
-                    </div>
-                </div>
             </div>
 
         </main>
@@ -429,9 +428,8 @@
                 </div>
             </div>
 
-            <!-- Revenue Analysis -->
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4 border-b dark:border-gray-700 pb-2">Revenue Tracking</h3>
+                <h3 class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4 border-b dark:border-gray-700 pb-2">Revenue Analysis</h3>
                 
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-sm font-bold dark:text-gray-300">Expected Value</span>
@@ -443,23 +441,22 @@
                 </div>
                 
                 <div id="det-diff-box" class="p-3 rounded-lg flex justify-between items-center font-bold">
-                    <span class="text-sm uppercase tracking-wide">Money Lost</span>
+                    <span class="text-sm uppercase tracking-wide">Difference</span>
                     <span class="text-xl" id="det-diff">$0</span>
                 </div>
+                <p class="text-[10px] text-gray-400 mt-2 text-center">Expected value is calculated based on Quantity sold × Price per Unit.</p>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-bold text-purple-600 dark:text-purple-400"><i data-lucide="user" class="inline w-4 h-4 mr-1"></i> Personal Use Logged:</span>
-                    <span class="text-lg font-black dark:text-white" id="det-personal">0.0g</span>
-                </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <span class="text-sm font-bold text-purple-600 dark:text-purple-400"><i data-lucide="user" class="inline w-4 h-4 mr-1"></i> Personal Use Logged:</span>
+                <span class="text-lg font-black dark:text-white" id="det-personal">0.0</span>
             </div>
 
             <!-- Danger / Clear -->
-            <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-4 rounded-xl border border-red-200 dark:border-red-800/50 hover:bg-red-200 dark:hover:bg-red-900/40 transition btn-interactive">
-                Collect Cash & Reset Stats to 0
+            <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-3 rounded-xl border border-red-200 dark:border-red-800/50 btn-interactive">
+                Clear Staff Balances (Reset to 0)
             </button>
-            <p class="text-center text-[10px] text-gray-500">This resets Expected/Collected to $0. It does NOT remove their holding weight.</p>
+            <p class="text-center text-[10px] text-gray-500">Use this after collecting money and zeroing out their stock.</p>
 
         </div>
     </div>
@@ -470,7 +467,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         lucide.createIcons();
 
@@ -485,7 +482,7 @@
             messagingSenderId: "686014043249",
             appId: "1:686014043249:web:8dcc93549cdb265269b7d0"
         };
-        const appId = "weight-tracker-v2"; // Using fresh ID for clean start
+        const appId = "weight-tracker-v2"; 
         const app = initializeApp(firebaseConfig); 
         const auth = getAuth(app); 
         const db = getFirestore(app); 
@@ -547,7 +544,13 @@
 
         window.logout = async () => { 
             if(unsubUserData) unsubUserData(); if(unsubRoster) unsubRoster(); if(unsubMaster) unsubMaster(); if(unsubAuthCheck) unsubAuthCheck();
-            await signOut(auth); window.location.reload(); 
+            
+            document.getElementById('staff-app').classList.add('hidden');
+            document.getElementById('admin-app').classList.add('hidden');
+            document.getElementById('approval-modal').classList.add('hidden');
+            
+            await signOut(auth); 
+            window.location.reload(); 
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -566,9 +569,11 @@
 
                     if (role === 'admin') {
                         document.getElementById('approval-modal').classList.add('hidden');
+                        document.getElementById('staff-app').classList.add('hidden');
                         initAdminDashboard();
                     } else if (status === 'active') {
                         document.getElementById('approval-modal').classList.add('hidden');
+                        document.getElementById('admin-app').classList.add('hidden');
                         initStaffApp(user);
                     } else {
                         // Pending or Suspended
@@ -592,7 +597,7 @@
                     window.showToast("Permission denied. Check Firebase Rules.");
                 });
 
-                // Master data listener (Pricing configs needed for both Admin and Staff)
+                // Always listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, ...s.data() };
@@ -614,31 +619,30 @@
             const labelUsual = document.getElementById('label-usual-weight');
             const expHint = document.getElementById('expected-money-hint');
             
-            if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)}g per unit)`;
-            if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)}g per unit)`;
+            if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`;
+            if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
             if(expHint) expHint.innerText = `Expected: $${currentQty * masterData.pricePerUnit}`;
 
             // Admin Display Updates
             const wRaw = document.getElementById('admin-master-weight');
-            const wUnit = document.getElementById('admin-processed-units');
             const pDisp = document.getElementById('admin-price-display');
             const rDisp = document.getElementById('admin-ratio-display');
             const pFull = document.getElementById('admin-pot-full');
             const pUsual = document.getElementById('admin-pot-usual');
             const hRat = document.getElementById('hint-ratio-txt');
 
-            if(wRaw) wRaw.innerText = masterData.rawWeight.toFixed(1);
-            if(wUnit) wUnit.innerText = masterData.processedUnits;
-            if(pDisp) pDisp.innerText = `$${masterData.pricePerUnit}`;
-            if(rDisp) rDisp.innerText = `${masterData.usualRatio}x`;
+            // Safe fallback to 0 if rawWeight is somehow missing
+            if(wRaw) wRaw.innerText = (masterData.rawWeight || 0).toFixed(1);
+            if(pDisp) pDisp.innerText = `$${masterData.pricePerUnit || 0}`;
+            if(rDisp) rDisp.innerText = `${masterData.usualRatio || 1}x`;
             
             // Calculate potential value of raw vault
-            if(pFull) pFull.innerText = `$${(masterData.rawWeight * masterData.pricePerUnit).toLocaleString()}`;
+            if(pFull) pFull.innerText = `$${((masterData.rawWeight || 0) * (masterData.pricePerUnit || 0)).toLocaleString()}`;
             if(pUsual) {
-                const usualSales = Math.floor(masterData.rawWeight / masterData.usualRatio);
-                pUsual.innerText = `$${(usualSales * masterData.pricePerUnit).toLocaleString()}`;
+                const usualSales = Math.floor((masterData.rawWeight || 0) / (masterData.usualRatio || 1));
+                pUsual.innerText = `$${(usualSales * (masterData.pricePerUnit || 0)).toLocaleString()}`;
             }
-            if(hRat) hRat.innerText = masterData.usualRatio;
+            if(hRat) hRat.innerText = masterData.usualRatio || 1;
         }
 
         // ---------------------------------------------------------
@@ -658,10 +662,21 @@
         }
 
         function renderStaffUI() {
-            document.getElementById('staff-stock').innerText = appData.weight.toFixed(1);
-            document.getElementById('staff-stat-weight').innerText = appData.soldWeight.toFixed(1);
-            document.getElementById('staff-stat-money').innerText = `$${appData.collected}`;
+            document.getElementById('staff-stock').innerText = (appData.weight || 0).toFixed(1);
+            document.getElementById('staff-stat-weight').innerText = (appData.soldWeight || 0).toFixed(1);
+            document.getElementById('staff-stat-money').innerText = `$${appData.collected || 0}`;
+            document.getElementById('staff-stat-expected').innerText = `$${appData.expected || 0}`;
             
+            // Shortage checking
+            const diff = (appData.expected || 0) - (appData.collected || 0);
+            const warn = document.getElementById('staff-shortage-warning');
+            if(diff > 0) {
+                warn.classList.remove('hidden');
+                document.getElementById('staff-shortage-amount').innerText = `$${diff}`;
+            } else {
+                warn.classList.add('hidden');
+            }
+
             const list = document.getElementById('staff-log-list');
             list.innerHTML = '';
             
@@ -672,7 +687,7 @@
                     <div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800">
                         <div>
                             <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use</div>
-                            <div class="text-xs text-gray-500">${t.time} • Removed: ${t.actualWeight.toFixed(1)}g</div>
+                            <div class="text-xs text-gray-500">${t.time} • Removed: ${t.actualWeight.toFixed(1)} units</div>
                         </div>
                         <div class="text-right"><div class="font-black text-gray-400">-$0</div></div>
                     </div>`;
@@ -680,10 +695,10 @@
                     const color = t.type === 'full' ? 'text-green-600' : 'text-orange-500';
                     const label = t.type === 'full' ? 'Full' : 'Usual';
                     list.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2 border border-gray-200 dark:border-gray-600">
                         <div>
                             <div class="font-bold dark:text-white">Sold ${t.qty} <span class="text-[10px] ${color} uppercase tracking-wider ml-1">(${label})</span></div>
-                            <div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)}g</div>
+                            <div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)} units</div>
                         </div>
                         <div class="text-right">
                             <div class="font-black text-green-600">+$${t.money}</div>
@@ -713,6 +728,7 @@
             } catch(e){} 
         }
 
+        // Terminal Actions
         window.selectQty = (q) => {
             currentQty = q;
             document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active'));
@@ -733,7 +749,8 @@
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
 
             const actualWeight = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
-            if(appData.weight < actualWeight) return window.showToast(`Not enough weight! Need ${actualWeight.toFixed(1)}g`);
+            
+            if(appData.weight < actualWeight) return window.showToast(`Not enough weight! Need ${actualWeight.toFixed(1)}`);
 
             const expectedMoney = currentQty * masterData.pricePerUnit;
 
@@ -758,7 +775,7 @@
         };
 
         window.staffPersonalUse = async () => {
-            const w = parseFloat(prompt("Enter weight used for personal (g):"));
+            const w = parseFloat(prompt("Enter weight used for personal (units):"));
             if(isNaN(w) || w <= 0) return;
             if(appData.weight < w) return window.showToast("Not enough weight!");
             
@@ -804,17 +821,21 @@
 
         function initAdminDashboard() {
             document.getElementById('admin-app').classList.remove('hidden');
+            
+            // Show admin settings in modal
+            const adminSet = document.getElementById('admin-settings-section');
+            if(adminSet) adminSet.classList.remove('hidden');
 
-            // Listen to Roster for Staff Stats
             unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                 const list = document.getElementById('admin-staff-list'); 
                 const select = document.getElementById('transfer-staff-select');
                 const pendingList = document.getElementById('admin-pending-users');
+                const staffTab = document.getElementById('adm-tab-staff');
                 
                 list.innerHTML=''; select.innerHTML='<option value="">Select Staff...</option>'; pendingList.innerHTML='';
                 globalRoster=[]; 
                 
-                let activeCount = 0, pendCount = 0;
+                let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0;
 
                 snap.forEach(d => {
                     const u = { id: d.id, ...d.data() }; 
@@ -826,14 +847,16 @@
                             pendingList.innerHTML += `
                             <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-100 dark:border-orange-800">
                                 <span class="font-bold text-orange-800 dark:text-orange-300">${u.name}</span>
-                                <div><button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600">Approve</button>
+                                <div><button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600 btn-interactive">Approve</button>
                                 <button onclick="window.adminDelUser('${u.id}')" class="text-red-500 text-xs px-2 hover:underline">Deny</button></div>
                             </div>`;
                         } else {
                             activeCount++;
+                            totExp += (u.expected || 0);
+                            totCol += (u.collected || 0);
                             
                             const diff = (u.expected || 0) - (u.collected || 0);
-                            const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
+                            const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
                             const diffSign = diff > 0 ? `-$${diff}` : (diff < 0 ? `+$${Math.abs(diff)}` : '$0');
 
                             list.innerHTML += `
@@ -845,7 +868,7 @@
                                     </div>
                                     <div class="text-right">
                                         <div class="text-xs text-gray-500">Holding</div>
-                                        <div class="font-black dark:text-white">${(u.weight||0).toFixed(1)}g</div>
+                                        <div class="font-black dark:text-white">${(u.weight||0).toFixed(1)} u</div>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
@@ -854,22 +877,30 @@
                                         Col: <span class="font-bold text-green-600">$${u.collected||0}</span>
                                     </div>
                                     <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
-                                        Lost: ${diffSign}
+                                        Diff: ${diffSign}
                                     </div>
                                 </div>
                             </div>`;
                             
-                            const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)}g)`; 
+                            const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
                             select.appendChild(opt); 
                         }
                     }
                 });
                 
                 document.getElementById('admin-active-count').innerText = `${activeCount} Active`;
-                if(pendCount === 0) pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
+                document.getElementById('admin-total-expected').innerText = `$${totExp}`;
+                document.getElementById('admin-total-collected').innerText = `$${totCol}`;
+                
+                if(pendCount === 0) {
+                    pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Team</span>`;
+                } else {
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Team</span> <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${pendCount}</span>`;
+                }
+                lucide.createIcons();
             });
 
-            // Listen to Weight Requests
             unsubReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), (snap) => {
                 const section = document.getElementById('admin-requests-section'); 
                 const list = document.getElementById('admin-requests-list'); 
@@ -878,7 +909,7 @@
                     const req = d.data(); 
                     if(req.status === 'pending') { 
                         count++; 
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm"><span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span><div class="space-x-1"><button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700">Fulfill</button><button onclick="window.dismissReq('${d.id}')" class="text-gray-400 text-xs px-2 hover:text-gray-600">Dismiss</button></div></div>`; 
+                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm"><span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span><div class="space-x-1"><button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive">Fulfill</button><button onclick="window.dismissReq('${d.id}')" class="text-gray-400 text-xs px-2 hover:text-gray-600">Dismiss</button></div></div>`; 
                     }
                 });
                 if(count > 0) {
@@ -891,37 +922,22 @@
             });
         }
 
-        // --- Admin Storage & Config ---
+        // Admin Master Controls
         window.adminAddWeight = async () => { 
-            const q = prompt("Add weight to Master Vault (g):"); 
+            const q = prompt("Add weight to Master Vault (Units):"); 
             if(q && !isNaN(q)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(parseFloat(q))},{merge:true}); 
         };
-        
         window.adminSetVariable = async (field, label) => {
             const v = prompt(`Set ${label}:`, masterData[field]);
             if(v && !isNaN(v)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true});
         };
 
         window.adminProcessUnits = async () => {
-            const qty = parseInt(document.getElementById('process-qty').value);
-            const wpu = parseFloat(document.getElementById('process-weight').value);
-            
-            if(isNaN(qty) || qty <= 0 || isNaN(wpu) || wpu <= 0) return window.showToast("Enter valid amounts");
-            
-            const totalW = qty * wpu;
-            if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {
-                rawWeight: increment(-totalW),
-                processedUnits: increment(qty)
-            }, {merge:true});
-            
-            document.getElementById('process-qty').value = '';
-            document.getElementById('process-weight').value = '';
-            window.showToast(`Processed ${qty} units.`);
+            // Processing logic removed as user requested direct raw weight handling only for now
+            // But keeping stubs if needed later.
+            window.showToast("Process units disabled in this version.");
         };
 
-        // --- Admin Terminal Selling ---
         window.adminSellRaw = async () => {
             const w = parseFloat(document.getElementById('adm-sell-raw-w').value);
             const m = parseFloat(document.getElementById('adm-sell-raw-m').value);
@@ -930,43 +946,36 @@
 
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: increment(-w) }, {merge:true});
             document.getElementById('adm-sell-raw-w').value = ''; document.getElementById('adm-sell-raw-m').value = '';
-            window.showToast(`Sold ${w}g for $${m}`);
-        };
-
-        window.adminSellUnit = async () => {
-            const q = parseInt(document.getElementById('adm-sell-unit-q').value);
-            const m = parseFloat(document.getElementById('adm-sell-unit-m').value);
-            if(isNaN(q) || isNaN(m)) return window.showToast("Enter valid numbers");
-            if(masterData.processedUnits < q) return window.showToast("Not enough processed units!");
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { processedUnits: increment(-q) }, {merge:true});
-            document.getElementById('adm-sell-unit-q').value = ''; document.getElementById('adm-sell-unit-m').value = '';
-            window.showToast(`Sold ${q} units for $${m}`);
+            window.showToast(`Sold ${w}u for $${m}`);
         };
 
         window.adminPersonalUse = async (type) => {
-            if(type === 'weight') {
-                const w = parseFloat(document.getElementById('adm-use-w').value);
-                if(isNaN(w) || w <= 0) return;
-                if(masterData.rawWeight < w) return window.showToast("Not enough raw weight!");
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: increment(-w) }, {merge:true});
-                document.getElementById('adm-use-w').value = '';
-            } else {
-                const u = parseInt(document.getElementById('adm-use-u').value);
-                if(isNaN(u) || u <= 0) return;
-                if(masterData.processedUnits < u) return window.showToast("Not enough processed units!");
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { processedUnits: increment(-u) }, {merge:true});
-                document.getElementById('adm-use-u').value = '';
-            }
+            const w = parseFloat(document.getElementById('adm-use-w').value);
+            if(isNaN(w) || w <= 0) return;
+            if(masterData.rawWeight < w) return window.showToast("Not enough raw weight!");
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: increment(-w) }, {merge:true});
+            document.getElementById('adm-use-w').value = '';
             window.showToast("Personal Use Logged");
         };
 
-        // --- Admin Transfers ---
+        // Admin Staff Approval
+        window.adminSetStatus = async (uid, status) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status }); window.showToast("Status updated"); };
+        window.adminDelUser = async (uid) => { if(confirm("Delete user?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); };
+
+        // Admin Transfers
+        window.fulfillReq = async (reqId, uid) => { 
+            window.switchAdminTab('transfers');
+            document.getElementById('transfer-staff-select').value = uid; 
+            window.updateTransferPreview(); 
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId), { status: 'completed' }); 
+        };
+        window.dismissReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', id)); };
+
         window.updateTransferPreview = () => {
             const uid = document.getElementById('transfer-staff-select').value;
             const el = document.getElementById('transfer-preview');
             const u = globalRoster.find(x => x.id === uid);
-            if(u) el.innerText = `Currently Holding: ${(u.weight||0).toFixed(1)}g`;
+            if(u) el.innerText = `Current Weight: ${(u.weight||0).toFixed(1)} units`;
             else el.innerText = '';
         };
 
@@ -976,7 +985,7 @@
             if(!uid || isNaN(amt) || amt <= 0) return window.showToast("Select staff and valid amount");
             
             if(masterData.rawWeight < amt) {
-                if(!confirm(`Warning: Master vault only has ${masterData.rawWeight.toFixed(1)}g. Proceed anyway?`)) return;
+                if(!confirm(`Warning: Master vault only has ${(masterData.rawWeight||0).toFixed(1)}. Proceed anyway?`)) return;
             }
 
             // Deduct Master
@@ -995,23 +1004,10 @@
             await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), {weight: dat.weight}, {merge:true}); 
             
             document.getElementById('transfer-amount').value = '';
-            window.updateTransferPreview();
-            window.showToast(`Sent ${amt}g to staff.`);
+            window.showToast(`Sent ${amt} to staff.`);
         };
 
-        window.fulfillReq = async (reqId, uid) => { 
-            document.getElementById('transfer-staff-select').value = uid; 
-            window.updateTransferPreview(); 
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId)); 
-            window.showToast("Staff selected below."); 
-        };
-        window.dismissReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', id)); };
-
-        // --- Admin Staff Approvals ---
-        window.adminSetStatus = async (uid, status) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status }); };
-        window.adminDelUser = async (uid) => { if(confirm("Deny/Delete user?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); };
-
-        // --- Admin Detail View ---
+        // Admin Detail View
         window.viewDriverDetails = (uid) => { 
             const d = globalRoster.find(x => x.id === uid); 
             if(!d) return; 
@@ -1023,7 +1019,6 @@
             document.getElementById('det-sold').innerText = (d.soldWeight||0).toFixed(1);
             document.getElementById('det-expected').innerText = `$${d.expected||0}`;
             document.getElementById('det-collected').innerText = `$${d.collected||0}`;
-            document.getElementById('det-personal').innerText = `${(d.personalUseWeight||0).toFixed(1)}g`;
             
             const diff = (d.expected||0) - (d.collected||0);
             const box = document.getElementById('det-diff-box');
@@ -1043,7 +1038,7 @@
 
         window.adminClearStaffData = async () => {
             if(!currentDetailUid) return;
-            if(!confirm("Are you sure? This sets their Expected and Collected money, and Sold Weight to 0. \n\n(It does NOT remove their Holding Weight or Personal Use total).")) return;
+            if(!confirm("Are you sure? This sets their expected, collected, and sold weight to 0. (Does not affect Holding Weight)")) return;
 
             const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
             const sn = await getDoc(r); 
@@ -1055,6 +1050,36 @@
                 window.showToast("Data Cleared.");
                 document.getElementById('admin-user-detail').classList.add('hidden');
             }
+        };
+
+        // ADMIN FACTORY RESET
+        window.adminFactoryReset = async () => {
+            if(!confirm("WARNING: This will reset all Master Vault inventory AND all Staff balances/sales history to 0.\n\nUser accounts and roles will remain intact.\n\nProceed?")) return;
+            if(!confirm("Are you ABSOLUTELY sure? This cannot be undone.")) return;
+
+            window.showToast("Resetting data...");
+
+            // 1. Reset Master
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, processedUnits: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio });
+
+            // 2. Reset All Staff
+            for(const u of globalRoster) {
+                if(u.role !== 'admin') {
+                    const r = doc(db,'artifacts',appId,'users',u.id,'data','app_state');
+                    const emptyData = { weight:0, soldWeight:0, personalUseWeight:0, collected:0, expected:0, transactions:[] };
+                    await setDoc(r, { json: JSON.stringify(emptyData), lastUpdated: Date.now() });
+
+                    await setDoc(doc(db,'artifacts',appId,'public','data','roster',u.id), {
+                        weight: 0, soldWeight: 0, personalUseWeight: 0, collected: 0, expected: 0, recentLogs: []
+                    }, {merge: true});
+                }
+            }
+
+            // 3. Clear pending requests
+            const reqsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'requests'));
+            reqsSnap.forEach(async (d) => { await deleteDoc(d.ref); });
+
+            window.showToast("Factory Reset Complete.");
         };
 
     </script>
