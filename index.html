@@ -371,7 +371,7 @@
             </div>
 
             <!-- Danger / Clear -->
-            <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-3 rounded-xl border border-red-200 dark:border-red-800/50">
+            <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-3 rounded-xl border border-red-200 dark:border-red-800/50 hover:bg-red-200 dark:hover:bg-red-900/40 transition">
                 Clear Staff Balances (Reset to 0)
             </button>
             <p class="text-center text-[10px] text-gray-500">Use this after collecting money and zeroing out their stock.</p>
@@ -390,7 +390,7 @@
         lucide.createIcons();
 
         const firebaseConfig = { apiKey: "AIzaSyBgX9tL8zEaPvaZIcqDdk8XHzz4y7MvCeU", authDomain: "salesonwheels-f6eec.firebaseapp.com", projectId: "salesonwheels-f6eec", storageBucket: "salesonwheels-f6eec.firebasestorage.app", messagingSenderId: "432785821226", appId: "1:432785821226:web:96b34cc3d0526160b0bd53" };
-        const appId = "weight-tracker-v1"; // New isolated appId
+        const appId = "weight-tracker-v1"; 
         const app = initializeApp(firebaseConfig); 
         const auth = getAuth(app); 
         const db = getFirestore(app); 
@@ -429,7 +429,10 @@
                     await setDoc(profRef, { name: res.user.displayName, email: res.user.email, role: 'staff', status: 'pending', createdAt: Date.now() });
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', res.user.uid), { name: res.user.displayName, role: 'staff', status: 'pending', uid: res.user.uid }, {merge:true});
                 }
-            } catch (e) { window.showToast("Login Failed"); }
+            } catch (e) { 
+                console.error("Auth Error:", e);
+                window.showToast("Login Failed: " + e.message); 
+            }
         };
 
         window.logout = async () => { 
@@ -462,6 +465,10 @@
                         document.getElementById('staff-app').classList.add('hidden');
                         document.getElementById('admin-app').classList.add('hidden');
                     }
+                }, (error) => {
+                    console.error("Roster Access Denied:", error);
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    window.showToast("Permission denied. Check Firebase Rules.");
                 });
 
                 // Always listen to master data for calculations
@@ -470,7 +477,7 @@
                         masterData = { stock: 0, pricePerUnit: 100, usualRatio: 0.8, ...s.data() };
                         updateMasterLabels();
                     } else {
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData);
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e));
                     }
                 });
 
