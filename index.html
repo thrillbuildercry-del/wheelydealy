@@ -111,6 +111,43 @@
         </div>
     </div>
 
+    <!-- Admin Add Bill Modal -->
+    <div id="admin-bill-modal" class="modal-overlay hidden z-[110]">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
+            <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center"><i data-lucide="file-text" class="w-5 h-5 mr-2 text-purple-500"></i> Add Priority Bill</h2>
+            <div class="space-y-3">
+                <input type="text" id="bill-name" placeholder="Bill Name (e.g. Rent, Restock)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                <input type="number" id="bill-amt" placeholder="Amount ($)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+                <input type="date" id="bill-date" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                <label class="flex items-center text-sm dark:text-gray-300 font-bold p-2">
+                    <input type="checkbox" id="bill-recurring" class="w-4 h-4 mr-2 accent-purple-600">
+                    Recurring Weekly/Monthly?
+                </label>
+            </div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="document.getElementById('admin-bill-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
+                <button onclick="window.saveAdminBill()" class="flex-[2] py-3 bg-purple-600 text-white rounded-xl font-bold shadow-md hover:bg-purple-700">Save Bill</button>
+            </div>
+            <input type="hidden" id="bill-request-id" value="">
+        </div>
+    </div>
+
+    <!-- Staff Request Bill Modal -->
+    <div id="staff-bill-modal" class="modal-overlay hidden z-[110]">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
+            <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center"><i data-lucide="receipt" class="w-5 h-5 mr-2 text-blue-500"></i> Request Bill / Expense</h2>
+            <p class="text-xs text-gray-500 mb-4">Submit a bill or expense to the Boss's planner for approval.</p>
+            <div class="space-y-3">
+                <input type="text" id="req-bill-desc" placeholder="What is this for?" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                <input type="number" id="req-bill-amt" placeholder="Total Amount ($)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+            </div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="document.getElementById('staff-bill-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
+                <button onclick="window.submitStaffBillReq()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">Send Request</button>
+            </div>
+        </div>
+    </div>
+
     <!-- STAFF UI -->
     <div id="staff-app" class="hidden">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
@@ -210,15 +247,21 @@
                     <p class="text-[10px] text-gray-400 mt-2 text-center">Usual Standard: Red &lt;$80, Orange $80-$99, Green $100+</p>
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex gap-2 mb-3">
                     <button onclick="window.processSale()" class="flex-[2] bg-blue-600 text-white font-black text-sm py-4 rounded-xl shadow-md hover:bg-blue-700 btn-interactive transition uppercase tracking-wide">
                         Log Sale
                     </button>
                     <button onclick="window.staffPersonalUse()" class="flex-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-bold text-xs py-2 rounded-xl shadow-sm hover:bg-purple-200 btn-interactive transition flex flex-col items-center justify-center">
                         <i data-lucide="user" class="w-4 h-4 mb-1"></i> Use
                     </button>
-                    <button onclick="window.staffExpense()" class="flex-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 font-bold text-xs py-2 rounded-xl shadow-sm hover:bg-orange-200 btn-interactive transition flex flex-col items-center justify-center">
-                        <i data-lucide="fuel" class="w-4 h-4 mb-1"></i> Expense
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="window.staffExpense()" class="flex-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 font-bold text-xs py-2.5 rounded-xl border border-orange-200 dark:border-orange-800 hover:bg-orange-100 btn-interactive transition flex items-center justify-center">
+                        <i data-lucide="fuel" class="w-3 h-3 mr-1"></i> Personal Expense
+                    </button>
+                    <button onclick="document.getElementById('staff-bill-modal').classList.remove('hidden')" class="flex-1 bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-300 font-bold text-xs py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-100 btn-interactive transition flex items-center justify-center">
+                        <i data-lucide="receipt" class="w-3 h-3 mr-1"></i> Request Bill
                     </button>
                 </div>
             </div>
@@ -368,7 +411,29 @@
                     </div>
                 </div>
 
-                <!-- Rates and Percentages (Expanded Settings) -->
+                <!-- Global Network Assets -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center border-b dark:border-gray-700 pb-2">
+                        <i data-lucide="globe" class="w-4 h-4 mr-1 text-blue-500"></i> Global Network Assets
+                    </h3>
+                    <p class="text-[10px] text-gray-400 mb-3">Includes Master Vault AND all units currently held by Staff.</p>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="text-[9px] text-gray-500 uppercase font-bold">Total Raw</div>
+                            <div class="text-lg font-black dark:text-white" id="global-stock-raw">0</div>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div class="text-[9px] text-blue-600 uppercase font-bold">Total Full</div>
+                            <div class="text-lg font-black text-blue-700 dark:text-blue-400" id="global-stock-full">0</div>
+                        </div>
+                        <div class="bg-orange-50 dark:bg-orange-900/20 p-2 rounded-lg border border-orange-200 dark:border-orange-800">
+                            <div class="text-[9px] text-orange-600 uppercase font-bold">Total Usual</div>
+                            <div class="text-lg font-black text-orange-700 dark:text-orange-400" id="global-stock-usual">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rates and Percentages -->
                 <div class="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
                     <div>
                         <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Price per 1.0 Unit</div>
@@ -442,7 +507,7 @@
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
                         <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-green-500"></i> Potential Earnings Projection
                     </h3>
-                    <p class="text-xs text-gray-500 mb-4">Calculates potential value from all processed units (Master Vault + Staff Holdings).</p>
+                    <p class="text-[10px] text-gray-500 mb-4">Calculates potential value from all processed units (Global Assets).</p>
                     
                     <div class="grid grid-cols-2 gap-3 mb-5">
                         <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 text-center">
@@ -469,12 +534,22 @@
                     </div>
                 </div>
 
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center border-b dark:border-gray-700 pb-2">
+                        <i data-lucide="line-chart" class="w-5 h-5 mr-2 text-blue-500"></i> 7-Day Revenue Forecast
+                    </h3>
+                    <p class="text-[10px] text-gray-500 mb-4">Extrapolates current team collection rate into a 7-day prediction.</p>
+                    <div class="h-40">
+                        <canvas id="financePredictionChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
-                        <i data-lucide="landmark" class="w-5 h-5 mr-2 text-purple-500"></i> Balance Manager & Priority Payments
+                        <i data-lucide="landmark" class="w-5 h-5 mr-2 text-purple-500"></i> Priority Balance Manager
                     </h3>
                     
-                    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800 mb-6 flex justify-between items-center">
+                    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800 mb-4 flex justify-between items-center">
                         <div>
                             <div class="text-[10px] text-purple-700 dark:text-purple-400 uppercase font-bold tracking-widest">Master Cash Balance</div>
                             <div class="text-3xl font-black text-purple-800 dark:text-purple-300" id="finance-cash-balance">$0.00</div>
@@ -482,9 +557,21 @@
                         <button onclick="window.adminUpdateCash()" class="bg-purple-600 text-white p-3 rounded-full hover:bg-purple-700 transition btn-interactive shadow-md"><i data-lucide="plus-minus" class="w-5 h-5"></i></button>
                     </div>
 
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <span class="text-sm font-bold text-gray-600 dark:text-gray-400">Total Unpaid Bills:</span>
+                        <span class="text-lg font-bold text-red-500 dark:text-red-400" id="finance-unpaid-total">-$0.00</span>
+                    </div>
+
+                    <div class="border-t border-dashed border-gray-300 dark:border-gray-600 my-4"></div>
+
+                    <div class="flex justify-between items-center mb-6 px-2">
+                        <span class="text-sm font-bold dark:text-white">Net Cash After Bills:</span>
+                        <span class="text-2xl font-black text-green-600 dark:text-green-400" id="finance-net-after-bills">$0.00</span>
+                    </div>
+
                     <div class="flex justify-between items-center mb-3">
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Bills & Liabilities</h4>
-                        <button onclick="window.adminAddLiability()" class="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 btn-interactive flex items-center"><i data-lucide="plus" class="w-3 h-3 mr-1"></i> Add</button>
+                        <button onclick="document.getElementById('admin-bill-modal').classList.remove('hidden')" class="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 btn-interactive flex items-center"><i data-lucide="plus" class="w-3 h-3 mr-1"></i> Add Bill</button>
                     </div>
                     
                     <div id="finance-liabilities-list" class="space-y-2">
@@ -648,13 +735,13 @@
                 </div>
             </div>
 
-            <!-- TAB: TRANSFERS -->
+            <!-- TAB: TRANSFERS & REQUESTS -->
             <div id="admin-view-transfers" class="admin-tab-content hidden">
                 
                 <!-- Stock Requests -->
                 <div id="admin-requests-section" class="hidden mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-200 dark:border-blue-800">
                     <h3 class="font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-3 flex items-center tracking-wide">
-                        <i data-lucide="bell" class="w-4 h-4 mr-2"></i> Weight Requests
+                        <i data-lucide="bell" class="w-4 h-4 mr-2"></i> Action Requests
                     </h3>
                     <div id="admin-requests-list" class="space-y-2"></div>
                 </div>
@@ -858,6 +945,7 @@
         let adminOverallChartInst = null;
         let adminDetailChartInst = null;
         let adminTerminalChartInst = null;
+        let financePredictionChartInst = null;
 
         // Chart Default Styling
         Chart.defaults.color = '#9ca3af';
@@ -987,10 +1075,7 @@
             if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
             
             // Dynamic Expected Calculation (Staff)
-            const source = document.getElementById('staff-sale-source') ? document.getElementById('staff-sale-source').value : 'raw';
-            const effectiveType = source === 'raw' ? currentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            
+            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
 
             // Sync Buttons
@@ -1102,7 +1187,7 @@
                     list.innerHTML += `
                     <div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800">
                         <div>
-                            <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use Debt</div>
+                            <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use (${t.qty} units)</div>
                             <div class="text-xs text-gray-500">${t.time} • ${masterData.personalUseDiscount}% Discount Applied</div>
                         </div>
                         <div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div>
@@ -1207,9 +1292,6 @@
             const val = parseFloat(input.value) || 0;
             const perUnit = val / currentQty;
             
-            const source = document.getElementById('staff-sale-source').value;
-            const effectiveType = source === 'raw' ? currentType : source;
-            
             input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
 
             if (val === 0) {
@@ -1217,7 +1299,7 @@
                 return;
             }
 
-            if (effectiveType === 'usual') {
+            if (currentType === 'usual') {
                 const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
                 if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
                 else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
@@ -1231,18 +1313,6 @@
         window.setQuickPrice = (pricePerUnit) => {
             const input = document.getElementById('money-input');
             input.value = pricePerUnit * currentQty;
-            window.checkPriceColor();
-        };
-
-        window.toggleStaffSource = () => {
-            const src = document.getElementById('staff-sale-source').value;
-            const typeSection = document.getElementById('staff-type-selection');
-            if(src === 'raw') {
-                typeSection.classList.remove('hidden');
-            } else {
-                typeSection.classList.add('hidden');
-            }
-            window.updateMasterLabels();
             window.checkPriceColor();
         };
 
@@ -1269,18 +1339,17 @@
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
 
             let actualWeightDeducted = 0;
-            const effectiveType = source === 'raw' ? currentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
 
             if (source === 'raw') {
                 actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
                 if(appData.weight < actualWeightDeducted) return window.showToast(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
                 appData.weight -= actualWeightDeducted;
-            } else if (source === 'full') {
+            } else if (source === 'processed' && currentType === 'full') {
                 if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
                 appData.unitsFull -= currentQty;
                 actualWeightDeducted = currentQty * 1.0;
-            } else if (source === 'usual') {
+            } else if (source === 'processed' && currentType === 'usual') {
                 if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
                 appData.unitsUsual -= currentQty;
                 actualWeightDeducted = currentQty * masterData.usualRatio;
@@ -1303,7 +1372,7 @@
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 qty: currentQty,
-                type: effectiveType,
+                type: currentType,
                 actualWeight: actualWeightDeducted,
                 money: money,
                 expected: expectedMoney
@@ -1316,23 +1385,22 @@
 
         window.staffPersonalUse = async () => {
             const source = document.getElementById('staff-sale-source').value;
-            const effectiveType = source === 'raw' ? currentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             
-            if(!confirm(`Log Personal Use for ${currentQty} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.personalUseDiscount}% discount.`)) return;
+            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.personalUseDiscount}% discount.`)) return;
 
             let actualWeightDeducted = 0;
             let standardCost = currentQty * unitPrice;
 
             if (source === 'raw') {
-                actualWeightDeducted = effectiveType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
+                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
                 if(appData.weight < actualWeightDeducted) return window.showToast("Not enough raw weight!");
                 appData.weight -= actualWeightDeducted;
-            } else if (source === 'full') {
+            } else if (source === 'processed' && currentType === 'full') {
                 if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
                 appData.unitsFull -= currentQty;
                 actualWeightDeducted = currentQty * 1.0;
-            } else if (source === 'usual') {
+            } else if (source === 'processed' && currentType === 'usual') {
                 if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
                 appData.unitsUsual -= currentQty;
                 actualWeightDeducted = currentQty * masterData.usualRatio;
@@ -1356,7 +1424,7 @@
             });
             
             await saveStaffData();
-            window.showToast("Personal Use Logged.");
+            window.showToast(`Logged ${currentType.toUpperCase()} unit(s) for personal use.`);
         };
 
         window.staffExpense = async () => {
@@ -1375,10 +1443,25 @@
             window.showToast("Expense Logged.");
         };
 
+        window.submitStaffBillReq = async () => {
+            const desc = document.getElementById('req-bill-desc').value;
+            const amt = parseFloat(document.getElementById('req-bill-amt').value);
+            if(!desc || isNaN(amt) || amt <= 0) return window.showToast("Enter description and valid amount.");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
+                uid: currentUser.uid, name: currentUser.displayName || 'Staff', timestamp: Date.now(), status: 'pending', type: 'bill_request', desc: desc, amount: amt 
+            }); 
+            
+            document.getElementById('staff-bill-modal').classList.add('hidden');
+            document.getElementById('req-bill-desc').value = '';
+            document.getElementById('req-bill-amt').value = '';
+            window.showToast("Bill Request Sent to Admin"); 
+        };
+
         window.requestWeight = async () => { 
             if(confirm("Notify admin you need more weight?")) { 
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
-                    uid: currentUser.uid, name: currentUser.displayName || 'Staff', timestamp: Date.now(), status: 'pending' 
+                    uid: currentUser.uid, name: currentUser.displayName || 'Staff', timestamp: Date.now(), status: 'pending', type: 'weight'
                 }); 
                 window.showToast("Request Sent"); 
             } 
@@ -1424,6 +1507,7 @@
                 globalRoster=[]; 
                 
                 let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0;
+                let globalRaw = 0, globalFull = 0, globalUsual = 0;
 
                 snap.forEach(d => {
                     const u = { id: d.id, ...d.data() }; 
@@ -1443,6 +1527,12 @@
                         activeCount++;
                         totExp += (u.expected || 0);
                         totCol += (u.collected || 0);
+                        
+                        if (u.role !== 'admin') {
+                            globalRaw += (u.weight || 0);
+                            globalFull += (u.unitsFull || 0);
+                            globalUsual += (u.unitsUsual || 0);
+                        }
                         
                         const diff = (u.expected || 0) - (u.collected || 0);
                         const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
@@ -1473,7 +1563,6 @@
                             </div>
                         </div>`;
                         
-                        // Populate transfer select (Don't let admin transfer to themselves via this tool)
                         if (u.role !== 'admin') {
                             const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
                             select.appendChild(opt); 
@@ -1485,9 +1574,14 @@
                 document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`;
                 document.getElementById('admin-total-collected').innerText = `$${totCol.toFixed(2)}`;
                 
-                // Update Admin Overall Chart
+                // Update Global Assets in Vault tab
+                document.getElementById('global-stock-raw').innerText = ((masterData.rawWeight || 0) + globalRaw).toFixed(1);
+                document.getElementById('global-stock-full').innerText = ((masterData.unitsFull || 0) + globalFull);
+                document.getElementById('global-stock-usual').innerText = ((masterData.unitsUsual || 0) + globalUsual);
+                
+                // Update Charts
                 updateAdminOverallChart(globalRoster);
-                updateFinanceUI(); // Roster changed, update projections
+                updateFinanceUI(); 
                 
                 if(pendCount === 0) {
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
@@ -1506,7 +1600,26 @@
                     const req = d.data(); 
                     if(req.status === 'pending') { 
                         count++; 
-                        list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm"><span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span><div class="space-x-1"><button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive">Fulfill</button><button onclick="window.dismissReq('${d.id}')" class="text-gray-400 text-xs px-2 hover:text-gray-600">Dismiss</button></div></div>`; 
+                        if(req.type === 'bill_request') {
+                            list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
+                                <div class="mb-2 sm:mb-0">
+                                    <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-purple-500 ml-1 border border-purple-200 bg-purple-50 px-1 rounded">Bill Request</span></span>
+                                    <div class="text-xs text-gray-500 mt-1">${req.desc} <span class="font-bold text-gray-800 dark:text-gray-300">($${req.amount})</span></div>
+                                </div>
+                                <div class="space-x-1 flex">
+                                    <button onclick="window.prepareApproveBill('${d.id}', '${req.desc}', ${req.amount})" class="flex-1 bg-purple-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-purple-700 btn-interactive text-center">Approve</button>
+                                    <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
+                                </div>
+                            </div>`; 
+                        } else {
+                            list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
+                                <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span>
+                                <div class="space-x-1">
+                                    <button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive">Fulfill</button>
+                                    <button onclick="window.dismissReq('${d.id}')" class="bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive">Dismiss</button>
+                                </div>
+                            </div>`;
+                        }
                     }
                 });
                 if(count > 0) {
@@ -1553,10 +1666,13 @@
             if (!document.getElementById('admin-view-finance')) return;
             
             // 1. Gather Totals
-            let staffFull = 0, staffUsual = 0;
+            let staffFull = 0, staffUsual = 0, teamCollected = 0;
             globalRoster.forEach(u => {
-                staffFull += (u.unitsFull || 0);
-                staffUsual += (u.unitsUsual || 0);
+                if (u.role !== 'admin') {
+                    staffFull += (u.unitsFull || 0);
+                    staffUsual += (u.unitsUsual || 0);
+                }
+                teamCollected += (u.collected || 0);
             });
 
             const totalFull = (masterData.unitsFull || 0) + staffFull;
@@ -1570,7 +1686,7 @@
             const priceFull = masterData.pricePerUnit;
             const priceUsual = masterData.pricePerUnit * masterData.usualRatio;
             
-            // Standard Projection (Fullx100 + Usualx80)
+            // Standard Projection
             const projFullStd = totalFull * priceFull;
             const projUsualStd = totalUsual * priceUsual;
             const totalProjStd = projFullStd + projUsualStd;
@@ -1578,7 +1694,6 @@
             // What If Projection (Both x100)
             const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
             
-            // Update Projection DOM
             document.getElementById('proj-std-total').innerText = `$${totalProjStd.toLocaleString()}`;
             document.getElementById('proj-whatif-total').innerText = `$${totalWhatIf.toLocaleString()}`;
 
@@ -1588,13 +1703,22 @@
             const liabList = document.getElementById('finance-liabilities-list');
             liabList.innerHTML = '';
             
+            let unpaidTotal = 0;
+
             if (masterData.liabilities && masterData.liabilities.length > 0) {
                 masterData.liabilities.forEach(l => {
+                    if(!l.isPaid) unpaidTotal += l.amount;
+                    const recurringBadge = l.isRecurring ? `<span class="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Recurring</span>` : '';
+                    const dateDisplay = l.dueDate ? `<div class="text-[10px] text-gray-500 mt-1">Due: ${new Date(l.dueDate).toLocaleDateString()}</div>` : '';
+
                     liabList.innerHTML += `
                     <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
-                        <div class="flex items-center">
-                            <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 accent-purple-600">
-                            <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name}</span>
+                        <div class="flex items-start">
+                            <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 mt-1 accent-purple-600 cursor-pointer">
+                            <div>
+                                <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name} ${recurringBadge}</span>
+                                ${dateDisplay}
+                            </div>
                         </div>
                         <div class="flex items-center">
                             <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
@@ -1605,6 +1729,38 @@
             } else {
                 liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>';
             }
+
+            document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
+            const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
+            document.getElementById('finance-net-after-bills').innerText = `$${netAfterBills.toFixed(2)}`;
+            if(netAfterBills < 0) document.getElementById('finance-net-after-bills').classList.replace('text-green-600', 'text-red-500');
+            else document.getElementById('finance-net-after-bills').classList.replace('text-red-500', 'text-green-600');
+
+            // 7-Day Revenue Forecast Chart
+            const ctxPred = document.getElementById('financePredictionChart');
+            if(ctxPred) {
+                // Simplistic daily average assuming the current shift is 1 day, extrapolated to 7 days
+                const dailyAvg = teamCollected; 
+                const labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+                const data = labels.map((_, i) => dailyAvg * (i + 1));
+
+                if(financePredictionChartInst) financePredictionChartInst.destroy();
+                financePredictionChartInst = new Chart(ctxPred, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Projected Revenue ($)',
+                            data: data,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.2
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+
             lucide.createIcons();
         }
 
@@ -1615,13 +1771,36 @@
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
         };
 
-        window.adminAddLiability = async () => {
-            const name = prompt("Enter bill/liability name (e.g. Rent, Supplier):");
-            if(!name) return;
-            const amt = parseFloat(prompt(`Enter amount for ${name} ($):`));
-            if(isNaN(amt) || amt <= 0) return;
-            const newLiabs = [...(masterData.liabilities || []), { id: Date.now(), name, amount: amt, isPaid: false }];
+        window.prepareApproveBill = (reqId, desc, amount) => {
+            document.getElementById('bill-name').value = desc;
+            document.getElementById('bill-amt').value = amount;
+            document.getElementById('bill-request-id').value = reqId; // Store link to dismiss after
+            document.getElementById('admin-bill-modal').classList.remove('hidden');
+        };
+
+        window.saveAdminBill = async () => {
+            const name = document.getElementById('bill-name').value;
+            const amt = parseFloat(document.getElementById('bill-amt').value);
+            const date = document.getElementById('bill-date').value;
+            const isRecurring = document.getElementById('bill-recurring').checked;
+            const reqId = document.getElementById('bill-request-id').value;
+
+            if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter valid bill details.");
+            
+            const newLiabs = [...(masterData.liabilities || []), { id: Date.now(), name, amount: amt, dueDate: date, isRecurring, isPaid: false }];
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: newLiabs }, {merge:true});
+            
+            if(reqId) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
+            }
+
+            document.getElementById('admin-bill-modal').classList.add('hidden');
+            document.getElementById('bill-name').value = '';
+            document.getElementById('bill-amt').value = '';
+            document.getElementById('bill-date').value = '';
+            document.getElementById('bill-recurring').checked = false;
+            document.getElementById('bill-request-id').value = '';
+            window.showToast("Bill Priority Added!");
         };
 
         window.adminToggleLiability = async (id) => {
@@ -1694,15 +1873,8 @@
             if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`;
             if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * masterData.usualRatio).toFixed(1)} units)`;
             
-            const source = document.getElementById('adm-sale-source') ? document.getElementById('adm-sale-source').value : 'raw';
-            const effectiveType = source === 'raw' ? admCurrentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            
+            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
-
-            const typeSection = document.getElementById('adm-type-selection');
-            if(source === 'raw') typeSection.classList.remove('hidden');
-            else typeSection.classList.add('hidden');
         };
 
         window.admSelectQty = (q) => {
@@ -1726,9 +1898,6 @@
             const val = parseFloat(input.value) || 0;
             const perUnit = val / admCurrentQty;
             
-            const source = document.getElementById('adm-sale-source').value;
-            const effectiveType = source === 'raw' ? admCurrentType : source;
-            
             input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
 
             if (val === 0) {
@@ -1736,7 +1905,7 @@
                 return;
             }
 
-            if (effectiveType === 'usual') {
+            if (admCurrentType === 'usual') {
                 const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
                 if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
                 else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
@@ -1760,8 +1929,7 @@
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
 
             let actualWeightDeducted = 0;
-            const effectiveType = source === 'raw' ? admCurrentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
 
             const updateMaster = {};
 
@@ -1799,7 +1967,7 @@
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 qty: admCurrentQty,
-                type: effectiveType,
+                type: admCurrentType,
                 actualWeight: actualWeightDeducted,
                 money: money,
                 expected: expectedMoney
@@ -1812,24 +1980,23 @@
 
         window.adminPersonalUseUnified = async () => {
             const source = document.getElementById('adm-sale-source').value;
-            const effectiveType = source === 'raw' ? admCurrentType : source;
-            const unitPrice = effectiveType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
             
-            if(!confirm(`Log Personal Use for ${admCurrentQty} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.personalUseDiscount}% discount.`)) return;
+            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.personalUseDiscount}% discount.`)) return;
 
             let actualWeightDeducted = 0;
             let standardCost = admCurrentQty * unitPrice;
             const updateMaster = {};
 
             if (source === 'raw') {
-                actualWeightDeducted = effectiveType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
+                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
                 if(masterData.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
                 updateMaster.rawWeight = increment(-actualWeightDeducted);
-            } else if (source === 'processed' && effectiveType === 'full') {
+            } else if (source === 'processed' && admCurrentType === 'full') {
                 if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
                 updateMaster.unitsFull = increment(-admCurrentQty);
                 actualWeightDeducted = admCurrentQty * 1.0;
-            } else if (source === 'processed' && effectiveType === 'usual') {
+            } else if (source === 'processed' && admCurrentType === 'usual') {
                 if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
                 updateMaster.unitsUsual = increment(-admCurrentQty);
                 actualWeightDeducted = admCurrentQty * masterData.usualRatio;
@@ -1856,7 +2023,7 @@
             });
             
             await saveAdminData();
-            window.showToast("Admin Personal Use Logged.");
+            window.showToast(`Admin Personal Use Logged (${admCurrentType.toUpperCase()}).`);
         };
 
         async function saveAdminData() { 
