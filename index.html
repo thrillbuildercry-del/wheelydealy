@@ -279,6 +279,43 @@
                     </div>
                 </div>
 
+                <!-- Purchase Stock Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 mr-2 text-blue-500"></i> Purchase Restock
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <button onclick="window.adminPurchaseStock(3.5, 200)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
+                            <div class="font-black text-lg dark:text-white">3.5 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
+                            <div class="text-sm text-red-500 font-bold">Cost: $200</div>
+                        </button>
+                        <button onclick="window.adminPurchaseStock(7, 300)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
+                            <div class="font-black text-lg dark:text-white">7 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
+                            <div class="text-sm text-red-500 font-bold">Cost: $300 <span class="text-[10px] text-gray-400">(Wknd)</span></div>
+                        </button>
+                        <button onclick="window.adminPurchaseStock(7, 350)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
+                            <div class="font-black text-lg dark:text-white">7 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
+                            <div class="text-sm text-red-500 font-bold">Cost: $350 <span class="text-[10px] text-gray-400">(Wkday)</span></div>
+                        </button>
+                        <button onclick="window.adminPurchaseStock(14, 600)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
+                            <div class="font-black text-lg dark:text-white">14 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
+                            <div class="text-sm text-red-500 font-bold">Cost: $600</div>
+                        </button>
+                        <button onclick="window.adminPurchaseStock(28, 1100)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
+                            <div class="font-black text-lg dark:text-white">28 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
+                            <div class="text-sm text-red-500 font-bold">Cost: $1100</div>
+                        </button>
+                        <button onclick="window.adminPurchaseStock('custom', 0)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive flex flex-col justify-center items-center text-gray-500">
+                            <i data-lucide="plus-circle" class="w-6 h-6 mb-1"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider">Custom</span>
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center text-sm border-t dark:border-gray-700 pt-3">
+                        <span class="font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide text-xs">Total Stock Expenses:</span>
+                        <span class="font-black text-lg text-red-500" id="admin-total-expenses">$0</span>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Potential Vault Value</h3>
                     <div class="space-y-4">
@@ -500,7 +537,7 @@
         let currentType = 'full';
 
         // Admin State
-        let masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8 };
+        let masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0 };
         let globalRoster = []; 
         let currentDetailUid = null;
 
@@ -600,7 +637,7 @@
                 // Always listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
-                        masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, ...s.data() };
+                        masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0, ...s.data() };
                         updateMasterLabels();
                     } else {
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e));
@@ -630,11 +667,13 @@
             const pFull = document.getElementById('admin-pot-full');
             const pUsual = document.getElementById('admin-pot-usual');
             const hRat = document.getElementById('hint-ratio-txt');
+            const expDisp = document.getElementById('admin-total-expenses');
 
             // Safe fallback to 0 if rawWeight is somehow missing
             if(wRaw) wRaw.innerText = (masterData.rawWeight || 0).toFixed(1);
             if(pDisp) pDisp.innerText = `$${masterData.pricePerUnit || 0}`;
             if(rDisp) rDisp.innerText = `${masterData.usualRatio || 1}x`;
+            if(expDisp) expDisp.innerText = `$${masterData.totalExpenses || 0}`;
             
             // Calculate potential value of raw vault
             if(pFull) pFull.innerText = `$${((masterData.rawWeight || 0) * (masterData.pricePerUnit || 0)).toLocaleString()}`;
@@ -927,6 +966,24 @@
             const q = prompt("Add weight to Master Vault (Units):"); 
             if(q && !isNaN(q)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(parseFloat(q))},{merge:true}); 
         };
+
+        window.adminPurchaseStock = async (weight, cost) => {
+            if (weight === 'custom') {
+                weight = parseFloat(prompt("Enter custom weight amount (units):"));
+                if (isNaN(weight) || weight <= 0) return;
+                cost = parseFloat(prompt("Enter total cost of purchase ($):"));
+                if (isNaN(cost) || cost < 0) return;
+            }
+            if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?`)) return;
+            
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{
+                rawWeight: increment(weight),
+                totalExpenses: increment(cost)
+            }, {merge:true});
+            
+            window.showToast(`Restocked ${weight} units for $${cost}.`);
+        };
+
         window.adminSetVariable = async (field, label) => {
             const v = prompt(`Set ${label}:`, masterData[field]);
             if(v && !isNaN(v)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true});
@@ -1060,7 +1117,7 @@
             window.showToast("Resetting data...");
 
             // 1. Reset Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, processedUnits: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio });
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, processedUnits: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, totalExpenses: 0 });
 
             // 2. Reset All Staff
             for(const u of globalRoster) {
