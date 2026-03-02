@@ -160,17 +160,16 @@
 
                 <!-- Source Selection -->
                 <div class="mb-4">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Inventory Source</label>
-                    <select id="staff-sale-source" onchange="window.toggleStaffSource()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Inventory Source</label>
+                    <select id="staff-sale-source" onchange="window.updateMasterLabels()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
+                        <option value="processed">Processed Pre-Packs</option>
                         <option value="raw">Raw Weight</option>
-                        <option value="full">Full Pre-Pack (1.0)</option>
-                        <option value="usual">Usual Pre-Pack</option>
                     </select>
                 </div>
                 
                 <!-- Qty Selection -->
                 <div class="mb-4">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Quantity</label>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Quantity</label>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="window.selectQty(0.5)" id="btn-qty-0.5" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">.5</button>
                         <button onclick="window.selectQty(1)" id="btn-qty-1" class="qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">1</button>
@@ -180,9 +179,9 @@
                     </div>
                 </div>
 
-                <!-- Type Selection (Hidden if selling pre-packs) -->
+                <!-- Type Selection -->
                 <div class="mb-5" id="staff-type-selection">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Weight Standard</label>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Weight Standard</label>
                     <div class="flex space-x-2">
                         <button onclick="window.selectType('full')" id="btn-type-full" class="type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive">
                             <span class="dark:text-white">Full Weight</span>
@@ -196,19 +195,20 @@
                 </div>
 
                 <!-- Money Collection -->
-                <div class="mb-4 bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-900/30">
+                <div class="mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center mb-2">
-                        <label class="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Money Received</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">4. Money Received</label>
                         <span class="text-xs font-bold text-gray-500" id="expected-money-hint">Expected: $100</span>
                     </div>
                     <div class="relative mb-2">
-                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl font-bold text-green-600 dark:text-green-500">$</span>
-                        <input type="number" id="money-input" placeholder="0.00" class="w-full bg-white dark:bg-gray-800 border-2 border-green-200 dark:border-green-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-green-500 dark:text-white transition">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl font-bold text-gray-400">$</span>
+                        <input type="number" id="money-input" placeholder="0.00" oninput="window.checkPriceColor()" class="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-blue-500 dark:text-white transition">
                     </div>
                     <div class="flex gap-2">
-                        <button id="btn-quick-usual" onclick="document.getElementById('money-input').value = (masterData.pricePerUnit * masterData.usualRatio) * currentQty" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800">$80 (Usual)</button>
-                        <button id="btn-quick-full" onclick="document.getElementById('money-input').value = masterData.pricePerUnit * currentQty" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800">$100 (Full)</button>
+                        <button onclick="window.setQuickPrice(80)" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800">$80 (Usual)</button>
+                        <button onclick="window.setQuickPrice(100)" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800">$100 (Full)</button>
                     </div>
+                    <p class="text-[10px] text-gray-400 mt-2 text-center">Usual Standard: Red &lt;$80, Orange $80-$99, Green $100+</p>
                 </div>
 
                 <div class="flex gap-2">
@@ -228,6 +228,21 @@
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
                 <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Shift Financials</h3>
                 
+                <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="text-[9px] text-gray-500 uppercase font-bold">Raw Sold</div>
+                        <div class="text-sm font-bold dark:text-white" id="staff-stat-sold-raw">0</div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div class="text-[9px] text-blue-600 uppercase font-bold">Full Sold</div>
+                        <div class="text-sm font-bold text-blue-600 dark:text-blue-400" id="staff-stat-sold-full">0</div>
+                    </div>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 p-2 rounded-lg border border-orange-200 dark:border-orange-800">
+                        <div class="text-[9px] text-orange-600 uppercase font-bold">Usual Sold</div>
+                        <div class="text-sm font-bold text-orange-600 dark:text-orange-400" id="staff-stat-sold-usual">0</div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
                         <div class="text-[10px] text-green-700 dark:text-green-400 uppercase font-bold">Gross Cash</div>
@@ -642,6 +657,15 @@
                 </div>
             </div>
 
+            <div class="bg-gray-800 text-white p-4 rounded-2xl shadow-sm mb-4">
+                <div class="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2 border-b border-gray-700 pb-1">Total Sold Items</div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div><div class="text-[10px] text-gray-400 uppercase">Raw Sold</div><div class="text-xl font-black" id="det-sold-raw">0</div></div>
+                    <div><div class="text-[10px] text-blue-400 uppercase">Full Sold</div><div class="text-xl font-black" id="det-sold-full">0</div></div>
+                    <div><div class="text-[10px] text-orange-400 uppercase">Usual Sold</div><div class="text-xl font-black" id="det-sold-usual">0</div></div>
+                </div>
+            </div>
+
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4 border-b dark:border-gray-700 pb-2">Revenue Analysis</h3>
                 
@@ -724,13 +748,13 @@
         let userRole = 'staff'; 
         
         // Staff State
-        let appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [] };
+        let appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [] };
         let currentQty = 1;
         let currentType = 'full';
 
         // Admin State
         let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0 };
-        let adminData = { soldWeight: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [] };
+        let adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [] };
         let globalRoster = []; 
         let currentDetailUid = null;
 
@@ -947,7 +971,7 @@
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
-                    appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [], ...d };
+                    appData = { weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, transactions: [], ...d };
                     renderStaffUI(); 
                 } else { saveStaffData(); } 
             });
@@ -959,8 +983,11 @@
             document.getElementById('staff-stock-full').innerText = (appData.unitsFull || 0);
             document.getElementById('staff-stock-usual').innerText = (appData.unitsUsual || 0);
             
-            // Stats
-            document.getElementById('staff-stat-weight').innerText = (appData.soldWeight || 0).toFixed(1);
+            // Stats Breakdown
+            document.getElementById('staff-stat-sold-raw').innerText = (appData.soldWeight || 0).toFixed(1);
+            document.getElementById('staff-stat-sold-full').innerText = (appData.soldUnitsFull || 0);
+            document.getElementById('staff-stat-sold-usual').innerText = (appData.soldUnitsUsual || 0);
+            
             document.getElementById('staff-stat-money').innerText = `$${appData.collected || 0}`;
             document.getElementById('staff-stat-expenses').innerText = `-$${appData.expenses || 0}`;
             
@@ -1066,6 +1093,8 @@
                     unitsFull: appData.unitsFull || 0,
                     unitsUsual: appData.unitsUsual || 0,
                     soldWeight: appData.soldWeight,
+                    soldUnitsFull: appData.soldUnitsFull || 0,
+                    soldUnitsUsual: appData.soldUnitsUsual || 0,
                     personalUseWeight: appData.personalUseWeight || 0,
                     personalUseOwed: appData.personalUseOwed || 0,
                     collected: appData.collected,
@@ -1078,29 +1107,48 @@
         }
 
         // Terminal Actions
-        window.toggleStaffSource = () => {
-            const src = document.getElementById('staff-sale-source').value;
-            const typeSection = document.getElementById('staff-type-selection');
-            if(src === 'raw') {
-                typeSection.classList.remove('hidden');
-            } else {
-                typeSection.classList.add('hidden');
+        window.checkPriceColor = () => {
+            const input = document.getElementById('money-input');
+            const val = parseFloat(input.value) || 0;
+            const perUnit = val / currentQty;
+            
+            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
+
+            if (val === 0) {
+                input.classList.add('dark:text-white', 'text-gray-800');
+                return;
             }
-            updateMasterLabels();
+
+            if (currentType === 'usual') {
+                if (perUnit < 80) input.classList.add('text-red-500', 'dark:text-red-500');
+                else if (perUnit < 100) input.classList.add('text-orange-500', 'dark:text-orange-500');
+                else input.classList.add('text-green-500', 'dark:text-green-500');
+            } else {
+                if (perUnit < 100) input.classList.add('text-red-500', 'dark:text-red-500');
+                else input.classList.add('text-green-500', 'dark:text-green-500');
+            }
+        };
+
+        window.setQuickPrice = (pricePerUnit) => {
+            const input = document.getElementById('money-input');
+            input.value = pricePerUnit * currentQty;
+            window.checkPriceColor();
         };
 
         window.selectQty = (q) => {
             currentQty = q;
             document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-qty-${q}`).classList.add('active');
-            updateMasterLabels();
+            window.updateMasterLabels();
+            window.checkPriceColor();
         };
 
         window.selectType = (t) => {
             currentType = t;
             document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-type-${t}`).classList.add('active');
-            updateMasterLabels();
+            window.updateMasterLabels();
+            window.checkPriceColor();
         };
 
         window.processSale = async () => {
@@ -1129,7 +1177,14 @@
 
             const expectedMoney = currentQty * unitPrice;
 
-            appData.soldWeight += actualWeightDeducted;
+            if (source === 'raw') {
+                appData.soldWeight += actualWeightDeducted;
+            } else if (source === 'processed' && currentType === 'full') {
+                appData.soldUnitsFull += currentQty;
+            } else if (source === 'processed' && currentType === 'usual') {
+                appData.soldUnitsUsual += currentQty;
+            }
+
             appData.collected += money;
             appData.expected += expectedMoney;
 
@@ -1237,7 +1292,7 @@
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
-                    adminData = { soldWeight: 0, personalUseWeight: 0, collected: 0, expected: 0, transactions: [], ...d };
+                    adminData = { soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, collected: 0, expected: 0, transactions: [], ...d };
                     renderAdminTerminalUI(); 
                 } else { saveAdminData(); } 
             });
@@ -1434,6 +1489,8 @@
             try { 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
                     soldWeight: adminData.soldWeight,
+                    soldUnitsFull: adminData.soldUnitsFull || 0,
+                    soldUnitsUsual: adminData.soldUnitsUsual || 0,
                     personalUseWeight: adminData.personalUseWeight || 0,
                     collected: adminData.collected,
                     expected: adminData.expected,
@@ -1531,8 +1588,13 @@
             if((currentStock || 0) < q) return window.showToast("Not enough processed units!");
 
             const updateData = {};
-            if (type === 'full') updateData.unitsFull = increment(-q);
-            else updateData.unitsUsual = increment(-q);
+            if (type === 'full') {
+                updateData.unitsFull = increment(-q);
+                adminData.soldUnitsFull += q;
+            } else {
+                updateData.unitsUsual = increment(-q);
+                adminData.soldUnitsUsual += q;
+            }
 
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
             
@@ -1675,7 +1737,10 @@
             document.getElementById('det-holding-full').innerText = (d.unitsFull||0);
             document.getElementById('det-holding-usual').innerText = (d.unitsUsual||0);
             
-            document.getElementById('det-sold').innerText = (d.soldWeight||0).toFixed(1);
+            // Sold Totals
+            document.getElementById('det-sold-raw').innerText = (d.soldWeight||0).toFixed(1);
+            document.getElementById('det-sold-full').innerText = (d.soldUnitsFull||0);
+            document.getElementById('det-sold-usual').innerText = (d.soldUnitsUsual||0);
             
             document.getElementById('det-expected').innerText = `$${d.expected||0}`;
             document.getElementById('det-personal-owed').innerText = `$${d.personalUseOwed||0}`;
@@ -1732,15 +1797,15 @@
 
         window.adminClearStaffData = async () => {
             if(!currentDetailUid) return;
-            if(!confirm("Are you sure? This sets their expected, collected, and sold weight to 0. (Does not affect Holding Inventory)")) return;
+            if(!confirm("Are you sure? This sets their expected, collected, and sold items to 0. (Does not affect Holding Inventory)")) return;
 
             const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
             const sn = await getDoc(r); 
             if(sn.exists()) {
                 let dat = JSON.parse(sn.data().json);
-                dat.soldWeight = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.expenses = 0; dat.transactions = [];
+                dat.soldWeight = 0; dat.soldUnitsFull = 0; dat.soldUnitsUsual = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.expenses = 0; dat.transactions = [];
                 await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, collected:0, expected:0, personalUseOwed:0, expenses:0, recentLogs:[]}, {merge:true}); 
+                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, collected:0, expected:0, personalUseOwed:0, expenses:0, recentLogs:[]}, {merge:true}); 
                 window.showToast("Data Cleared.");
                 document.getElementById('admin-user-detail').classList.add('hidden');
             }
