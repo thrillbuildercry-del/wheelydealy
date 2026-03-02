@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WeightOps | Revenue & Inventory</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = { darkMode: 'class' };
     </script>
@@ -180,9 +181,13 @@
                         <label class="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">3. Money Received</label>
                         <span class="text-xs font-bold text-gray-500" id="expected-money-hint">Expected: $100</span>
                     </div>
-                    <div class="relative">
+                    <div class="relative mb-2">
                         <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl font-bold text-green-600 dark:text-green-500">$</span>
                         <input type="number" id="money-input" placeholder="0.00" class="w-full bg-white dark:bg-gray-800 border-2 border-green-200 dark:border-green-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-green-500 dark:text-white transition">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('money-input').value = 80 * currentQty" class="flex-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100 py-2 rounded-lg font-bold text-sm hover:bg-green-300 btn-interactive transition shadow-sm">$80 / unit</button>
+                        <button onclick="document.getElementById('money-input').value = 100 * currentQty" class="flex-1 bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100 py-2 rounded-lg font-bold text-sm hover:bg-green-300 btn-interactive transition shadow-sm">$100 / unit</button>
                     </div>
                 </div>
 
@@ -209,6 +214,11 @@
                         <div class="text-xl font-bold text-green-600" id="staff-stat-money">$0</div>
                     </div>
                 </div>
+                
+                <div class="h-32 mb-4 border-b dark:border-gray-700 pb-4">
+                    <canvas id="staffChart"></canvas>
+                </div>
+
                 <div id="staff-log-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm">
                     <div class="text-center text-gray-400 py-4 text-xs">No sales recorded yet.</div>
                 </div>
@@ -261,8 +271,36 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
-                        <div>
+                    <!-- Processing Tool -->
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm mt-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-blue-300 flex items-center"><i data-lucide="layers" class="w-4 h-4 mr-2"></i> Process into Units</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <select id="process-type" class="w-1/3 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
+                                <option value="full">Full (1.0)</option>
+                                <option value="usual">Usual</option>
+                            </select>
+                            <input type="number" id="process-qty" placeholder="# Units" class="w-1/3 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
+                            <button onclick="window.adminProcessUnits()" class="w-1/3 bg-blue-600 rounded-lg font-bold text-sm hover:bg-blue-500 btn-interactive">Make</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processed Units Vault -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex flex-col justify-center items-center text-center">
+                        <h2 class="text-blue-800 dark:text-blue-300 text-[10px] uppercase font-bold tracking-widest mb-1">Full Units (1.0)</h2>
+                        <div class="text-3xl font-black text-blue-900 dark:text-white" id="admin-stock-full">0</div>
+                    </div>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 flex flex-col justify-center items-center text-center">
+                        <h2 class="text-orange-800 dark:text-orange-300 text-[10px] uppercase font-bold tracking-widest mb-1">Usual Units</h2>
+                        <div class="text-3xl font-black text-orange-900 dark:text-white" id="admin-stock-usual">0</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+                    <div>
                             <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">Price per 1.0 Unit</div>
                             <div class="flex items-center">
                                 <span class="text-lg font-bold text-green-400 mr-2" id="admin-price-display">$0</span>
@@ -363,7 +401,7 @@
                         <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide">Team Summary</h3>
                         <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300" id="admin-active-count">0 Active</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-xl border border-gray-200 dark:border-gray-600">
                             <div class="text-[10px] text-gray-500 uppercase font-bold">Total Expected $</div>
                             <div class="text-lg font-bold dark:text-white" id="admin-total-expected">$0</div>
@@ -373,26 +411,15 @@
                             <div class="text-lg font-bold text-green-600 dark:text-green-400" id="admin-total-collected">$0</div>
                         </div>
                     </div>
+                    
+                    <!-- Admin Overall Graph -->
+                    <div class="border-t dark:border-gray-700 pt-4">
+                        <h3 class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2">Revenue Contribution</h3>
+                        <div class="h-40"><canvas id="adminOverallChart"></canvas></div>
+                    </div>
                 </div>
 
                 <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 ml-1 text-sm uppercase">Staff List</h3>
-                <div id="admin-staff-list" class="space-y-3 mb-6">
-                    <div class="text-center py-8 text-gray-400 animate-pulse text-sm">Loading staff data...</div>
-                </div>
-
-                <!-- Pending Approvals in Staff Tab -->
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-3 text-sm uppercase">Pending Approvals</h3>
-                    <div id="admin-pending-users" class="space-y-2 text-sm">
-                        <div class="text-gray-400 italic text-xs">No pending users.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB: ADMIN TERMINAL -->
-            <div id="admin-view-terminal" class="admin-tab-content hidden">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 space-y-6">
-                    
                     <!-- Sell Raw Weight -->
                     <div>
                         <h3 class="font-bold text-gray-800 dark:text-white mb-3 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wide">
@@ -400,9 +427,39 @@
                         </h3>
                         <div class="flex space-x-2">
                             <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Weight</label><input type="number" step="0.1" id="adm-sell-raw-w" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
-                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label><input type="number" id="adm-sell-raw-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
+                            <div class="w-1/2">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label>
+                                <input type="number" id="adm-sell-raw-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white mb-2">
+                                <div class="flex gap-1">
+                                    <button onclick="document.getElementById('adm-sell-raw-m').value = 80" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200">$80</button>
+                                    <button onclick="document.getElementById('adm-sell-raw-m').value = 100" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200">$100</button>
+                                </div>
+                            </div>
                         </div>
                         <button onclick="window.adminSellRaw()" class="w-full mt-3 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 btn-interactive transition">Record Sale</button>
+                    </div>
+
+                    <!-- Sell Processed Units -->
+                    <div>
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wide">
+                            <i data-lucide="package" class="w-4 h-4 inline mr-1 text-purple-500"></i> Sell Processed Units
+                        </h3>
+                        <select id="adm-sell-unit-type" class="w-full p-3 mb-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
+                            <option value="full">Full Unit (1.0)</option>
+                            <option value="usual">Usual Unit</option>
+                        </select>
+                        <div class="flex space-x-2">
+                            <div class="w-1/2"><label class="text-[10px] font-bold text-gray-500 uppercase">Quantity</label><input type="number" id="adm-sell-unit-q" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white"></div>
+                            <div class="w-1/2">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Money ($)</label>
+                                <input type="number" id="adm-sell-unit-m" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white mb-2">
+                                <div class="flex gap-1">
+                                    <button onclick="document.getElementById('adm-sell-unit-m').value = 80 * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200">$80</button>
+                                    <button onclick="document.getElementById('adm-sell-unit-m').value = 100 * (document.getElementById('adm-sell-unit-q').value || 1)" class="flex-1 bg-green-100 text-green-700 text-xs py-1 rounded font-bold hover:bg-green-200">$100</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="window.adminSellUnit()" class="w-full mt-3 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 btn-interactive transition">Record Sale</button>
                     </div>
 
                     <!-- Admin Personal Use -->
@@ -410,9 +467,17 @@
                         <h3 class="font-bold text-gray-800 dark:text-white mb-3 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wide text-red-500">
                             <i data-lucide="user" class="w-4 h-4 inline mr-1"></i> Admin Personal Use
                         </h3>
-                        <div class="flex space-x-2">
+                        <div class="flex space-x-2 mb-2">
                             <input type="number" step="0.1" id="adm-use-w" placeholder="Weight to use" class="w-2/3 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white">
-                            <button onclick="window.adminPersonalUse()" class="w-1/3 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive hover:bg-gray-900">Log Usage</button>
+                            <button onclick="window.adminPersonalUse('weight')" class="w-1/3 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive hover:bg-gray-900">Use Wgt</button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <select id="adm-use-u-type" class="w-1/3 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-xs outline-none">
+                                <option value="full">Full</option>
+                                <option value="usual">Usual</option>
+                            </select>
+                            <input type="number" id="adm-use-u" placeholder="# Units" class="w-1/3 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-center">
+                            <button onclick="window.adminPersonalUse('unit')" class="w-1/3 bg-gray-800 text-white text-xs font-bold rounded-xl btn-interactive hover:bg-gray-900">Use Unit</button>
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2">Deducts from Master Storage without tracking revenue.</p>
                     </div>
@@ -450,9 +515,12 @@
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Amount to Send (Units)</label>
                             <div class="flex space-x-2 mt-1">
                                 <input type="number" step="0.1" id="transfer-amount" placeholder="0.0" class="flex-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl outline-none font-black text-lg dark:text-white">
-                                <button onclick="window.adminTransferWeight()" class="bg-purple-600 text-white font-bold px-6 rounded-xl shadow-md hover:bg-purple-700 active:scale-95 transition">Send</button>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-2">* Deducts from Master Vault and adds to Staff's holding weight.</p>
+                            <div class="flex space-x-2 mt-2">
+                                <button onclick="window.adminTransferWeight('send')" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 active:scale-95 transition flex justify-center items-center"><i data-lucide="arrow-up-right" class="w-4 h-4 mr-1"></i> Send</button>
+                                <button onclick="window.adminTransferWeight('reclaim')" class="flex-1 bg-orange-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-orange-600 active:scale-95 transition flex justify-center items-center"><i data-lucide="arrow-down-left" class="w-4 h-4 mr-1"></i> Reclaim</button>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-2">* Adjusts Master Vault and Staff's holding weight.</p>
                         </div>
                     </div>
                 </div>
@@ -496,11 +564,15 @@
                     <span class="text-lg font-bold text-green-600" id="det-collected">$0</span>
                 </div>
                 
-                <div id="det-diff-box" class="p-3 rounded-lg flex justify-between items-center font-bold">
+                <div id="det-diff-box" class="p-3 rounded-lg flex justify-between items-center font-bold mb-4">
                     <span class="text-sm uppercase tracking-wide">Difference</span>
                     <span class="text-xl" id="det-diff">$0</span>
                 </div>
-                <p class="text-[10px] text-gray-400 mt-2 text-center">Expected value is calculated based on Quantity sold × Price per Unit.</p>
+                
+                <h3 class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2 border-b dark:border-gray-700 pb-2">Recent Sales</h3>
+                <div class="h-32">
+                    <canvas id="adminDetailChart"></canvas>
+                </div>
             </div>
             
             <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -556,9 +628,18 @@
         let currentType = 'full';
 
         // Admin State
-        let masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0 };
+        let masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0 };
         let globalRoster = []; 
         let currentDetailUid = null;
+
+        // Chart Instances
+        let staffChartInst = null;
+        let adminOverallChartInst = null;
+        let adminDetailChartInst = null;
+
+        // Chart Default Styling
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = '#374151';
 
         // Listeners
         let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck;
@@ -656,7 +737,7 @@
                 // Always listen to master data for calculations
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
-                        masterData = { rawWeight: 0, processedUnits: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0, ...s.data() };
+                        masterData = { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, totalExpenses: 0, ...s.data() };
                         updateMasterLabels();
                     } else {
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e));
@@ -693,6 +774,9 @@
             const pUsual = document.getElementById('admin-prof-usual');
             const hRat = document.getElementById('hint-ratio-txt');
 
+            const stockFull = document.getElementById('admin-stock-full');
+            const stockUsual = document.getElementById('admin-stock-usual');
+
             const rawW = masterData.rawWeight || 0;
             const price = masterData.pricePerUnit || 0;
             const ratio = masterData.usualRatio || 1;
@@ -702,6 +786,9 @@
             if(pDisp) pDisp.innerText = `$${price}`;
             if(rDisp) rDisp.innerText = `${ratio}x`;
             if(expDisp) expDisp.innerText = `-$${expenses}`;
+            
+            if(stockFull) stockFull.innerText = masterData.unitsFull || 0;
+            if(stockUsual) stockUsual.innerText = masterData.unitsUsual || 0;
             
             // Calculate potential value and units
             const fullUnits = Math.floor(rawW / 1.0);
@@ -762,6 +849,9 @@
                 warn.classList.add('hidden');
             }
 
+            // Update Staff Chart
+            updateStaffChart(appData.transactions);
+
             const list = document.getElementById('staff-log-list');
             list.innerHTML = '';
             
@@ -793,6 +883,38 @@
             });
             if(reversed.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
             lucide.createIcons();
+        }
+
+        function updateStaffChart(transactions) {
+            const ctx = document.getElementById('staffChart');
+            if(!ctx) return;
+            
+            const sales = transactions.filter(t => t.type !== 'personal').reverse(); 
+            const labels = sales.map(t => t.time);
+            const data = sales.map(t => t.money);
+
+            if(staffChartInst) staffChartInst.destroy();
+            staffChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sale ($)',
+                        data: data,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         }
 
         async function saveStaffData() { 
@@ -977,6 +1099,9 @@
                 document.getElementById('admin-total-expected').innerText = `$${totExp}`;
                 document.getElementById('admin-total-collected').innerText = `$${totCol}`;
                 
+                // Update Admin Overall Chart
+                updateAdminOverallChart(globalRoster);
+                
                 if(pendCount === 0) {
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
                     staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 sm:mr-1"></i> <span class="hidden sm:inline">Team</span>`;
@@ -1003,6 +1128,35 @@
                 } else {
                     section.classList.add('hidden');
                     document.getElementById('admin-req-badge').classList.add('hidden');
+                }
+            });
+        }
+
+        function updateAdminOverallChart(roster) {
+            const ctx = document.getElementById('adminOverallChart');
+            if(!ctx) return;
+            
+            const activeStaff = roster.filter(u => u.role !== 'admin' && u.status === 'active');
+            const labels = activeStaff.map(u => u.name);
+            const data = activeStaff.map(u => u.collected || 0);
+
+            if(adminOverallChartInst) adminOverallChartInst.destroy();
+            adminOverallChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Collected ($)',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
@@ -1036,9 +1190,24 @@
         };
 
         window.adminProcessUnits = async () => {
-            // Processing logic removed as user requested direct raw weight handling only for now
-            // But keeping stubs if needed later.
-            window.showToast("Process units disabled in this version.");
+            const type = document.getElementById('process-type').value;
+            const qty = parseInt(document.getElementById('process-qty').value);
+            
+            if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
+            
+            const wpu = type === 'full' ? 1.0 : masterData.usualRatio;
+            const totalW = qty * wpu;
+            
+            if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
+
+            const updateData = { rawWeight: increment(-totalW) };
+            if (type === 'full') updateData.unitsFull = increment(qty);
+            else updateData.unitsUsual = increment(qty);
+
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
+            
+            document.getElementById('process-qty').value = '';
+            window.showToast(`Processed ${qty} ${type} units.`);
         };
 
         window.adminSellRaw = async () => {
@@ -1052,12 +1221,46 @@
             window.showToast(`Sold ${w}u for $${m}`);
         };
 
+        window.adminSellUnit = async () => {
+            const type = document.getElementById('adm-sell-unit-type').value;
+            const q = parseInt(document.getElementById('adm-sell-unit-q').value);
+            const m = parseFloat(document.getElementById('adm-sell-unit-m').value);
+            if(isNaN(q) || isNaN(m)) return window.showToast("Enter valid numbers");
+            
+            const currentStock = type === 'full' ? masterData.unitsFull : masterData.unitsUsual;
+            if((currentStock || 0) < q) return window.showToast("Not enough processed units!");
+
+            const updateData = {};
+            if (type === 'full') updateData.unitsFull = increment(-q);
+            else updateData.unitsUsual = increment(-q);
+
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
+            document.getElementById('adm-sell-unit-q').value = ''; document.getElementById('adm-sell-unit-m').value = '';
+            window.showToast(`Sold ${q} units for $${m}`);
+        };
+
         window.adminPersonalUse = async (type) => {
-            const w = parseFloat(document.getElementById('adm-use-w').value);
-            if(isNaN(w) || w <= 0) return;
-            if(masterData.rawWeight < w) return window.showToast("Not enough raw weight!");
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: increment(-w) }, {merge:true});
-            document.getElementById('adm-use-w').value = '';
+            if(type === 'weight') {
+                const w = parseFloat(document.getElementById('adm-use-w').value);
+                if(isNaN(w) || w <= 0) return;
+                if(masterData.rawWeight < w) return window.showToast("Not enough raw weight!");
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: increment(-w) }, {merge:true});
+                document.getElementById('adm-use-w').value = '';
+            } else {
+                const u = parseInt(document.getElementById('adm-use-u').value);
+                const uType = document.getElementById('adm-use-u-type').value;
+                if(isNaN(u) || u <= 0) return;
+                
+                const currentStock = uType === 'full' ? masterData.unitsFull : masterData.unitsUsual;
+                if((currentStock || 0) < u) return window.showToast("Not enough processed units!");
+                
+                const updateData = {};
+                if (uType === 'full') updateData.unitsFull = increment(-u);
+                else updateData.unitsUsual = increment(-u);
+
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
+                document.getElementById('adm-use-u').value = '';
+            }
             window.showToast("Personal Use Logged");
         };
 
@@ -1082,24 +1285,30 @@
             else el.innerText = '';
         };
 
-        window.adminTransferWeight = async () => {
+        window.adminTransferWeight = async (action) => {
             const uid = document.getElementById('transfer-staff-select').value;
             const amt = parseFloat(document.getElementById('transfer-amount').value);
             if(!uid || isNaN(amt) || amt <= 0) return window.showToast("Select staff and valid amount");
             
-            if(masterData.rawWeight < amt) {
-                if(!confirm(`Warning: Master vault only has ${(masterData.rawWeight||0).toFixed(1)}. Proceed anyway?`)) return;
-            }
-
-            // Deduct Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(-amt)},{merge:true}); 
-
-            // Fetch absolute latest staff data to prevent overwrite
             const r = doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn = await getDoc(r); 
             let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, soldWeight:0, collected:0, expected:0, transactions:[]}; 
-            
-            dat.weight = (dat.weight||0) + amt;
+
+            if (action === 'send') {
+                if(masterData.rawWeight < amt) {
+                    if(!confirm(`Warning: Master vault only has ${(masterData.rawWeight||0).toFixed(1)}. Proceed anyway?`)) return;
+                }
+                // Deduct Master, Add to Staff
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(-amt)},{merge:true}); 
+                dat.weight = (dat.weight||0) + amt;
+                window.showToast(`Sent ${amt} to staff.`);
+            } else if (action === 'reclaim') {
+                if(dat.weight < amt) return window.showToast("Staff does not have that much weight to reclaim!");
+                // Add to Master, Deduct from Staff
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{rawWeight:increment(amt)},{merge:true}); 
+                dat.weight = (dat.weight||0) - amt;
+                window.showToast(`Reclaimed ${amt} from staff.`);
+            }
             
             // Save private
             await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
@@ -1107,7 +1316,7 @@
             await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), {weight: dat.weight}, {merge:true}); 
             
             document.getElementById('transfer-amount').value = '';
-            window.showToast(`Sent ${amt} to staff.`);
+            window.updateTransferPreview();
         };
 
         // Admin Detail View
@@ -1137,6 +1346,34 @@
                 box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
                 diffEl.innerText = `$0 (Perfect)`;
             }
+            
+            // Update Detail Chart
+            const ctx = document.getElementById('adminDetailChart');
+            if(ctx && d.recentLogs) {
+                const sales = d.recentLogs.filter(t => t.type !== 'personal').reverse();
+                const labels = sales.map(t => t.time);
+                const data = sales.map(t => t.money);
+
+                if(adminDetailChartInst) adminDetailChartInst.destroy();
+                adminDetailChartInst = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Sale ($)',
+                            data: data,
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
         };
 
         window.adminClearStaffData = async () => {
@@ -1163,7 +1400,7 @@
             window.showToast("Resetting data...");
 
             // 1. Reset Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, processedUnits: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, totalExpenses: 0 });
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, totalExpenses: 0 });
 
             // 2. Reset All Staff
             for(const u of globalRoster) {
