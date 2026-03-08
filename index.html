@@ -1873,7 +1873,49 @@
             const adminSet = document.getElementById('admin-settings-section');
             if(adminSet) adminSet.classList.remove('hidden');
 
+            (u.collected || 0);
                         
+                        if (u.role !== 'admin') {
+                            globalRaw += (u.weight || 0);
+                            globalFull += (u.unitsFull || 0);
+                            globalUsual += (u.unitsUsual || 0);
+                        }
+                        
+                        const diff = (u.expected || 0) - (u.collected || 0);
+                        const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
+                        const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
+
+                        const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
+
+                        list.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-400 transition" onclick="window.viewDriverDetails('${u.id}')">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-bold dark:text-white flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mr-2 border border-blue-200">${u.name[0]}</div>
+                                    ${u.name} ${badge}
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-500">${u.role === 'admin' ? 'Total Sold' : 'Holding'}</div>
+                                    <div class="font-black dark:text-white">${u.role === 'admin' ? (u.soldWeight||0).toFixed(1) : (u.weight||0).toFixed(1)} u</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
+                                <div class="text-xs text-gray-500">
+                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
+                                    Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
+                                </div>
+                                <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
+                                    Diff: ${diffSign}
+                                </div>
+                            </div>
+                        </div>`;
+                        
+                        if (u.role !== 'admin') {
+                            const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
+                            select.appendChild(opt); 
+                        }
+                    }
+                });
                 
                 document.getElementById('admin-active-count').innerText = `${activeCount} Active`;
                 document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`;
