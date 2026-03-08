@@ -2726,6 +2726,27 @@
                 window.viewDriverDetails(currentDetailUid); // Refresh view
             }
         };
+		
+		// INSTANT UI FIX: Update local roster cache before Firestore sync finishes
+                const uIndex = globalRoster.findIndex(x => x.id === currentDetailUid);
+                if(uIndex > -1) {
+                    globalRoster[uIndex].borrowings = dat.borrowings;
+                    globalRoster[uIndex].expected = dat.expected;
+                    globalRoster[uIndex].recentLogs = dat.transactions.slice(-10).reverse();
+                }
+
+                await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
+                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {
+                    borrowings: dat.borrowings,
+                    expected: dat.expected,
+                    recentLogs: dat.transactions.slice(-10).reverse()
+                }, {merge:true}); 
+                
+                window.showToast("Debt added to staff member.");
+                window.sendNotificationAlert(currentDetailUid, `Admin logged a $${amt} cash advance/debt to your account.`);
+                window.viewDriverDetails(currentDetailUid); // Refresh view instantly
+            }
+        };
 
   
 
