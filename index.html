@@ -1973,12 +1973,6 @@
                         const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
                         const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
 
-                        // Calculate Commission & Debt for Team Overview
-                        const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-                        const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
-                        const appliedToDebt = Math.min(grossComm, totalDebt);
-                        const netComm = grossComm - appliedToDebt;
-
                         const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
 
                         list.innerHTML += `
@@ -1997,10 +1991,6 @@
                                 <div class="text-xs text-gray-500">
                                     Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
                                     Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
-                                </div>
-                                <div class="text-xs text-center mx-2">
-                                    <span class="block text-[9px] text-gray-400 uppercase font-bold tracking-widest">Net Comm</span>
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">$${netComm.toFixed(2)}</span>
                                 </div>
                                 <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
                                     Diff: ${diffSign}
