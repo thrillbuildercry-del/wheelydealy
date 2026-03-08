@@ -31,17 +31,6 @@
         .btn-select { transition: all 0.2s; border: 2px solid transparent; }
         .btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .btn-interactive:active { transform: scale(0.95); }
-		
-		/* --- ADD THESE NEW STYLES --- */
-		.tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
-		.tab-content.active { display: block; }
-		@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-		/* Ticker Animation for Announcements */
-		.ticker-wrapper { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
-		.ticker-content { display: inline-block; padding-left: 100%; animation: ticker 15s linear infinite; }
-		@keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-6">
@@ -275,156 +264,28 @@
     </div>
 
     <!-- STAFF UI -->
-   <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md">
-    <div class="flex justify-between items-center mb-2">
-        <div>
-            <h1 class="text-lg font-bold">Staff Portal</h1>
-            <div class="text-xs text-blue-200" id="staff-name-display">Guest</div>
-        </div>
-        <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
-            <i data-lucide="settings" class="w-5 h-5"></i>
-        </button>
-    </div>
-    
-    <!-- Staff Navigation Tabs -->
-    <div class="flex space-x-1 bg-blue-800/50 dark:bg-gray-900/50 p-1 rounded-xl">
-        <button onclick="window.switchStaffTab('terminal')" id="stf-tab-terminal" class="flex-1 py-2 rounded-lg font-bold text-xs bg-white text-blue-800 dark:bg-gray-700 dark:text-white shadow transition btn-interactive">Terminal</button>
-        <button onclick="window.switchStaffTab('stats')" id="stf-tab-stats" class="flex-1 py-2 rounded-lg font-bold text-xs text-blue-100 hover:bg-blue-700/50 dark:text-gray-400 dark:hover:bg-gray-800 transition btn-interactive">My Stats</button>
-        <button onclick="window.switchStaffTab('tools')" id="stf-tab-tools" class="flex-1 py-2 rounded-lg font-bold text-xs text-blue-100 hover:bg-blue-700/50 dark:text-gray-400 dark:hover:bg-gray-800 transition btn-interactive">Tools</button>
-    </div>
-</header>
-
-<!-- Announcement Banner -->
-<div id="staff-announcement" class="hidden bg-yellow-400 text-yellow-900 p-2 text-xs font-bold shadow-inner ticker-wrapper border-b border-yellow-500">
-    <div class="ticker-content flex items-center"><i data-lucide="megaphone" class="w-4 h-4 mr-2"></i> <span id="staff-announcement-text"></span></div>
-</div>
-
-<main class="p-4 max-w-md mx-auto space-y-4">
-    <!-- STAFF TAB: TERMINAL (Keep your existing terminal card code here, just wrapped in this div) -->
-    <div id="staff-view-terminal" class="tab-content active">
-        <!-- Stock Card -->
-        <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden mb-4">
-            <div class="flex justify-between items-start relative z-10 mb-4 border-b border-gray-700 pb-3">
-                <div>
-                    <h2 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-1">Raw Weight</h2>
-                    <div class="flex items-baseline"><span class="text-3xl font-black mr-1" id="staff-stock">0.0</span><span class="text-gray-400 text-xs font-bold">u</span></div>
-                </div>
-                <button onclick="window.requestWeight()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-2 px-3 rounded-xl shadow-md transition active:scale-95 flex items-center">
-                    <i data-lucide="bell" class="w-3 h-3 mr-1"></i> Request
-                </button>
+    <div id="staff-app" class="hidden">
+        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold">Staff Terminal</h1>
+                <div class="text-xs text-blue-200" id="staff-name-display">Guest</div>
             </div>
-            <div class="grid grid-cols-2 gap-4 relative z-10">
-                <div><h2 class="text-blue-400 text-[10px] uppercase font-bold tracking-widest mb-1">Full Units</h2><span class="text-2xl font-black" id="staff-stock-full">0</span></div>
-                <div><h2 class="text-orange-400 text-[10px] uppercase font-bold tracking-widest mb-1">Usual Units</h2><span class="text-2xl font-black" id="staff-stock-usual">0</span></div>
+            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <!-- Notification Banner -->
+        <div id="push-setup-banner" class="hidden bg-indigo-600 text-white p-3 text-xs flex justify-between items-center shadow-inner">
+            <div class="flex-1">
+                <span class="font-bold"><i data-lucide="bell-ring" class="w-3 h-3 inline mr-1"></i> Notifications Off</span><br>
+                <span class="text-[10px] text-indigo-200">For iPhone: Add app to Home Screen first, then click Enable.</span>
             </div>
+            <button onclick="window.enableNotifications()" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition">Enable</button>
         </div>
 
-        <!-- Terminal Card (Your existing POS UI goes here) -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-            <h2 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center justify-between"><div class="flex items-center"><i data-lucide="calculator" class="w-5 h-5 mr-2 text-blue-500"></i> Record Sale</div></h2>
+        <main class="p-4 max-w-md mx-auto space-y-4">
             
-            <div class="mb-4">
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Inventory Source</label>
-                <select id="staff-sale-source" onchange="window.updateMasterLabels()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
-                    <option value="processed">Processed Pre-Packs</option><option value="raw">Raw Weight</option>
-                </select>
-            </div>
-            
-            <div class="mb-4">
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Quantity</label>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.selectQty(0.5)" id="btn-qty-0.5" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">.5</button>
-                    <button onclick="window.selectQty(1)" id="btn-qty-1" class="qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">1</button>
-                    <button onclick="window.selectQty(2)" id="btn-qty-2" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">2</button>
-                    <button onclick="window.selectQty(3)" id="btn-qty-3" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">3</button>
-                    <button onclick="window.selectQty(4)" id="btn-qty-4" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">4</button>
-                </div>
-            </div>
-
-            <div class="mb-5" id="staff-type-selection">
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Weight Standard</label>
-                <div class="flex space-x-2">
-                    <button onclick="window.selectType('full')" id="btn-type-full" class="type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive"><span class="dark:text-white">Full Weight</span><span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-full-weight">(1.0 units)</span></button>
-                    <button onclick="window.selectType('usual')" id="btn-type-usual" class="type-btn btn-select flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive"><span class="dark:text-white">Usual Weight</span><span class="text-[10px] text-gray-400 mt-1 font-normal" id="label-usual-weight">(0.8 units)</span></button>
-                </div>
-            </div>
-
-            <div class="mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div class="flex justify-between items-center mb-2"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">4. Money Received</label><span class="text-xs font-bold text-gray-500" id="expected-money-hint">Expected: $100</span></div>
-                <div class="relative mb-2"><span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl font-bold text-gray-400">$</span><input type="number" id="money-input" placeholder="0.00" oninput="window.checkPriceColor()" class="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-blue-500 dark:text-white transition"></div>
-                <div class="flex gap-2">
-                    <button onclick="window.setQuickPrice(80)" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800" id="btn-quick-usual">$80 (Usual)</button>
-                    <button onclick="window.setQuickPrice(100)" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800" id="btn-quick-full">$100 (Full)</button>
-                </div>
-            </div>
-
-            <div class="flex gap-2 mb-3">
-                <button onclick="window.processSale()" class="flex-[2] bg-blue-600 text-white font-black text-sm py-4 rounded-xl shadow-md hover:bg-blue-700 btn-interactive transition uppercase tracking-wide">Log Sale</button>
-                <button onclick="window.staffPersonalUse()" class="flex-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-bold text-xs py-2 rounded-xl shadow-sm hover:bg-purple-200 btn-interactive transition flex flex-col items-center justify-center"><i data-lucide="user" class="w-4 h-4 mb-1"></i> Use</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- STAFF TAB: STATS -->
-    <div id="staff-view-stats" class="tab-content hidden">
-        <!-- Global Business Income Widget -->
-        <div class="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl p-5 text-white shadow-lg mb-4 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4 opacity-20"><i data-lucide="trending-up" class="w-16 h-16"></i></div>
-            <h3 class="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-80 relative z-10">Global Business Revenue</h3>
-            <p class="text-[9px] opacity-70 mb-2 relative z-10">Total money generated by the entire team.</p>
-            <div class="text-3xl font-black mb-4 relative z-10" id="staff-global-revenue">$0.00</div>
-            
-            <div class="flex justify-between items-end border-t border-white/20 pt-3 relative z-10">
-                <div>
-                    <div class="text-[10px] uppercase font-bold opacity-80">My Contribution</div>
-                    <div class="text-xl font-bold" id="staff-my-contribution">$0.00</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[10px] uppercase font-bold opacity-80">Share</div>
-                    <div class="text-2xl font-black text-blue-200" id="staff-my-percentage">0%</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Personal Cash Drawer -->
-        <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mb-4 flex justify-between items-center shadow-inner">
-            <div class="text-xs text-blue-800 dark:text-blue-300 uppercase font-bold tracking-widest leading-tight">Current Cash<br>On Hand</div>
-            <div class="text-3xl font-black text-blue-700 dark:text-blue-400" id="staff-stat-net">$0</div>
-        </div>
-
-        <!-- Log History -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-            <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Recent Activity</h3>
-            <div id="staff-log-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm"></div>
-        </div>
-    </div>
-
-    <!-- STAFF TAB: TOOLS -->
-    <div id="staff-view-tools" class="tab-content hidden">
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <button onclick="document.getElementById('staff-bill-modal').classList.remove('hidden')" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-blue-500 btn-interactive flex flex-col items-center">
-                <i data-lucide="receipt" class="w-6 h-6 mb-2 text-blue-500"></i> <span class="text-xs">Request Bill</span>
-            </button>
-            <button onclick="document.getElementById('staff-iou-modal').classList.remove('hidden')" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-blue-500 btn-interactive flex flex-col items-center">
-                <i data-lucide="book-open" class="w-6 h-6 mb-2 text-purple-500"></i> <span class="text-xs">Client Finance</span>
-            </button>
-            <button onclick="window.staffExpense()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-orange-500 btn-interactive flex flex-col items-center">
-                <i data-lucide="fuel" class="w-6 h-6 mb-2 text-orange-500"></i> <span class="text-xs">Log Expense</span>
-            </button>
-            <button onclick="window.requestWeight()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-green-500 btn-interactive flex flex-col items-center">
-                <i data-lucide="bell" class="w-6 h-6 mb-2 text-green-500"></i> <span class="text-xs">Req Inventory</span>
-            </button>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-4">
-            <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center"><i data-lucide="map-pin" class="w-5 h-5 mr-2 text-red-500"></i> Mileage / Shift Notes</h3>
-            <p class="text-[10px] text-gray-500 mb-3">Keep track of addresses, miles driven, or quick reminders.</p>
-            <textarea id="staff-notes-input" placeholder="Enter notes here..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 text-sm dark:text-white outline-none min-h-[120px] mb-2"></textarea>
-            <button onclick="window.saveStaffNotes()" class="w-full bg-gray-800 dark:bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-900 transition btn-interactive text-sm">Save Notes</button>
-        </div>
-    </div>
-</main>
-     
             <!-- Stock Card -->
             <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden">
                 <div class="flex justify-between items-start relative z-10 mb-4 border-b border-gray-700 pb-3">
@@ -1088,14 +949,6 @@
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-4">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide">Team Summary</h3>
-						<!-- NEW: Broadcast Tool -->
-						<div class="mb-4 mt-2 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl border border-yellow-200 dark:border-yellow-800">
-						<label class="text-[10px] font-bold text-yellow-700 dark:text-yellow-500 uppercase mb-1 block"><i data-lucide="megaphone" class="w-3 h-3 inline"></i> Broadcast to Team</label>
-							<div class="flex space-x-2">
-						<input type="text" id="admin-broadcast-input" placeholder="Type message..." class="flex-1 text-xs p-2 rounded border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-gray-800 outline-none dark:text-white">
-							<button onclick="window.sendBroadcast()" class="bg-yellow-500 text-white font-bold px-3 py-2 rounded shadow text-xs hover:bg-yellow-600 btn-interactive">Send</button>
-						</div>
-					</div>
                         <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300" id="admin-active-count">0 Active</span>
                     </div>
                     <div class="grid grid-cols-2 gap-3 mb-4">
@@ -1986,9 +1839,6 @@
 
         window.processSale = async () => {
             const source = document.getElementById('staff-sale-source').value;
-			// CRITICAL: Automatically add collected money to Master Vault Cash Balance
-await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: increment(money) }, {merge:true});
-
             const moneyInput = document.getElementById('money-input');
             const money = parseFloat(moneyInput.value);
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
@@ -2217,72 +2067,6 @@ await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { c
                 window.sendNotificationAlert('admin', `${window.currentUserName} is requesting more inventory.`);
             } 
         };
-		
-		
-		// --- NEW UPGRADED LOGIC FUNCTIONS ---
-
-// Tab Switching
-window.switchStaffTab = (tab) => {
-    ['terminal','stats','tools'].forEach(x => {
-        document.getElementById(`staff-view-${x}`).classList.remove('active');
-        document.getElementById(`staff-view-${x}`).classList.add('hidden');
-        document.getElementById(`stf-tab-${x}`).classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
-        document.getElementById(`stf-tab-${x}`).classList.add('text-blue-100', 'dark:text-gray-400');
-    });
-    document.getElementById(`staff-view-${tab}`).classList.remove('hidden');
-    document.getElementById(`staff-view-${tab}`).classList.add('active');
-    document.getElementById(`stf-tab-${tab}`).classList.remove('text-blue-100', 'dark:text-gray-400');
-    document.getElementById(`stf-tab-${tab}`).classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
-};
-
-// Update Global Revenue
-window.updateStaffGlobalStats = () => {
-    let totalCol = 0;
-    globalRoster.forEach(u => { totalCol += (u.collected || 0); });
-    const myCol = appData.collected || 0;
-    const myPct = totalCol > 0 ? ((myCol / totalCol) * 100).toFixed(1) : 0;
-    
-    const revEl = document.getElementById('staff-global-revenue');
-    const contEl = document.getElementById('staff-my-contribution');
-    const pctEl = document.getElementById('staff-my-percentage');
-    
-    if(revEl) revEl.innerText = `$${totalCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-    if(contEl) contEl.innerText = `$${myCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-    if(pctEl) pctEl.innerText = `${myPct}%`;
-};
-
-// Notes Logic
-window.saveStaffNotes = async () => {
-    const notes = document.getElementById('staff-notes-input').value;
-    appData.notes = notes;
-    await saveStaffData();
-    window.showToast("Notes saved.");
-};
-
-// Admin CSV Export Logic
-window.exportDataCSV = () => {
-    let csv = "Name,Role,Raw Units Held,Full Units Held,Usual Units Held,Expected $,Collected $,Owed/Debt $,Expenses $\n";
-    csv += `MASTER VAULT,Admin Vault,${masterData.rawWeight||0},${masterData.unitsFull||0},${masterData.unitsUsual||0},0,${masterData.cashBalance||0},0,${masterData.totalExpenses||0}\n`;
-    
-    globalRoster.forEach(u => {
-        csv += `"${u.name}",${u.role},${u.weight||0},${u.unitsFull||0},${u.unitsUsual||0},${u.expected||0},${u.collected||0},${(u.personalUseOwed||0)+(u.borrowings||0)},${u.expenses||0}\n`;
-    });
-    const blob = new Blob([csv], {type: 'text/csv'});
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', ''); a.setAttribute('href', url); a.setAttribute('download', 'WeightOps_Report.csv');
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    window.showToast("Report Exported!");
-};
-
-// Admin Broadcast Logic
-window.sendBroadcast = async () => {
-    const input = document.getElementById('admin-broadcast-input').value;
-    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { announcement: input }, {merge:true});
-    document.getElementById('admin-broadcast-input').value = '';
-    window.showToast(input ? "Announcement Broadcasted!" : "Announcement Cleared");
-};
-
 
         // ---------------------------------------------------------
         // ADMIN LOGIC
@@ -2397,9 +2181,6 @@ window.sendBroadcast = async () => {
                         if (u.role !== 'admin') {
                             const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
                             select.appendChild(opt); 
-							
-    if(userRole === 'staff' && typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats(); 
-
                         }
                     }
                 });
