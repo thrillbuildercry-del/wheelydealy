@@ -186,7 +186,6 @@
                 <button onclick="document.getElementById('admin-iou-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold btn-interactive">Cancel</button>
                 <button onclick="window.saveAdminIOU()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700 btn-interactive">Save Client IOU</button>
             </div>
-            <input type="hidden" id="iou-request-id" value="">
         </div>
     </div>
 
@@ -202,30 +201,6 @@
             <div class="flex space-x-2 mt-5">
                 <button onclick="document.getElementById('staff-bill-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
                 <button onclick="window.submitStaffBillReq()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">Send Request</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Staff Request IOU Modal -->
-    <div id="staff-iou-modal" class="modal-overlay hidden z-[110]">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
-            <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center"><i data-lucide="book-open" class="w-5 h-5 mr-2 text-blue-500"></i> Request Client Finance</h2>
-            <p class="text-xs text-gray-500 mb-4">Send a request to the Boss to approve an IOU for a client.</p>
-            <div class="space-y-3">
-                <input type="text" id="req-iou-name" placeholder="Client Name" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
-                <input type="text" id="req-iou-contact" placeholder="Contact Info (Phone/Social)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
-                <div class="relative">
-                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</span>
-                    <input type="number" id="req-iou-amt" placeholder="Amount Owed" class="w-full p-3 pl-8 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-lg outline-none font-black">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Agreed Pay Date</label>
-                    <input type="date" id="req-iou-date" class="w-full p-3 mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
-                </div>
-            </div>
-            <div class="flex space-x-2 mt-5">
-                <button onclick="document.getElementById('staff-iou-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold">Cancel</button>
-                <button onclick="window.submitStaffIOUReq()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700">Send Request</button>
             </div>
         </div>
     </div>
@@ -357,17 +332,12 @@
                     </button>
                 </div>
                 
-                <div class="flex gap-2 mb-2">
+                <div class="flex gap-2">
                     <button onclick="window.staffExpense()" class="flex-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 font-bold text-xs py-2.5 rounded-xl border border-orange-200 dark:border-orange-800 hover:bg-orange-100 btn-interactive transition flex items-center justify-center">
                         <i data-lucide="fuel" class="w-3 h-3 mr-1"></i> Personal Expense
                     </button>
                     <button onclick="document.getElementById('staff-bill-modal').classList.remove('hidden')" class="flex-1 bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-300 font-bold text-xs py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-100 btn-interactive transition flex items-center justify-center">
                         <i data-lucide="receipt" class="w-3 h-3 mr-1"></i> Request Bill
-                    </button>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="document.getElementById('staff-iou-modal').classList.remove('hidden')" class="w-full bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 font-bold text-xs py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 hover:bg-blue-100 btn-interactive transition flex items-center justify-center shadow-sm">
-                        <i data-lucide="book-open" class="w-3 h-3 mr-1"></i> Request Client Finance
                     </button>
                 </div>
             </div>
@@ -1863,35 +1833,6 @@
             window.sendNotificationAlert('admin', `New bill request from ${window.currentUserName}: $${amt}`);
         };
 
-        window.submitStaffIOUReq = async () => {
-            const name = document.getElementById('req-iou-name').value;
-            const contact = document.getElementById('req-iou-contact').value;
-            const amt = parseFloat(document.getElementById('req-iou-amt').value);
-            const date = document.getElementById('req-iou-date').value;
-
-            if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
-            
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
-                uid: currentUser.uid, 
-                name: window.currentUserName || 'Staff', 
-                timestamp: Date.now(), 
-                status: 'pending', 
-                type: 'iou_request', 
-                clientName: name, 
-                contact: contact,
-                amount: amt,
-                dueDate: date
-            }); 
-            
-            document.getElementById('staff-iou-modal').classList.add('hidden');
-            document.getElementById('req-iou-name').value = '';
-            document.getElementById('req-iou-contact').value = '';
-            document.getElementById('req-iou-amt').value = '';
-            document.getElementById('req-iou-date').value = '';
-            window.showToast("Finance Request Sent to Boss");
-            window.sendNotificationAlert('admin', `New finance request from ${window.currentUserName} for client ${name} ($${amt})`);
-        };
-
         window.requestWeight = async () => { 
             if(confirm("Notify admin you need more weight?")) { 
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
@@ -1932,88 +1873,7 @@
             const adminSet = document.getElementById('admin-settings-section');
             if(adminSet) adminSet.classList.remove('hidden');
 
-            unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
-                const list = document.getElementById('admin-staff-list'); 
-                const select = document.getElementById('transfer-staff-select');
-                const pendingList = document.getElementById('admin-pending-users');
-                const staffTab = document.getElementById('adm-tab-staff');
-                
-                list.innerHTML=''; select.innerHTML='<option value="">Select Staff...</option>'; pendingList.innerHTML='';
-                globalRoster=[]; 
-                
-                let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0;
-                let globalRaw = 0, globalFull = 0, globalUsual = 0;
-
-                snap.forEach(d => {
-                    const u = { id: d.id, ...d.data() }; 
-                    globalRoster.push(u);
-                    
-                    if(u.status === 'pending') {
-                        if (u.role !== 'admin') {
-                            pendCount++;
-                            pendingList.innerHTML += `
-                            <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-100 dark:border-orange-800">
-                                <span class="font-bold text-orange-800 dark:text-orange-300">${u.name}</span>
-                                <div><button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600 btn-interactive">Approve</button>
-                                <button onclick="window.adminDelUser('${u.id}')" class="text-red-500 text-xs px-2 hover:underline">Deny</button></div>
-                            </div>`;
-                        }
-                    } else {
-                        activeCount++;
-                        totExp += (u.expected || 0);
-                        totCol += (u.collected || 0);
                         
-                        if (u.role !== 'admin') {
-                            globalRaw += (u.weight || 0);
-                            globalFull += (u.unitsFull || 0);
-                            globalUsual += (u.unitsUsual || 0);
-                        }
-                        
-                        const diff = (u.expected || 0) - (u.collected || 0);
-                        const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
-                        const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
-
-                        // Calculate Commission & Debt for Team Overview
-                        const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-                        const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
-                        const appliedToDebt = Math.min(grossComm, totalDebt);
-                        const netComm = grossComm - appliedToDebt;
-
-                        const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
-
-                        list.innerHTML += `
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-400 transition" onclick="window.viewDriverDetails('${u.id}')">
-                            <div class="flex justify-between items-center mb-2">
-                                <div class="font-bold dark:text-white flex items-center">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mr-2 border border-blue-200">${u.name[0]}</div>
-                                    ${u.name} ${badge}
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-xs text-gray-500">${u.role === 'admin' ? 'Total Sold' : 'Holding'}</div>
-                                    <div class="font-black dark:text-white">${u.role === 'admin' ? (u.soldWeight||0).toFixed(1) : (u.weight||0).toFixed(1)} u</div>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
-                                <div class="text-xs text-gray-500">
-                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
-                                    Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
-                                </div>
-                                <div class="text-xs text-center mx-2">
-                                    <span class="block text-[9px] text-gray-400 uppercase font-bold tracking-widest">Net Comm</span>
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">$${netComm.toFixed(2)}</span>
-                                </div>
-                                <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
-                                    Diff: ${diffSign}
-                                </div>
-                            </div>
-                        </div>`;
-                        
-                        if (u.role !== 'admin') {
-                            const opt = document.createElement('option'); opt.value=u.id; opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
-                            select.appendChild(opt); 
-                        }
-                    }
-                });
                 
                 document.getElementById('admin-active-count').innerText = `${activeCount} Active`;
                 document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`;
@@ -2062,17 +1922,6 @@
                                 </div>
                                 <div class="space-x-1 flex">
                                     <button onclick="window.prepareApproveBill('${d.id}', '${req.desc}', ${req.amount})" class="flex-1 bg-purple-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-purple-700 btn-interactive text-center">Approve</button>
-                                    <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
-                                </div>
-                            </div>`; 
-                        } else if (req.type === 'iou_request') {
-                            list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
-                                <div class="mb-2 sm:mb-0">
-                                    <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-blue-500 ml-1 border border-blue-200 bg-blue-50 px-1 rounded">Finance Request</span></span>
-                                    <div class="text-xs text-gray-500 mt-1">Client: <span class="font-bold text-gray-800 dark:text-gray-300">${req.clientName}</span> ($${req.amount})</div>
-                                </div>
-                                <div class="space-x-1 flex">
-                                    <button onclick="window.prepareApproveIOU('${d.id}', '${req.clientName.replace(/'/g, "\\'")}', '${(req.contact||'').replace(/'/g, "\\'")}', ${req.amount}, '${req.dueDate||''}')" class="flex-1 bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive text-center">Approve</button>
                                     <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
                                 </div>
                             </div>`; 
@@ -2127,21 +1976,11 @@
         }
 
         // --- NEW IOU / FINANCED LOGIC ---
-        window.prepareApproveIOU = (reqId, clientName, contact, amount, dueDate) => {
-            document.getElementById('iou-name').value = clientName;
-            document.getElementById('iou-contact').value = contact;
-            document.getElementById('iou-amt').value = amount;
-            document.getElementById('iou-date').value = dueDate;
-            document.getElementById('iou-request-id').value = reqId; 
-            document.getElementById('admin-iou-modal').classList.remove('hidden');
-        };
-
         window.saveAdminIOU = async () => {
             const name = document.getElementById('iou-name').value;
             const contact = document.getElementById('iou-contact').value;
             const amt = parseFloat(document.getElementById('iou-amt').value);
             const date = document.getElementById('iou-date').value;
-            const reqId = document.getElementById('iou-request-id')?.value;
 
             if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
             
@@ -2150,11 +1989,6 @@
             }];
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: newClients }, {merge:true});
             
-            if(reqId) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
-                document.getElementById('iou-request-id').value = '';
-            }
-
             document.getElementById('admin-iou-modal').classList.add('hidden');
             document.getElementById('iou-name').value = '';
             document.getElementById('iou-contact').value = '';
@@ -2519,6 +2353,62 @@
                 actualWeightDeducted = admCurrentQty * masterData.usualRatio;
             }
 
+            // Deduct from Master Vault
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
+
+            const expectedMoney = admCurrentQty * unitPrice;
+
+            if (source === 'raw') {
+                adminData.soldWeight += actualWeightDeducted;
+            } else if (source === 'processed' && admCurrentType === 'full') {
+                adminData.soldUnitsFull += admCurrentQty;
+            } else if (source === 'processed' && admCurrentType === 'usual') {
+                adminData.soldUnitsUsual += admCurrentQty;
+            }
+
+            adminData.collected += money;
+            adminData.expected += expectedMoney;
+
+            adminData.transactions.push({
+                id: Date.now(),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                source: source,
+                qty: admCurrentQty,
+                type: admCurrentType,
+                actualWeight: actualWeightDeducted,
+                money: money,
+                expected: expectedMoney
+            });
+
+            moneyInput.value = '';
+            await saveAdminData();
+            window.showToast("Admin Sale Complete!");
+        };
+
+        window.adminPersonalUseUnified = async () => {
+            const source = document.getElementById('adm-sale-source').value;
+            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            
+            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
+
+            let actualWeightDeducted = 0;
+            let standardCost = admCurrentQty * unitPrice;
+            const updateMaster = {};
+
+            if (source === 'raw') {
+                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
+                if(masterData.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
+                updateMaster.rawWeight = increment(-actualWeightDeducted);
+            } else if (source === 'processed' && admCurrentType === 'full') {
+                if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
+                updateMaster.unitsFull = increment(-admCurrentQty);
+                actualWeightDeducted = admCurrentQty * 1.0;
+            } else if (source === 'processed' && admCurrentType === 'usual') {
+                if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
+                updateMaster.unitsUsual = increment(-admCurrentQty);
+                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
+            }
+
             // Deduct Master Vault
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
 
@@ -2726,8 +2616,6 @@
                 window.viewDriverDetails(currentDetailUid); // Refresh view
             }
         };
-		
-		
 
   
 
