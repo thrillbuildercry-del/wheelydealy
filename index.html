@@ -165,15 +165,31 @@
         </div>
     </div>
 
-    <!-- Admin Add IOU Modal -->
+    <!-- Admin Add/Edit IOU Modal -->
     <div id="admin-iou-modal" class="modal-overlay hidden z-[110]">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
-            <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center"><i data-lucide="book-open" class="w-5 h-5 mr-2 text-blue-500"></i> Add Financed Client</h2>
+            <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center"><i data-lucide="book-open" class="w-5 h-5 mr-2 text-blue-500"></i> Client Finance Details</h2>
             <p class="text-xs text-gray-500 mb-4">Log items taken on credit by customers.</p>
             <div class="space-y-3">
                 <input type="text" id="iou-name" placeholder="Client Name" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
                 <input type="text" id="iou-contact" placeholder="Contact Info (Phone / Social)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
-                <div class="relative">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Pieces / Qty</label>
+                        <input type="number" id="iou-qty" placeholder="e.g. 2" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Type</label>
+                        <select id="iou-type" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+                            <option value="full">Full Unit</option>
+                            <option value="usual">Usual Unit</option>
+                            <option value="raw">Raw Weight</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="relative mt-2">
                     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</span>
                     <input type="number" id="iou-amt" placeholder="Amount Owed" class="w-full p-3 pl-8 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-lg outline-none font-black">
                 </div>
@@ -187,6 +203,7 @@
                 <button onclick="window.saveAdminIOU()" class="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700 btn-interactive">Save Client IOU</button>
             </div>
             <input type="hidden" id="iou-request-id" value="">
+            <input type="hidden" id="iou-edit-id" value="">
         </div>
     </div>
 
@@ -214,7 +231,23 @@
             <div class="space-y-3">
                 <input type="text" id="req-iou-name" placeholder="Client Name" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
                 <input type="text" id="req-iou-contact" placeholder="Contact Info (Phone/Social)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
-                <div class="relative">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Pieces / Qty</label>
+                        <input type="number" id="req-iou-qty" placeholder="e.g. 2" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Type</label>
+                        <select id="req-iou-type" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold">
+                            <option value="full">Full Unit</option>
+                            <option value="usual">Usual Unit</option>
+                            <option value="raw">Raw Weight</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="relative mt-2">
                     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</span>
                     <input type="number" id="req-iou-amt" placeholder="Amount Owed" class="w-full p-3 pl-8 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-lg outline-none font-black">
                 </div>
@@ -446,6 +479,35 @@
                 </div>
             </div>
 
+            <!-- Volume & Profit Analytics (Staff) -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-indigo-500"></i> Volume & Profit Analytics
+                </h3>
+                
+                <div class="grid grid-cols-3 gap-2 text-center mb-5">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Today</div>
+                        <div class="text-xl font-black dark:text-white" id="staff-pieces-today">0</div>
+                        <div class="text-[9px] text-gray-400 uppercase">Pieces</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">7 Days</div>
+                        <div class="text-xl font-black dark:text-white" id="staff-pieces-week">0</div>
+                        <div class="text-[9px] text-gray-400 uppercase">Pieces</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">30 Days</div>
+                        <div class="text-xl font-black dark:text-white" id="staff-pieces-month">0</div>
+                        <div class="text-[9px] text-gray-400 uppercase">Pieces</div>
+                    </div>
+                </div>
+
+                <div class="h-48">
+                    <canvas id="staffAnalyticsChart"></canvas>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -479,7 +541,7 @@
                 <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative"><i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span></button>
                 <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition relative flex flex-col justify-center items-center"><i data-lucide="arrow-right-left" class="w-4 h-4 mb-1"></i> <span>Move</span><div id="admin-req-badge" class="hidden absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></div></button>
                 <button onclick="window.switchAdminTab('finance')" id="adm-tab-finance" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center"><i data-lucide="pie-chart" class="w-4 h-4 mb-1"></i> <span>Finance</span></button>
-                <button onclick="window.switchAdminTab('ious')" id="adm-tab-ious" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center"><i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span></button>
+                <button onclick="window.switchAdminTab('ious')" id="adm-tab-ious" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative"><i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span></button>
             </div>
 
             <!-- TAB: MASTER STORAGE -->
@@ -608,6 +670,7 @@
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
                         <i data-lucide="shopping-bag" class="w-5 h-5 mr-2 text-blue-500"></i> Purchase Restock
                     </h3>
+                    <p class="text-[10px] text-gray-500 mb-4">* Automatically logs expense and deducts from Master Cash Balance.</p>
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <button onclick="window.adminPurchaseStock(3.5, 200)" class="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-blue-500 transition btn-interactive text-left">
                             <div class="font-black text-lg dark:text-white">3.5 <span class="text-xs text-gray-500 font-bold uppercase">units</span></div>
@@ -655,7 +718,7 @@
 
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Active IOUs</h4>
-                        <button onclick="document.getElementById('admin-iou-modal').classList.remove('hidden')" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-blue-700 btn-interactive flex items-center shadow-sm">
+                        <button onclick="document.getElementById('iou-edit-id').value=''; document.getElementById('admin-iou-modal').classList.remove('hidden')" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-blue-700 btn-interactive flex items-center shadow-sm">
                             <i data-lucide="plus" class="w-3 h-3 mr-1"></i> Add Client
                         </button>
                     </div>
@@ -669,6 +732,35 @@
             <!-- TAB: FINANCE & PROJECTIONS -->
             <div id="admin-view-finance" class="admin-tab-content hidden">
                 
+                <!-- NEW GLOBAL ANALYTICS CARD -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-indigo-500"></i> Global Profit & Sales Analytics
+                    </h3>
+                    
+                    <div class="grid grid-cols-3 gap-2 text-center mb-5">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Today</div>
+                            <div class="text-xl font-black dark:text-white" id="admin-pieces-today">0</div>
+                            <div class="text-[9px] text-gray-400 uppercase">Pieces Sold</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">7 Days</div>
+                            <div class="text-xl font-black dark:text-white" id="admin-pieces-week">0</div>
+                            <div class="text-[9px] text-gray-400 uppercase">Pieces Sold</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">30 Days</div>
+                            <div class="text-xl font-black dark:text-white" id="admin-pieces-month">0</div>
+                            <div class="text-[9px] text-gray-400 uppercase">Pieces Sold</div>
+                        </div>
+                    </div>
+
+                    <div class="h-56">
+                        <canvas id="adminProfitChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
                     <h3 class="font-bold text-gray-800 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex items-center">
                         <i data-lucide="trending-up" class="w-5 h-5 mr-2 text-green-500"></i> Potential Earnings Projection
@@ -697,16 +789,6 @@
                             <div class="text-3xl font-black text-green-700 dark:text-green-400 mb-1" id="proj-whatif-total">$0</div>
                             <p class="text-[10px] text-green-600/70 dark:text-green-500">Both Full and Usual units sold at the Maximum Full Price.</p>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center border-b dark:border-gray-700 pb-2">
-                        <i data-lucide="line-chart" class="w-5 h-5 mr-2 text-blue-500"></i> 7-Day Revenue Forecast
-                    </h3>
-                    <p class="text-[10px] text-gray-500 mb-4">Extrapolates current team collection rate into a 7-day prediction.</p>
-                    <div class="h-40">
-                        <canvas id="financePredictionChart"></canvas>
                     </div>
                 </div>
 
@@ -1106,7 +1188,15 @@
         const app = initializeApp(firebaseConfig); 
         const auth = getAuth(app); 
         const db = getFirestore(app); 
-        const messaging = getMessaging(app);
+        
+        // Safety net: Don't crash the app if browser blocks push notifications
+        let messaging = null;
+        try {
+            messaging = getMessaging(app);
+        } catch (e) {
+            console.warn("Push messaging not fully supported on this device/browser yet.");
+        }
+
         const googleProvider = new GoogleAuthProvider();
 
         // ---------------------------------------------------------
@@ -1135,7 +1225,8 @@
         let adminOverallChartInst = null;
         let adminDetailChartInst = null;
         let adminTerminalChartInst = null;
-        let financePredictionChartInst = null;
+        let staffAnalyticsChartInst = null;
+        let adminProfitChartInst = null;
 
         // Listeners
         let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts;
@@ -1155,6 +1246,11 @@
         };
 
         window.enableNotifications = async () => {
+            if (!messaging) {
+                window.showToast("Push requires adding to Home Screen first!");
+                return;
+            }
+            
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
@@ -1200,7 +1296,7 @@
         };
 
         // ---------------------------------------------------------
-        // UTILS
+        // UTILS & ANALYTICS HELPER
         // ---------------------------------------------------------
         window.showToast = (msg) => { 
             const t = document.getElementById('toast'); 
@@ -1213,6 +1309,38 @@
             document.documentElement.classList.toggle('dark'); 
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); 
         };
+
+        // Analytics Calculator
+        function calculateAnalytics(transactions) {
+            const now = Date.now();
+            const periods = [
+                { label: 'Today', ms: 86400000 },
+                { label: '7 Days', ms: 604800000 },
+                { label: '30 Days', ms: 2592000000 }
+            ];
+
+            let stats = periods.map(p => ({
+                label: p.label, pieces: 0, revenue: 0, expenses: 0, profit: 0
+            }));
+
+            transactions.forEach(t => {
+                const age = now - t.id; // t.id is Date.now()
+                periods.forEach((p, index) => {
+                    if (age <= p.ms) {
+                        if (t.type === 'expense') {
+                            stats[index].expenses += Math.abs(t.money);
+                        } else if (t.type !== 'personal' && t.type !== 'borrowing' && t.type !== 'dropoff') {
+                            // Regular Sale
+                            stats[index].revenue += (t.money || 0);
+                            stats[index].pieces += (t.qty || 0);
+                        }
+                    }
+                });
+            });
+
+            stats.forEach(s => s.profit = s.revenue - s.expenses);
+            return stats;
+        }
 
         // Name Editing Functionality
         window.editMyName = async () => {
@@ -1495,7 +1623,6 @@
             document.getElementById('staff-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
             // EXACT Cash On Hand calculation
-            // Gross Cash - Logged Expenses - Net Commission to Keep - Cash Already Dropped to Boss
             const cashOnHand = (appData.collected || 0) - (appData.expenses || 0) - netComm - (appData.cashDropped || 0);
             document.getElementById('staff-stat-net').innerText = `$${cashOnHand.toFixed(2)}`;
 
@@ -1509,8 +1636,11 @@
                 warn.classList.add('hidden');
             }
 
-            // Update Staff Chart
+            // Update Staff Chart (Sales over time)
             updateStaffChart(appData.transactions);
+            
+            // Update Volume & Analytics Section
+            renderStaffAnalytics();
 
             const list = document.getElementById('staff-log-list');
             list.innerHTML = '';
@@ -1570,6 +1700,37 @@
             });
             if(reversed.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
             lucide.createIcons();
+        }
+
+        function renderStaffAnalytics() {
+            const stats = calculateAnalytics(appData.transactions);
+            
+            document.getElementById('staff-pieces-today').innerText = stats[0].pieces;
+            document.getElementById('staff-pieces-week').innerText = stats[1].pieces;
+            document.getElementById('staff-pieces-month').innerText = stats[2].pieces;
+
+            const ctx = document.getElementById('staffAnalyticsChart');
+            if(!ctx) return;
+            
+            if(staffAnalyticsChartInst) staffAnalyticsChartInst.destroy();
+            staffAnalyticsChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: stats.map(s => s.label),
+                    datasets: [
+                        { label: 'Revenue', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, // Green
+                        { label: 'Cost/Exp', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, // Red
+                        { label: 'Net Profit', data: stats.map(s => s.profit), backgroundColor: '#3b82f6', borderRadius: 4 }  // Blue
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } 
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         }
 
         function updateStaffChart(transactions) {
@@ -1868,6 +2029,8 @@
             const contact = document.getElementById('req-iou-contact').value;
             const amt = parseFloat(document.getElementById('req-iou-amt').value);
             const date = document.getElementById('req-iou-date').value;
+            const qty = parseFloat(document.getElementById('req-iou-qty').value) || 0;
+            const type = document.getElementById('req-iou-type').value;
 
             if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
             
@@ -1880,7 +2043,9 @@
                 clientName: name, 
                 contact: contact,
                 amount: amt,
-                dueDate: date
+                dueDate: date,
+                qty: qty,
+                iouType: type
             }); 
             
             document.getElementById('staff-iou-modal').classList.add('hidden');
@@ -1888,6 +2053,7 @@
             document.getElementById('req-iou-contact').value = '';
             document.getElementById('req-iou-amt').value = '';
             document.getElementById('req-iou-date').value = '';
+            document.getElementById('req-iou-qty').value = '';
             window.showToast("Finance Request Sent to Boss");
             window.sendNotificationAlert('admin', `New finance request from ${window.currentUserName} for client ${name} ($${amt})`);
         };
@@ -1914,6 +2080,10 @@
             document.getElementById(`admin-view-${t}`).classList.remove('hidden'); 
             document.getElementById(`adm-tab-${t}`).classList.add('bg-gray-800','text-white','shadow'); 
             document.getElementById(`adm-tab-${t}`).classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300');
+            
+            if (t === 'finance') {
+                window.loadGlobalAnalytics();
+            }
         };
 
         function initAdminDashboard(user) {
@@ -2033,9 +2203,9 @@
                     globalEqEl.innerText = `${globalEq.toFixed(1)} u`;
                 }
 
-                // Update Charts
                 updateAdminOverallChart(globalRoster);
                 updateFinanceUI(); 
+                if(document.getElementById('admin-view-finance').classList.contains('active')) window.loadGlobalAnalytics();
                 
                 if(pendCount === 0) {
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>';
@@ -2072,48 +2242,908 @@
                                     <div class="text-xs text-gray-500 mt-1">Client: <span class="font-bold text-gray-800 dark:text-gray-300">${req.clientName}</span> ($${req.amount})</div>
                                 </div>
                                 <div class="space-x-1 flex">
-                                    <button onclick="window.prepareApproveIOU('${d.id}', '${req.clientName.replace(/'/g, "\\'")}', '${(req.contact||'').replace(/'/g, "\\'")}', ${req.amount}, '${req.dueDate||''}')" class="flex-1 bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive text-center">Approve</button>
+                                    <button onclick="window.prepareApproveIOU('${d.id}', '${req.clientName.replace(/'/g, "\\'")}', '${(req.contact||'').replace(/'/g, "\\'")}', ${req.amount}, '${req.dueDate||''}', ${req.qty||0}, '${req.iouType||'full'}')" class="flex-1 bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive text-center">Approve</button>
                                     <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
-                                </div>
-                            </div>`; 
-                        } else {
-                            list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
-                                <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span>
-                                <div class="space-x-1">
-                                    <button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive">Fulfill</button>
-                                    <button onclick="window.dismissReq('${d.id}')" class="bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive">Dismiss</button>
-                                </div>
-                            </div>`;
-                        }
+									</div>
+</div>;  } else { list.innerHTML += <div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
+<span class="font-bold dark:text-white">${req.name} &lt;span class=&quot;text-xs font-normal text-gray-500 ml-2&quot;&gt;Needs weight&lt;/span&gt;&lt;/span&gt;
+&lt;div class=&quot;space-x-1&quot;&gt;
+&lt;button onclick=&quot;window.fulfillReq(&#39;${d.id}', '${req.uid}&#39;)&quot; class=&quot;bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive&quot;&gt;Fulfill&lt;/button&gt;
+&lt;button onclick=&quot;window.dismissReq(&#39;${d.id}')" class="bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive">Dismiss</button>
+</div>
+</div>`;
+}
+}
+});
+if(count > 0) {
+section.classList.remove('hidden');
+document.getElementById('admin-req-badge').classList.remove('hidden');
+} else {
+section.classList.add('hidden');
+document.getElementById('admin-req-badge').classList.add('hidden');
+}
+});
+}
+window.loadGlobalAnalytics = async () => {
+        let allTx = [];
+        // Admin's own
+        if(adminData && adminData.transactions) allTx.push(...adminData.transactions);
+
+        // Fetch staff historical states
+        for(const u of globalRoster) {
+            if(u.role !== 'admin') {
+                try {
+                    const snap = await getDoc(doc(db, 'artifacts', appId, 'users', u.id, 'data', 'app_state'));
+                    if(snap.exists()) {
+                        const dat = JSON.parse(snap.data().json);
+                        if(dat.transactions) allTx.push(...dat.transactions);
                     }
-                });
-                if(count > 0) {
-                    section.classList.remove('hidden');
-                    document.getElementById('admin-req-badge').classList.remove('hidden');
-                } else {
-                    section.classList.add('hidden');
-                    document.getElementById('admin-req-badge').classList.add('hidden');
+                } catch(e) {}
+            }
+        }
+
+        const stats = calculateAnalytics(allTx);
+        
+        document.getElementById('admin-pieces-today').innerText = stats[0].pieces;
+        document.getElementById('admin-pieces-week').innerText = stats[1].pieces;
+        document.getElementById('admin-pieces-month').innerText = stats[2].pieces;
+
+        const ctx = document.getElementById('adminProfitChart');
+        if(!ctx) return;
+        
+        if(adminProfitChartInst) adminProfitChartInst.destroy();
+        adminProfitChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: stats.map(s => s.label),
+                datasets: [
+                    { label: 'Revenue', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, // Green
+                    { label: 'Cost/Exp', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, // Red
+                    { label: 'Net Profit', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 }  // Purple
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } 
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    };
+
+    function updateAdminOverallChart(roster) {
+        const ctx = document.getElementById('adminOverallChart');
+        if(!ctx) return;
+        
+        const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin');
+        const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name);
+        const data = activeStaff.map(u => u.collected || 0);
+
+        if(adminOverallChartInst) adminOverallChartInst.destroy();
+        adminOverallChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Collected ($)',
+                    data: data,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // --- NEW IOU / FINANCED LOGIC ---
+    window.prepareApproveIOU = (reqId, clientName, contact, amount, dueDate, qty, type) => {
+        document.getElementById('iou-name').value = clientName;
+        document.getElementById('iou-contact').value = contact;
+        document.getElementById('iou-amt').value = amount;
+        document.getElementById('iou-date').value = dueDate;
+        document.getElementById('iou-qty').value = qty || '';
+        document.getElementById('iou-type').value = type || 'full';
+        document.getElementById('iou-request-id').value = reqId; 
+        document.getElementById('iou-edit-id').value = ''; 
+        document.getElementById('admin-iou-modal').classList.remove('hidden');
+    };
+
+    window.prepareEditIOU = (id) => {
+        const client = (masterData.financedClients || []).find(c => c.id === id);
+        if(!client) return;
+        document.getElementById('iou-name').value = client.name;
+        document.getElementById('iou-contact').value = client.contact || '';
+        document.getElementById('iou-amt').value = client.amount;
+        document.getElementById('iou-date').value = client.dueDate || '';
+        document.getElementById('iou-qty').value = client.qty || '';
+        document.getElementById('iou-type').value = client.type || 'full';
+        document.getElementById('iou-edit-id').value = client.id;
+        document.getElementById('iou-request-id').value = '';
+        document.getElementById('admin-iou-modal').classList.remove('hidden');
+    };
+
+    window.saveAdminIOU = async () => {
+        const name = document.getElementById('iou-name').value;
+        const contact = document.getElementById('iou-contact').value;
+        const amt = parseFloat(document.getElementById('iou-amt').value);
+        const date = document.getElementById('iou-date').value;
+        const qty = parseFloat(document.getElementById('iou-qty').value) || 0;
+        const type = document.getElementById('iou-type').value;
+
+        const reqId = document.getElementById('iou-request-id')?.value;
+        const editId = document.getElementById('iou-edit-id')?.value;
+
+        if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
+        
+        let newClients = [...(masterData.financedClients || [])];
+        
+        if (editId) {
+            // Edit existing
+            newClients = newClients.map(c => c.id == editId ? { ...c, name, contact, amount: amt, dueDate: date, qty, type } : c);
+        } else {
+            // Add new
+            newClients.push({ id: Date.now(), name, contact, amount: amt, dueDate: date, qty, type, isPaid: false });
+        }
+        
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: newClients }, {merge:true});
+        
+        if(reqId) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
+            document.getElementById('iou-request-id').value = '';
+        }
+
+        document.getElementById('admin-iou-modal').classList.add('hidden');
+        document.getElementById('iou-name').value = '';
+        document.getElementById('iou-contact').value = '';
+        document.getElementById('iou-amt').value = '';
+        document.getElementById('iou-date').value = '';
+        document.getElementById('iou-qty').value = '';
+        document.getElementById('iou-edit-id').value = '';
+        window.showToast("Client IOU Saved!");
+    };
+
+    window.adminToggleIOU = async (id) => {
+        const clients = (masterData.financedClients || []).map(c => c.id === id ? { ...c, isPaid: !c.isPaid } : c);
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: clients }, {merge:true});
+    };
+
+    window.adminRemoveIOU = async (id) => {
+        if(!confirm("Remove this client record entirely?")) return;
+        const clients = (masterData.financedClients || []).filter(c => c.id !== id);
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: clients }, {merge:true});
+    };
+
+    window.updateIOUUI = () => {
+        if (!document.getElementById('admin-view-ious')) return;
+
+        const list = document.getElementById('iou-list');
+        list.innerHTML = '';
+        let totalOwed = 0;
+        let overdueCount = 0;
+        let dueSoonCount = 0;
+
+        if (masterData.financedClients && masterData.financedClients.length > 0) {
+            // Sort by due date (earliest first, blanks at end)
+            let clients = [...masterData.financedClients];
+            clients.sort((a,b) => {
+                const da = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+                const db = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+                return da - db;
+            });
+
+            clients.forEach(c => {
+                if (!c.isPaid) totalOwed += c.amount;
+                
+                const now = new Date(); now.setHours(0,0,0,0);
+                let diffDays = null;
+                let cardClass = 'bg-white border-blue-200 dark:bg-gray-800 dark:border-blue-800';
+                let dateColor = 'text-gray-500';
+
+                if (c.dueDate) {
+                    const due = new Date(c.dueDate); 
+                    // Fix timezone offset issues for precise day calc
+                    const utcDue = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+                    const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+                    diffDays = Math.floor((utcDue - utcNow) / (1000 * 60 * 60 * 24));
                 }
+
+                if (!c.isPaid && diffDays !== null) {
+                    if (diffDays < 0) {
+                        cardClass = 'bg-red-50 border-red-400 dark:bg-red-900/30 dark:border-red-600';
+                        dateColor = 'text-red-600 dark:text-red-400 font-bold';
+                        overdueCount++;
+                    } else if (diffDays <= 1) {
+                        cardClass = 'bg-orange-50 border-orange-400 dark:bg-orange-900/30 dark:border-orange-600';
+                        dateColor = 'text-orange-600 dark:text-orange-400 font-bold';
+                        dueSoonCount++;
+                    }
+                }
+
+                if (c.isPaid) {
+                    cardClass = 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60';
+                }
+
+                const dateDisplay = c.dueDate ? `<div class="text-[10px] ${dateColor} mt-1"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>Due: ${new Date(c.dueDate).toLocaleDateString()}</div>` : '';
+                const contactDisplay = c.contact ? `<div class="text-[10px] text-gray-500"><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i>${c.contact}</div>` : '';
+                const pieceDisplay = c.qty ? `<span class="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 font-bold tracking-wider uppercase">${c.qty} ${c.type}</span>` : '';
+
+                list.innerHTML += `
+                <div class="flex justify-between items-center p-4 rounded-xl border ${cardClass} shadow-sm mb-2 transition">
+                    <div class="flex items-start">
+                        <input type="checkbox" ${c.isPaid ? 'checked' : ''} onchange="window.adminToggleIOU(${c.id})" class="w-5 h-5 mr-3 mt-0.5 accent-blue-600 cursor-pointer">
+                        <div>
+                            <span class="font-bold ${c.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm flex items-center mb-1">${c.name} ${pieceDisplay}</span>
+                            ${contactDisplay}
+                            ${dateDisplay}
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end justify-between h-full">
+                        <span class="font-black ${c.isPaid ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'} text-lg mb-2">$${c.amount.toFixed(2)}</span>
+                        <div class="flex space-x-1">
+                            <button onclick="window.prepareEditIOU(${c.id})" class="text-blue-400 hover:text-blue-600 bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg transition btn-interactive"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="window.adminRemoveIOU(${c.id})" class="text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg transition btn-interactive"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        } else {
+            list.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 italic">No financed items / IOUs recorded.</div>';
+        }
+
+        document.getElementById('iou-total-owed').innerText = `$${totalOwed.toFixed(2)}`;
+
+        // Update Tab Indicator
+        const iouTab = document.getElementById('adm-tab-ious');
+        if (overdueCount > 0 || dueSoonCount > 0) {
+            const dotColor = overdueCount > 0 ? 'bg-red-500' : 'bg-orange-500';
+            iouTab.innerHTML = `<i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span> <span class="absolute top-1 right-2 w-2 h-2 ${dotColor} rounded-full animate-pulse shadow-sm"></span>`;
+        } else {
+            iouTab.innerHTML = `<i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span>`;
+        }
+
+        lucide.createIcons();
+    };
+
+    // --- NEW FINANCE TAB LOGIC ---
+    function updateFinanceUI() {
+        if (!document.getElementById('admin-view-finance')) return;
+        
+        // 1. Gather Totals
+        let staffFull = 0, staffUsual = 0, teamCollected = 0;
+        globalRoster.forEach(u => {
+            if (u.role !== 'admin') {
+                staffFull += (u.unitsFull || 0);
+                staffUsual += (u.unitsUsual || 0);
+            }
+            teamCollected += (u.collected || 0);
+        });
+
+        const totalFull = (masterData.unitsFull || 0) + staffFull;
+        const totalUsual = (masterData.unitsUsual || 0) + staffUsual;
+
+        // Display Unit Counts
+        document.getElementById('proj-full-count').innerText = totalFull;
+        document.getElementById('proj-usual-count').innerText = totalUsual;
+
+        // Calculations
+        const priceFull = masterData.pricePerUnit;
+        const priceUsual = masterData.pricePerUnit * masterData.usualRatio;
+        
+        // Standard Projection
+        const projFullStd = totalFull * priceFull;
+        const projUsualStd = totalUsual * priceUsual;
+        const totalProjStd = projFullStd + projUsualStd;
+
+        // What If Projection (Both x100)
+        const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
+        
+        document.getElementById('proj-std-total').innerText = `$${totalProjStd.toLocaleString()}`;
+        document.getElementById('proj-whatif-total').innerText = `$${totalWhatIf.toLocaleString()}`;
+
+        // Balance Manager DOM
+        document.getElementById('finance-cash-balance').innerText = `$${(masterData.cashBalance || 0).toFixed(2)}`;
+        
+        const liabList = document.getElementById('finance-liabilities-list');
+        liabList.innerHTML = '';
+        
+        let unpaidTotal = 0;
+
+        if (masterData.liabilities && masterData.liabilities.length > 0) {
+            masterData.liabilities.forEach(l => {
+                if(!l.isPaid) unpaidTotal += l.amount;
+                const recurringBadge = l.isRecurring ? `<span class="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Recurring</span>` : '';
+                const dateDisplay = l.dueDate ? `<div class="text-[10px] text-gray-500 mt-1">Due: ${new Date(l.dueDate).toLocaleDateString()}</div>` : '';
+
+                liabList.innerHTML += `
+                <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
+                    <div class="flex items-start">
+                        <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 mt-1 accent-purple-600 cursor-pointer">
+                        <div>
+                            <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name} ${recurringBadge}</span>
+                            ${dateDisplay}
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
+                        <button onclick="window.adminRemoveLiability(${l.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
+            });
+        } else {
+            liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>';
+        }
+
+        document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
+        const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
+        document.getElementById('finance-net-after-bills').innerText = `$${netAfterBills.toFixed(2)}`;
+        if(netAfterBills < 0) document.getElementById('finance-net-after-bills').classList.replace('text-green-600', 'text-red-500');
+        else document.getElementById('finance-net-after-bills').classList.replace('text-red-500', 'text-green-600');
+
+        lucide.createIcons();
+    }
+
+    window.adminUpdateCash = async () => {
+        const current = masterData.cashBalance || 0;
+        const amt = parseFloat(prompt(`Current Master Cash: $${current}\n\nEnter amount to add/subtract (use negative number to subtract):`, "0"));
+        if(isNaN(amt)) return;
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
+    };
+
+    window.prepareApproveBill = (reqId, desc, amount) => {
+        document.getElementById('bill-name').value = desc;
+        document.getElementById('bill-amt').value = amount;
+        document.getElementById('bill-request-id').value = reqId; // Store link to dismiss after
+        document.getElementById('admin-bill-modal').classList.remove('hidden');
+    };
+
+    window.saveAdminBill = async () => {
+        const name = document.getElementById('bill-name').value;
+        const amt = parseFloat(document.getElementById('bill-amt').value);
+        const date = document.getElementById('bill-date').value;
+        const isRecurring = document.getElementById('bill-recurring').checked;
+        const reqId = document.getElementById('bill-request-id').value;
+
+        if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter valid bill details.");
+        
+        const newLiabs = [...(masterData.liabilities || []), { id: Date.now(), name, amount: amt, dueDate: date, isRecurring, isPaid: false }];
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: newLiabs }, {merge:true});
+        
+        if(reqId) {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
+        }
+
+        document.getElementById('admin-bill-modal').classList.add('hidden');
+        document.getElementById('bill-name').value = '';
+        document.getElementById('bill-amt').value = '';
+        document.getElementById('bill-date').value = '';
+        document.getElementById('bill-recurring').checked = false;
+        document.getElementById('bill-request-id').value = '';
+        window.showToast("Bill Priority Added!");
+    };
+
+    window.adminToggleLiability = async (id) => {
+        const liabs = (masterData.liabilities || []).map(l => l.id === id ? { ...l, isPaid: !l.isPaid } : l);
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
+    };
+
+    window.adminRemoveLiability = async (id) => {
+        if(!confirm("Remove this liability from list?")) return;
+        const liabs = (masterData.liabilities || []).filter(l => l.id !== id);
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
+    };
+
+
+    // Admin Master Inventory Controls
+    window.saveInventoryAdjustment = async () => {
+        const type = document.getElementById('adj-item-type').value; // 'rawWeight', 'unitsFull', 'unitsUsual'
+        const action = document.getElementById('adj-action').value; // 'add', 'remove', 'set'
+        const amt = parseFloat(document.getElementById('adj-amt').value);
+
+        if(isNaN(amt) || amt < 0) return window.showToast("Please enter a valid amount.");
+
+        const currentVal = masterData[type] || 0;
+        let newVal = currentVal;
+
+        if (action === 'add') {
+            newVal = currentVal + amt;
+        } else if (action === 'remove') {
+            newVal = currentVal - amt;
+            if(newVal < 0) newVal = 0; // Prevent negative inventory via UI
+        } else if (action === 'set') {
+            newVal = amt;
+        }
+
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[type]: newVal}, {merge:true});
+        
+        document.getElementById('admin-adjust-modal').classList.add('hidden');
+        document.getElementById('adj-amt').value = '';
+        window.showToast("Inventory Adjusted Successfully");
+    };
+
+    window.adminPurchaseStock = async (weight, cost) => {
+        if (weight === 'custom') {
+            weight = parseFloat(prompt("Enter custom weight amount (units):"));
+            if (isNaN(weight) || weight <= 0) return;
+            cost = parseFloat(prompt("Enter total cost of purchase ($):"));
+            if (isNaN(cost) || cost < 0) return;
+        }
+        if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
+        
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{
+            rawWeight: increment(weight),
+            totalExpenses: increment(cost),
+            cashBalance: increment(-cost)
+        }, {merge:true});
+        
+        window.showToast(`Restocked ${weight} units for $${cost}. Cash Balance updated.`);
+    };
+
+    window.adminSetVariable = async (field, label) => {
+        const v = prompt(`Set ${label}:`, masterData[field]);
+        if(v && !isNaN(v)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true});
+    };
+
+    window.adminProcessUnits = async () => {
+        const type = document.getElementById('process-type').value;
+        const qty = parseInt(document.getElementById('process-qty').value);
+        
+        if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
+        
+        const wpu = type === 'full' ? 1.0 : masterData.usualRatio;
+        const totalW = qty * wpu;
+        
+        if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
+
+        const updateData = { rawWeight: increment(-totalW) };
+        if (type === 'full') updateData.unitsFull = increment(qty);
+        else updateData.unitsUsual = increment(qty);
+
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
+        
+        document.getElementById('process-qty').value = '';
+        window.showToast(`Processed ${qty} ${type} units.`);
+    };
+
+    // ADMIN TERMINAL SALE LOGIC
+    window.admUpdateMasterLabels = () => {
+        const labelFull = document.getElementById('adm-label-full-weight');
+        const labelUsual = document.getElementById('adm-label-usual-weight');
+        const expHint = document.getElementById('adm-expected-money-hint');
+        
+        if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`;
+        if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * masterData.usualRatio).toFixed(1)} units)`;
+        
+        const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+        if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
+    };
+
+    window.admSelectQty = (q) => {
+        admCurrentQty = q;
+        document.querySelectorAll('.adm-qty-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`adm-btn-qty-${q}`).classList.add('active');
+        window.admUpdateMasterLabels();
+        window.admCheckPriceColor();
+    };
+
+    window.admSelectType = (t) => {
+        admCurrentType = t;
+        document.querySelectorAll('.adm-type-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`adm-btn-type-${t}`).classList.add('active');
+        window.admUpdateMasterLabels();
+        window.admCheckPriceColor();
+    };
+
+    window.admCheckPriceColor = () => {
+        const input = document.getElementById('adm-money-input');
+        const val = parseFloat(input.value) || 0;
+        const perUnit = val / admCurrentQty;
+        
+        input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
+
+        if (val === 0) {
+            input.classList.add('dark:text-white', 'text-gray-800');
+            return;
+        }
+
+        if (admCurrentType === 'usual') {
+            const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
+            if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
+            else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
+            else input.classList.add('text-green-500', 'dark:text-green-500');
+        } else {
+            if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500');
+            else input.classList.add('text-green-500', 'dark:text-green-500');
+        }
+    };
+
+    window.admSetQuickPrice = (pricePerUnit) => {
+        const input = document.getElementById('adm-money-input');
+        input.value = pricePerUnit * admCurrentQty;
+        window.admCheckPriceColor();
+    };
+
+    window.adminProcessSale = async () => {
+        const source = document.getElementById('adm-sale-source').value;
+        const moneyInput = document.getElementById('adm-money-input');
+        const money = parseFloat(moneyInput.value);
+        if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
+
+        let actualWeightDeducted = 0;
+        const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+
+        const updateMaster = {};
+
+        if (source === 'raw') {
+            actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
+            if(masterData.rawWeight < actualWeightDeducted) return window.showToast(`Not enough Master Raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
+            updateMaster.rawWeight = increment(-actualWeightDeducted);
+        } else if (source === 'processed' && admCurrentType === 'full') {
+            if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master Vault!");
+            updateMaster.unitsFull = increment(-admCurrentQty);
+            actualWeightDeducted = admCurrentQty * 1.0;
+        } else if (source === 'processed' && admCurrentType === 'usual') {
+            if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master Vault!");
+            updateMaster.unitsUsual = increment(-admCurrentQty);
+            actualWeightDeducted = admCurrentQty * masterData.usualRatio;
+        }
+
+        // Add money straight into master cash balance from admin sales
+        updateMaster.cashBalance = increment(money);
+
+        // Deduct from Master Vault & Update Cash
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
+
+        const expectedMoney = admCurrentQty * unitPrice;
+
+        if (source === 'raw') {
+            adminData.soldWeight += actualWeightDeducted;
+        } else if (source === 'processed' && admCurrentType === 'full') {
+            adminData.soldUnitsFull += admCurrentQty;
+        } else if (source === 'processed' && admCurrentType === 'usual') {
+            adminData.soldUnitsUsual += admCurrentQty;
+        }
+
+        adminData.collected += money;
+        adminData.expected += expectedMoney;
+
+        adminData.transactions.push({
+            id: Date.now(),
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            source: source,
+            qty: admCurrentQty,
+            type: admCurrentType,
+            actualWeight: actualWeightDeducted,
+            money: money,
+            expected: expectedMoney
+        });
+
+        moneyInput.value = '';
+        await saveAdminData();
+        window.showToast("Admin Sale Complete! Master Cash Updated.");
+    };
+
+    window.adminPersonalUseUnified = async () => {
+        const source = document.getElementById('adm-sale-source').value;
+        const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+        
+        if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
+
+        let actualWeightDeducted = 0;
+        let standardCost = admCurrentQty * unitPrice;
+        const updateMaster = {};
+
+        if (source === 'raw') {
+            actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
+            if(masterData.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
+            updateMaster.rawWeight = increment(-actualWeightDeducted);
+        } else if (source === 'processed' && admCurrentType === 'full') {
+            if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
+            updateMaster.unitsFull = increment(-admCurrentQty);
+            actualWeightDeducted = admCurrentQty * 1.0;
+        } else if (source === 'processed' && admCurrentType === 'usual') {
+            if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
+            updateMaster.unitsUsual = increment(-admCurrentQty);
+            actualWeightDeducted = admCurrentQty * masterData.usualRatio;
+        }
+
+        // Deduct Master Vault
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
+
+        const discountMultiplier = 1 - (masterData.adminDiscount / 100);
+        const discountedDebt = standardCost * discountMultiplier;
+        
+        adminData.personalUseWeight = (adminData.personalUseWeight || 0) + actualWeightDeducted;
+        adminData.expected += discountedDebt;
+        adminData.personalUseOwed = (adminData.personalUseOwed || 0) + discountedDebt;
+        
+        adminData.transactions.push({
+            id: Date.now(),
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            source: source,
+            qty: admCurrentQty,
+            type: 'personal',
+            actualWeight: actualWeightDeducted,
+            money: 0,
+            expected: discountedDebt
+        });
+        
+        await saveAdminData();
+        window.showToast(`Admin Personal Use Logged (${admCurrentType.toUpperCase()}).`);
+    };
+
+    async function saveAdminData() { 
+        if(!currentUser) return; 
+        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { json: JSON.stringify(adminData), lastUpdated: Date.now() }); 
+        try { 
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
+                soldWeight: adminData.soldWeight,
+                soldUnitsFull: adminData.soldUnitsFull || 0,
+                soldUnitsUsual: adminData.soldUnitsUsual || 0,
+                personalUseWeight: adminData.personalUseWeight || 0,
+                personalUseOwed: adminData.personalUseOwed || 0,
+                borrowings: adminData.borrowings || 0,
+                cashDropped: adminData.cashDropped || 0,
+                collected: adminData.collected,
+                expected: adminData.expected,
+                recentLogs: adminData.transactions.slice(-10).reverse(),
+                lastSync: Date.now() 
+            }, { merge: true }); 
+        } catch(e){} 
+    }
+
+    function renderAdminTerminalUI() {
+        document.getElementById('admin-stat-sold-raw').innerText = (adminData.soldWeight || 0).toFixed(1);
+        document.getElementById('admin-stat-sold-full').innerText = (adminData.soldUnitsFull || 0);
+        document.getElementById('admin-stat-sold-usual').innerText = (adminData.soldUnitsUsual || 0);
+        
+        document.getElementById('admin-stat-money').innerText = `$${adminData.collected || 0}`;
+        document.getElementById('admin-stat-debt').innerText = `$${adminData.personalUseOwed || 0}`;
+        
+        const diff = (adminData.expected || 0) - (adminData.collected || 0);
+        const warn = document.getElementById('admin-shortage-warning');
+        if(diff > 0) {
+            warn.classList.remove('hidden');
+            document.getElementById('admin-shortage-amount').innerText = `$${diff.toFixed(2)}`;
+        } else {
+            warn.classList.add('hidden');
+        }
+
+        // Chart
+        const ctx = document.getElementById('adminTerminalChart');
+        if(ctx) {
+            const sales = adminData.transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
+            const labels = sales.map(t => t.time);
+            const data = sales.map(t => t.money);
+
+            if(adminTerminalChartInst) adminTerminalChartInst.destroy();
+            adminTerminalChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sale ($)',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2, fill: true, tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
-        function updateAdminOverallChart(roster) {
-            const ctx = document.getElementById('adminOverallChart');
-            if(!ctx) return;
-            
-            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin');
-            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name);
-            const data = activeStaff.map(u => u.collected || 0);
+        // Logs
+        const list = document.getElementById('admin-log-list');
+        list.innerHTML = '';
+        const reversed = [...adminData.transactions].reverse();
+        reversed.forEach(t => {
+            if(t.type === 'personal') {
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800"><div><div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Debt</div><div class="text-xs text-gray-500">${t.time} • ${masterData.adminDiscount}% Discount</div></div><div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div></div>`;
+            } else {
+                const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
+                const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2 border border-gray-200 dark:border-gray-600"><div><div class="font-bold dark:text-white">Sold ${t.qty} <span class="text-[10px] ${color} uppercase tracking-wider ml-1">(${label})</span></div><div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)} u</div></div><div class="text-right"><div class="font-black text-green-600">+$${t.money}</div></div></div>`;
+            }
+        });
+        if(reversed.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
+        lucide.createIcons();
+    }
 
-            if(adminOverallChartInst) adminOverallChartInst.destroy();
-            adminOverallChartInst = new Chart(ctx, {
+    // Admin Staff Approval
+    window.adminSetStatus = async (uid, status) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status }); window.showToast("Status updated"); };
+    window.adminDelUser = async (uid) => { if(confirm("Delete user?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); };
+
+    // Admin Transfers
+    window.fulfillReq = async (reqId, uid) => { 
+        window.switchAdminTab('transfers');
+        document.getElementById('transfer-staff-select').value = uid; 
+        window.updateTransferPreview(); 
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId), { status: 'completed' }); 
+    };
+    window.dismissReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', id)); };
+
+    window.updateTransferPreview = () => {
+        const uid = document.getElementById('transfer-staff-select').value;
+        const el = document.getElementById('transfer-preview');
+        const u = globalRoster.find(x => x.id === uid);
+        if(u) {
+            const type = document.getElementById('transfer-item-type').value;
+            let h = 0; let label = "";
+            if(type === 'raw') { h = u.weight||0; label = 'g'; }
+            else if(type === 'full') { h = u.unitsFull||0; label = 'units'; }
+            else if(type === 'usual') { h = u.unitsUsual||0; label = 'units'; }
+            el.innerText = `Current Staff Holding: ${h.toFixed(1)} ${label}`;
+        } else { el.innerText = ''; }
+    };
+
+    window.adminTransferWeight = async (action) => {
+        const uid = document.getElementById('transfer-staff-select').value;
+        const amt = parseFloat(document.getElementById('transfer-amount').value);
+        const type = document.getElementById('transfer-item-type').value; // 'raw', 'full', 'usual'
+
+        if(!uid || isNaN(amt) || amt <= 0) return window.showToast("Select staff and valid amount");
+        
+        const r = doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
+        const sn = await getDoc(r); 
+        let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, cashDropped: 0, transactions:[]}; 
+
+        // Map keys
+        let adminKey = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+        let staffKey = type === 'raw' ? 'weight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+
+        if (action === 'send') {
+            if((masterData[adminKey] || 0) < amt) {
+                if(!confirm(`Warning: Master vault only has ${(masterData[adminKey]||0).toFixed(1)} of this item. Proceed anyway?`)) return;
+            }
+            // Deduct Master, Add to Staff
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(-amt)},{merge:true}); 
+            dat[staffKey] = (dat[staffKey]||0) + amt;
+            window.showToast(`Sent ${amt} to staff.`);
+            window.sendNotificationAlert(uid, `Admin sent you ${amt} units of inventory.`);
+        } else if (action === 'reclaim') {
+            if((dat[staffKey] || 0) < amt) return window.showToast("Staff does not have that much inventory to reclaim!");
+            // Add to Master, Deduct from Staff
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(amt)},{merge:true}); 
+            dat[staffKey] = (dat[staffKey]||0) - amt;
+            window.showToast(`Reclaimed ${amt} from staff.`);
+            window.sendNotificationAlert(uid, `Admin reclaimed ${amt} units of inventory.`);
+        }
+        
+        // Save private
+        await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
+        // Save public
+        await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), {
+            weight: dat.weight, unitsFull: dat.unitsFull, unitsUsual: dat.unitsUsual
+        }, {merge:true}); 
+        
+        document.getElementById('transfer-amount').value = '';
+        window.updateTransferPreview();
+    };
+
+    // Admin Log Cash Advance / Debt
+    window.adminAddBorrowing = async () => {
+        if(!currentDetailUid) return;
+        const desc = prompt("What is this Debt / Cash Advance for?");
+        if(!desc) return;
+        const amt = parseFloat(prompt(`How much debt to add to this staff member? ($)`));
+        if(isNaN(amt) || amt <= 0) return;
+
+        const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
+        const sn = await getDoc(r); 
+        if(sn.exists()) {
+            let dat = JSON.parse(sn.data().json);
+            dat.borrowings = (dat.borrowings || 0) + amt;
+            dat.expected = (dat.expected || 0) + amt;
+            
+            dat.transactions.push({
+                id: Date.now(),
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                qty: 0, type: 'borrowing', actualWeight: 0, money: 0, expected: amt, desc: desc
+            });
+
+            // INSTANT UI FIX: Update local roster cache before Firestore sync finishes
+            const uIndex = globalRoster.findIndex(x => x.id === currentDetailUid);
+            if(uIndex > -1) {
+                globalRoster[uIndex].borrowings = dat.borrowings;
+                globalRoster[uIndex].expected = dat.expected;
+                globalRoster[uIndex].recentLogs = dat.transactions.slice(-10).reverse();
+            }
+
+            await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {
+                borrowings: dat.borrowings,
+                expected: dat.expected,
+                recentLogs: dat.transactions.slice(-10).reverse()
+            }, {merge:true}); 
+            
+            window.showToast("Debt added to staff member.");
+            window.sendNotificationAlert(currentDetailUid, `Admin logged a $${amt} cash advance/debt to your account.`);
+            window.viewDriverDetails(currentDetailUid); // Refresh view instantly
+        }
+    };
+
+    // Admin Detail View
+    window.viewDriverDetails = (uid) => { 
+        const d = globalRoster.find(x => x.id === uid); 
+        if(!d) return; 
+        currentDetailUid = uid; 
+        document.getElementById('admin-user-detail').classList.remove('hidden'); 
+        document.getElementById('detail-user-name').innerText = d.name; 
+        
+        // Holdings
+        document.getElementById('det-holding-raw').innerText = (d.weight||0).toFixed(1);
+        document.getElementById('det-holding-full').innerText = (d.unitsFull||0);
+        document.getElementById('det-holding-usual').innerText = (d.unitsUsual||0);
+        
+        // Sold Totals
+        document.getElementById('det-sold-raw').innerText = (d.soldWeight||0).toFixed(1);
+        document.getElementById('det-sold-full').innerText = (d.soldUnitsFull||0);
+        document.getElementById('det-sold-usual').innerText = (d.soldUnitsUsual||0);
+        
+        document.getElementById('det-expected').innerText = `$${(d.expected||0).toFixed(2)}`;
+        
+        // Fix: Protect against missing elements causing silent JS crash
+        const elPers = document.getElementById('det-personal-owed'); if(elPers) elPers.innerText = `$${(d.personalUseOwed||0).toFixed(2)}`;
+        const elBorr = document.getElementById('det-borrowings'); if(elBorr) elBorr.innerText = `$${(d.borrowings||0).toFixed(2)}`;
+        
+        document.getElementById('det-collected').innerText = `$${(d.collected||0).toFixed(2)}`;
+        document.getElementById('det-expenses').innerText = `-$${(d.expenses||0).toFixed(2)}`;
+        document.getElementById('det-cash-dropped').innerText = `-$${(d.cashDropped||0).toFixed(2)}`;
+        
+        // Commission & Debt Calculation
+        const grossComm = (d.collected || 0) * ((masterData.staffCommission || 0) / 100);
+        const totalDebt = (d.personalUseOwed || 0) + (d.borrowings || 0);
+        
+        const appliedToDebt = Math.min(grossComm, totalDebt);
+        const netComm = grossComm - appliedToDebt;
+        const remainingDebt = totalDebt - appliedToDebt;
+
+        document.getElementById('det-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+        document.getElementById('det-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+        document.getElementById('det-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+        document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+        document.getElementById('det-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+
+        const netCash = (d.collected||0) - (d.expenses||0) - netComm - (d.cashDropped||0);
+        document.getElementById('det-net-cash').innerText = `$${netCash.toFixed(2)}`;
+
+        const diff = (d.expected||0) - (d.collected||0);
+        const box = document.getElementById('det-diff-box');
+        const diffEl = document.getElementById('det-diff');
+        
+        if(diff > 0) {
+            box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 mb-4";
+            diffEl.innerText = `-$${diff.toFixed(2)} (Short)`;
+        } else if (diff < 0) {
+            box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 mb-4";
+            diffEl.innerText = `+$${Math.abs(diff).toFixed(2)} (Over)`;
+        } else {
+            box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 mb-4";
+            diffEl.innerText = `$0 (Perfect)`;
+        }
+        
+        // Update Detail Chart
+        const ctx = document.getElementById('adminDetailChart');
+        if(ctx && d.recentLogs) {
+            const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
+            const labels = sales.map(t => t.time);
+            const data = sales.map(t => t.money);
+
+            if(adminDetailChartInst) adminDetailChartInst.destroy();
+            adminDetailChartInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Collected ($)',
+                        label: 'Sale ($)',
                         data: data,
-                        backgroundColor: '#3b82f6',
+                        backgroundColor: '#8b5cf6',
                         borderRadius: 4
                     }]
                 },
@@ -2125,817 +3155,66 @@
                 }
             });
         }
+    };
 
-        // --- NEW IOU / FINANCED LOGIC ---
-        window.prepareApproveIOU = (reqId, clientName, contact, amount, dueDate) => {
-            document.getElementById('iou-name').value = clientName;
-            document.getElementById('iou-contact').value = contact;
-            document.getElementById('iou-amt').value = amount;
-            document.getElementById('iou-date').value = dueDate;
-            document.getElementById('iou-request-id').value = reqId; 
-            document.getElementById('admin-iou-modal').classList.remove('hidden');
-        };
+    window.adminClearStaffData = async () => {
+        if(!currentDetailUid) return;
+        if(!confirm("Are you sure? This sets their expected, collected, and sold items to 0. (Does not affect Holding Inventory)")) return;
 
-        window.saveAdminIOU = async () => {
-            const name = document.getElementById('iou-name').value;
-            const contact = document.getElementById('iou-contact').value;
-            const amt = parseFloat(document.getElementById('iou-amt').value);
-            const date = document.getElementById('iou-date').value;
-            const reqId = document.getElementById('iou-request-id')?.value;
-
-            if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
+        const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
+        const sn = await getDoc(r); 
+        if(sn.exists()) {
+            let dat = JSON.parse(sn.data().json);
+            dat.soldWeight = 0; dat.soldUnitsFull = 0; dat.soldUnitsUsual = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.borrowings = 0; dat.expenses = 0; dat.cashDropped = 0; dat.transactions = [];
             
-            const newClients = [...(masterData.financedClients || []), { 
-                id: Date.now(), name, contact, amount: amt, dueDate: date, isPaid: false 
-            }];
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: newClients }, {merge:true});
-            
-            if(reqId) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
-                document.getElementById('iou-request-id').value = '';
+            // INSTANT UI FIX: Update local roster cache before Firestore sync finishes
+            const uIndex = globalRoster.findIndex(x => x.id === currentDetailUid);
+            if(uIndex > -1) {
+                globalRoster[uIndex].soldWeight = 0; globalRoster[uIndex].soldUnitsFull = 0; globalRoster[uIndex].soldUnitsUsual = 0;
+                globalRoster[uIndex].collected = 0; globalRoster[uIndex].expected = 0; globalRoster[uIndex].personalUseOwed = 0;
+                globalRoster[uIndex].borrowings = 0; globalRoster[uIndex].expenses = 0; globalRoster[uIndex].cashDropped = 0;
+                globalRoster[uIndex].recentLogs = [];
             }
 
-            document.getElementById('admin-iou-modal').classList.add('hidden');
-            document.getElementById('iou-name').value = '';
-            document.getElementById('iou-contact').value = '';
-            document.getElementById('iou-amt').value = '';
-            document.getElementById('iou-date').value = '';
-            window.showToast("Client IOU Added!");
-        };
-
-        window.adminToggleIOU = async (id) => {
-            const clients = (masterData.financedClients || []).map(c => c.id === id ? { ...c, isPaid: !c.isPaid } : c);
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: clients }, {merge:true});
-        };
-
-        window.adminRemoveIOU = async (id) => {
-            if(!confirm("Remove this client record entirely?")) return;
-            const clients = (masterData.financedClients || []).filter(c => c.id !== id);
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { financedClients: clients }, {merge:true});
-        };
-
-        window.updateIOUUI = () => {
-            if (!document.getElementById('admin-view-ious')) return;
-
-            const list = document.getElementById('iou-list');
-            list.innerHTML = '';
-            let totalOwed = 0;
-
-            if (masterData.financedClients && masterData.financedClients.length > 0) {
-                masterData.financedClients.forEach(c => {
-                    if (!c.isPaid) totalOwed += c.amount;
-                    
-                    const dateDisplay = c.dueDate ? `<div class="text-[10px] text-gray-500 mt-1"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>Due: ${new Date(c.dueDate).toLocaleDateString()}</div>` : '';
-                    const contactDisplay = c.contact ? `<div class="text-[10px] text-gray-500"><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i>${c.contact}</div>` : '';
-
-                    list.innerHTML += `
-                    <div class="flex justify-between items-center p-4 rounded-xl border ${c.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-blue-200 dark:bg-gray-800 dark:border-blue-800'} shadow-sm mb-2 transition">
-                        <div class="flex items-start">
-                            <input type="checkbox" ${c.isPaid ? 'checked' : ''} onchange="window.adminToggleIOU(${c.id})" class="w-5 h-5 mr-3 mt-0.5 accent-blue-600 cursor-pointer">
-                            <div>
-                                <span class="font-bold ${c.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm block mb-1">${c.name}</span>
-                                ${contactDisplay}
-                                ${dateDisplay}
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end justify-between h-full">
-                            <span class="font-black ${c.isPaid ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'} text-lg mb-2">$${c.amount.toFixed(2)}</span>
-                            <button onclick="window.adminRemoveIOU(${c.id})" class="text-red-400 hover:text-red-600 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg transition btn-interactive"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>`;
-                });
-            } else {
-                list.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 italic">No financed items / IOUs recorded.</div>';
-            }
-
-            document.getElementById('iou-total-owed').innerText = `$${totalOwed.toFixed(2)}`;
-            lucide.createIcons();
-        };
-
-        // --- NEW FINANCE TAB LOGIC ---
-        function updateFinanceUI() {
-            if (!document.getElementById('admin-view-finance')) return;
-            
-            // 1. Gather Totals
-            let staffFull = 0, staffUsual = 0, teamCollected = 0;
-            globalRoster.forEach(u => {
-                if (u.role !== 'admin') {
-                    staffFull += (u.unitsFull || 0);
-                    staffUsual += (u.unitsUsual || 0);
-                }
-                teamCollected += (u.collected || 0);
-            });
-
-            const totalFull = (masterData.unitsFull || 0) + staffFull;
-            const totalUsual = (masterData.unitsUsual || 0) + staffUsual;
-
-            // Display Unit Counts
-            document.getElementById('proj-full-count').innerText = totalFull;
-            document.getElementById('proj-usual-count').innerText = totalUsual;
-
-            // Calculations
-            const priceFull = masterData.pricePerUnit;
-            const priceUsual = masterData.pricePerUnit * masterData.usualRatio;
-            
-            // Standard Projection
-            const projFullStd = totalFull * priceFull;
-            const projUsualStd = totalUsual * priceUsual;
-            const totalProjStd = projFullStd + projUsualStd;
-
-            // What If Projection (Both x100)
-            const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
-            
-            document.getElementById('proj-std-total').innerText = `$${totalProjStd.toLocaleString()}`;
-            document.getElementById('proj-whatif-total').innerText = `$${totalWhatIf.toLocaleString()}`;
-
-            // Balance Manager DOM
-            document.getElementById('finance-cash-balance').innerText = `$${(masterData.cashBalance || 0).toFixed(2)}`;
-            
-            const liabList = document.getElementById('finance-liabilities-list');
-            liabList.innerHTML = '';
-            
-            let unpaidTotal = 0;
-
-            if (masterData.liabilities && masterData.liabilities.length > 0) {
-                masterData.liabilities.forEach(l => {
-                    if(!l.isPaid) unpaidTotal += l.amount;
-                    const recurringBadge = l.isRecurring ? `<span class="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Recurring</span>` : '';
-                    const dateDisplay = l.dueDate ? `<div class="text-[10px] text-gray-500 mt-1">Due: ${new Date(l.dueDate).toLocaleDateString()}</div>` : '';
-
-                    liabList.innerHTML += `
-                    <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
-                        <div class="flex items-start">
-                            <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 mt-1 accent-purple-600 cursor-pointer">
-                            <div>
-                                <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name} ${recurringBadge}</span>
-                                ${dateDisplay}
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
-                            <button onclick="window.adminRemoveLiability(${l.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>`;
-                });
-            } else {
-                liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>';
-            }
-
-            document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
-            const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
-            document.getElementById('finance-net-after-bills').innerText = `$${netAfterBills.toFixed(2)}`;
-            if(netAfterBills < 0) document.getElementById('finance-net-after-bills').classList.replace('text-green-600', 'text-red-500');
-            else document.getElementById('finance-net-after-bills').classList.replace('text-red-500', 'text-green-600');
-
-            // 7-Day Revenue Forecast Chart
-            const ctxPred = document.getElementById('financePredictionChart');
-            if(ctxPred) {
-                // Simplistic daily average assuming the current shift is 1 day, extrapolated to 7 days
-                const dailyAvg = teamCollected; 
-                const labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
-                const data = labels.map((_, i) => dailyAvg * (i + 1));
-
-                if(financePredictionChartInst) financePredictionChartInst.destroy();
-                financePredictionChartInst = new Chart(ctxPred, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Projected Revenue ($)',
-                            data: data,
-                            borderColor: '#8b5cf6',
-                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                            borderWidth: 2, fill: true, tension: 0.2
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
-            }
-
-            lucide.createIcons();
-        }
-
-        window.adminUpdateCash = async () => {
-            const current = masterData.cashBalance || 0;
-            const amt = parseFloat(prompt(`Current Master Cash: $${current}\n\nEnter amount to add/subtract (use negative number to subtract):`, "0"));
-            if(isNaN(amt)) return;
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
-        };
-
-        window.prepareApproveBill = (reqId, desc, amount) => {
-            document.getElementById('bill-name').value = desc;
-            document.getElementById('bill-amt').value = amount;
-            document.getElementById('bill-request-id').value = reqId; // Store link to dismiss after
-            document.getElementById('admin-bill-modal').classList.remove('hidden');
-        };
-
-        window.saveAdminBill = async () => {
-            const name = document.getElementById('bill-name').value;
-            const amt = parseFloat(document.getElementById('bill-amt').value);
-            const date = document.getElementById('bill-date').value;
-            const isRecurring = document.getElementById('bill-recurring').checked;
-            const reqId = document.getElementById('bill-request-id').value;
-
-            if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter valid bill details.");
-            
-            const newLiabs = [...(masterData.liabilities || []), { id: Date.now(), name, amount: amt, dueDate: date, isRecurring, isPaid: false }];
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: newLiabs }, {merge:true});
-            
-            if(reqId) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId));
-            }
-
-            document.getElementById('admin-bill-modal').classList.add('hidden');
-            document.getElementById('bill-name').value = '';
-            document.getElementById('bill-amt').value = '';
-            document.getElementById('bill-date').value = '';
-            document.getElementById('bill-recurring').checked = false;
-            document.getElementById('bill-request-id').value = '';
-            window.showToast("Bill Priority Added!");
-        };
-
-        window.adminToggleLiability = async (id) => {
-            const liabs = (masterData.liabilities || []).map(l => l.id === id ? { ...l, isPaid: !l.isPaid } : l);
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
-        };
-
-        window.adminRemoveLiability = async (id) => {
-            if(!confirm("Remove this liability from list?")) return;
-            const liabs = (masterData.liabilities || []).filter(l => l.id !== id);
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { liabilities: liabs }, {merge:true});
-        };
-
-
-        // Admin Master Inventory Controls
-        window.saveInventoryAdjustment = async () => {
-            const type = document.getElementById('adj-item-type').value; // 'rawWeight', 'unitsFull', 'unitsUsual'
-            const action = document.getElementById('adj-action').value; // 'add', 'remove', 'set'
-            const amt = parseFloat(document.getElementById('adj-amt').value);
-
-            if(isNaN(amt) || amt < 0) return window.showToast("Please enter a valid amount.");
-
-            const currentVal = masterData[type] || 0;
-            let newVal = currentVal;
-
-            if (action === 'add') {
-                newVal = currentVal + amt;
-            } else if (action === 'remove') {
-                newVal = currentVal - amt;
-                if(newVal < 0) newVal = 0; // Prevent negative inventory via UI
-            } else if (action === 'set') {
-                newVal = amt;
-            }
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[type]: newVal}, {merge:true});
-            
-            document.getElementById('admin-adjust-modal').classList.add('hidden');
-            document.getElementById('adj-amt').value = '';
-            window.showToast("Inventory Adjusted Successfully");
-        };
-
-        window.adminPurchaseStock = async (weight, cost) => {
-            if (weight === 'custom') {
-                weight = parseFloat(prompt("Enter custom weight amount (units):"));
-                if (isNaN(weight) || weight <= 0) return;
-                cost = parseFloat(prompt("Enter total cost of purchase ($):"));
-                if (isNaN(cost) || cost < 0) return;
-            }
-            if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?`)) return;
-            
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{
-                rawWeight: increment(weight),
-                totalExpenses: increment(cost)
-            }, {merge:true});
-            
-            window.showToast(`Restocked ${weight} units for $${cost}.`);
-        };
-
-        window.adminSetVariable = async (field, label) => {
-            const v = prompt(`Set ${label}:`, masterData[field]);
-            if(v && !isNaN(v)) await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true});
-        };
-
-        window.adminProcessUnits = async () => {
-            const type = document.getElementById('process-type').value;
-            const qty = parseInt(document.getElementById('process-qty').value);
-            
-            if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
-            
-            const wpu = type === 'full' ? 1.0 : masterData.usualRatio;
-            const totalW = qty * wpu;
-            
-            if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
-
-            const updateData = { rawWeight: increment(-totalW) };
-            if (type === 'full') updateData.unitsFull = increment(qty);
-            else updateData.unitsUsual = increment(qty);
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
-            
-            document.getElementById('process-qty').value = '';
-            window.showToast(`Processed ${qty} ${type} units.`);
-        };
-
-        // ADMIN TERMINAL SALE LOGIC
-        window.admUpdateMasterLabels = () => {
-            const labelFull = document.getElementById('adm-label-full-weight');
-            const labelUsual = document.getElementById('adm-label-usual-weight');
-            const expHint = document.getElementById('adm-expected-money-hint');
-            
-            if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`;
-            if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * masterData.usualRatio).toFixed(1)} units)`;
-            
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
-        };
-
-        window.admSelectQty = (q) => {
-            admCurrentQty = q;
-            document.querySelectorAll('.adm-qty-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`adm-btn-qty-${q}`).classList.add('active');
-            window.admUpdateMasterLabels();
-            window.admCheckPriceColor();
-        };
-
-        window.admSelectType = (t) => {
-            admCurrentType = t;
-            document.querySelectorAll('.adm-type-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`adm-btn-type-${t}`).classList.add('active');
-            window.admUpdateMasterLabels();
-            window.admCheckPriceColor();
-        };
-
-        window.admCheckPriceColor = () => {
-            const input = document.getElementById('adm-money-input');
-            const val = parseFloat(input.value) || 0;
-            const perUnit = val / admCurrentQty;
-            
-            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
-
-            if (val === 0) {
-                input.classList.add('dark:text-white', 'text-gray-800');
-                return;
-            }
-
-            if (admCurrentType === 'usual') {
-                const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
-                if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
-                else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
-                else input.classList.add('text-green-500', 'dark:text-green-500');
-            } else {
-                if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500');
-                else input.classList.add('text-green-500', 'dark:text-green-500');
-            }
-        };
-
-        window.admSetQuickPrice = (pricePerUnit) => {
-            const input = document.getElementById('adm-money-input');
-            input.value = pricePerUnit * admCurrentQty;
-            window.admCheckPriceColor();
-        };
-
-        window.adminProcessSale = async () => {
-            const source = document.getElementById('adm-sale-source').value;
-            const moneyInput = document.getElementById('adm-money-input');
-            const money = parseFloat(moneyInput.value);
-            if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
-
-            let actualWeightDeducted = 0;
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-
-            const updateMaster = {};
-
-            if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if(masterData.rawWeight < actualWeightDeducted) return window.showToast(`Not enough Master Raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
-                updateMaster.rawWeight = increment(-actualWeightDeducted);
-            } else if (source === 'processed' && admCurrentType === 'full') {
-                if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master Vault!");
-                updateMaster.unitsFull = increment(-admCurrentQty);
-                actualWeightDeducted = admCurrentQty * 1.0;
-            } else if (source === 'processed' && admCurrentType === 'usual') {
-                if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master Vault!");
-                updateMaster.unitsUsual = increment(-admCurrentQty);
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
-            }
-
-            // Deduct from Master Vault
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
-
-            const expectedMoney = admCurrentQty * unitPrice;
-
-            if (source === 'raw') {
-                adminData.soldWeight += actualWeightDeducted;
-            } else if (source === 'processed' && admCurrentType === 'full') {
-                adminData.soldUnitsFull += admCurrentQty;
-            } else if (source === 'processed' && admCurrentType === 'usual') {
-                adminData.soldUnitsUsual += admCurrentQty;
-            }
-
-            adminData.collected += money;
-            adminData.expected += expectedMoney;
-
-            adminData.transactions.push({
-                id: Date.now(),
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                source: source,
-                qty: admCurrentQty,
-                type: admCurrentType,
-                actualWeight: actualWeightDeducted,
-                money: money,
-                expected: expectedMoney
-            });
-
-            moneyInput.value = '';
-            await saveAdminData();
-            window.showToast("Admin Sale Complete!");
-        };
-
-        window.adminPersonalUseUnified = async () => {
-            const source = document.getElementById('adm-sale-source').value;
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            
-            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
-
-            let actualWeightDeducted = 0;
-            let standardCost = admCurrentQty * unitPrice;
-            const updateMaster = {};
-
-            if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if(masterData.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
-                updateMaster.rawWeight = increment(-actualWeightDeducted);
-            } else if (source === 'processed' && admCurrentType === 'full') {
-                if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
-                updateMaster.unitsFull = increment(-admCurrentQty);
-                actualWeightDeducted = admCurrentQty * 1.0;
-            } else if (source === 'processed' && admCurrentType === 'usual') {
-                if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
-                updateMaster.unitsUsual = increment(-admCurrentQty);
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
-            }
-
-            // Deduct Master Vault
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
-
-            const discountMultiplier = 1 - (masterData.adminDiscount / 100);
-            const discountedDebt = standardCost * discountMultiplier;
-            
-            adminData.personalUseWeight = (adminData.personalUseWeight || 0) + actualWeightDeducted;
-            adminData.expected += discountedDebt;
-            adminData.personalUseOwed = (adminData.personalUseOwed || 0) + discountedDebt;
-            
-            adminData.transactions.push({
-                id: Date.now(),
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                source: source,
-                qty: admCurrentQty,
-                type: 'personal',
-                actualWeight: actualWeightDeducted,
-                money: 0,
-                expected: discountedDebt
-            });
-            
-            await saveAdminData();
-            window.showToast(`Admin Personal Use Logged (${admCurrentType.toUpperCase()}).`);
-        };
-
-        async function saveAdminData() { 
-            if(!currentUser) return; 
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { json: JSON.stringify(adminData), lastUpdated: Date.now() }); 
-            try { 
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
-                    soldWeight: adminData.soldWeight,
-                    soldUnitsFull: adminData.soldUnitsFull || 0,
-                    soldUnitsUsual: adminData.soldUnitsUsual || 0,
-                    personalUseWeight: adminData.personalUseWeight || 0,
-                    personalUseOwed: adminData.personalUseOwed || 0,
-                    borrowings: adminData.borrowings || 0,
-                    cashDropped: adminData.cashDropped || 0,
-                    collected: adminData.collected,
-                    expected: adminData.expected,
-                    recentLogs: adminData.transactions.slice(-10).reverse(),
-                    lastSync: Date.now() 
-                }, { merge: true }); 
-            } catch(e){} 
-        }
-
-        function renderAdminTerminalUI() {
-            document.getElementById('admin-stat-sold-raw').innerText = (adminData.soldWeight || 0).toFixed(1);
-            document.getElementById('admin-stat-sold-full').innerText = (adminData.soldUnitsFull || 0);
-            document.getElementById('admin-stat-sold-usual').innerText = (adminData.soldUnitsUsual || 0);
-            
-            document.getElementById('admin-stat-money').innerText = `$${adminData.collected || 0}`;
-            document.getElementById('admin-stat-debt').innerText = `$${adminData.personalUseOwed || 0}`;
-            
-            const diff = (adminData.expected || 0) - (adminData.collected || 0);
-            const warn = document.getElementById('admin-shortage-warning');
-            if(diff > 0) {
-                warn.classList.remove('hidden');
-                document.getElementById('admin-shortage-amount').innerText = `$${diff.toFixed(2)}`;
-            } else {
-                warn.classList.add('hidden');
-            }
-
-            // Chart
-            const ctx = document.getElementById('adminTerminalChart');
-            if(ctx) {
-                const sales = adminData.transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
-                const labels = sales.map(t => t.time);
-                const data = sales.map(t => t.money);
-
-                if(adminTerminalChartInst) adminTerminalChartInst.destroy();
-                adminTerminalChartInst = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Sale ($)',
-                            data: data,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2, fill: true, tension: 0.3
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                });
-            }
-
-            // Logs
-            const list = document.getElementById('admin-log-list');
-            list.innerHTML = '';
-            const reversed = [...adminData.transactions].reverse();
-            reversed.forEach(t => {
-                if(t.type === 'personal') {
-                    list.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800"><div><div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Debt</div><div class="text-xs text-gray-500">${t.time} • ${masterData.adminDiscount}% Discount</div></div><div class="text-right"><div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div></div></div>`;
-                } else {
-                    const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
-                    const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
-                    list.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2 border border-gray-200 dark:border-gray-600"><div><div class="font-bold dark:text-white">Sold ${t.qty} <span class="text-[10px] ${color} uppercase tracking-wider ml-1">(${label})</span></div><div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)} u</div></div><div class="text-right"><div class="font-black text-green-600">+$${t.money}</div></div></div>`;
-                }
-            });
-            if(reversed.length === 0) list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
-            lucide.createIcons();
-        }
-
-        // Admin Staff Approval
-        window.adminSetStatus = async (uid, status) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status }); window.showToast("Status updated"); };
-        window.adminDelUser = async (uid) => { if(confirm("Delete user?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); };
-
-        // Admin Transfers
-        window.fulfillReq = async (reqId, uid) => { 
-            window.switchAdminTab('transfers');
-            document.getElementById('transfer-staff-select').value = uid; 
-            window.updateTransferPreview(); 
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId), { status: 'completed' }); 
-        };
-        window.dismissReq = async (id) => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', id)); };
-
-        window.updateTransferPreview = () => {
-            const uid = document.getElementById('transfer-staff-select').value;
-            const el = document.getElementById('transfer-preview');
-            const u = globalRoster.find(x => x.id === uid);
-            if(u) {
-                const type = document.getElementById('transfer-item-type').value;
-                let h = 0; let label = "";
-                if(type === 'raw') { h = u.weight||0; label = 'g'; }
-                else if(type === 'full') { h = u.unitsFull||0; label = 'units'; }
-                else if(type === 'usual') { h = u.unitsUsual||0; label = 'units'; }
-                el.innerText = `Current Staff Holding: ${h.toFixed(1)} ${label}`;
-            } else { el.innerText = ''; }
-        };
-
-        window.adminTransferWeight = async (action) => {
-            const uid = document.getElementById('transfer-staff-select').value;
-            const amt = parseFloat(document.getElementById('transfer-amount').value);
-            const type = document.getElementById('transfer-item-type').value; // 'raw', 'full', 'usual'
-
-            if(!uid || isNaN(amt) || amt <= 0) return window.showToast("Select staff and valid amount");
-            
-            const r = doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
-            const sn = await getDoc(r); 
-            let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, cashDropped: 0, transactions:[]}; 
-
-            // Map keys
-            let adminKey = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
-            let staffKey = type === 'raw' ? 'weight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
-
-            if (action === 'send') {
-                if((masterData[adminKey] || 0) < amt) {
-                    if(!confirm(`Warning: Master vault only has ${(masterData[adminKey]||0).toFixed(1)} of this item. Proceed anyway?`)) return;
-                }
-                // Deduct Master, Add to Staff
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(-amt)},{merge:true}); 
-                dat[staffKey] = (dat[staffKey]||0) + amt;
-                window.showToast(`Sent ${amt} to staff.`);
-                window.sendNotificationAlert(uid, `Admin sent you ${amt} units of inventory.`);
-            } else if (action === 'reclaim') {
-                if((dat[staffKey] || 0) < amt) return window.showToast("Staff does not have that much inventory to reclaim!");
-                // Add to Master, Deduct from Staff
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(amt)},{merge:true}); 
-                dat[staffKey] = (dat[staffKey]||0) - amt;
-                window.showToast(`Reclaimed ${amt} from staff.`);
-                window.sendNotificationAlert(uid, `Admin reclaimed ${amt} units of inventory.`);
-            }
-            
-            // Save private
             await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-            // Save public
-            await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), {
-                weight: dat.weight, unitsFull: dat.unitsFull, unitsUsual: dat.unitsUsual
-            }, {merge:true}); 
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, collected:0, expected:0, personalUseOwed:0, borrowings: 0, cashDropped: 0, expenses:0, recentLogs:[]}, {merge:true}); 
             
-            document.getElementById('transfer-amount').value = '';
-            window.updateTransferPreview();
-        };
+            window.showToast("Data Cleared.");
+            window.sendNotificationAlert(currentDetailUid, "Admin has cleared your shift and settled balances.");
+            document.getElementById('admin-user-detail').classList.add('hidden');
+        }
+    };
 
-        // Admin Log Cash Advance / Debt
-        window.adminAddBorrowing = async () => {
-            if(!currentDetailUid) return;
-            const desc = prompt("What is this Debt / Cash Advance for?");
-            if(!desc) return;
-            const amt = parseFloat(prompt(`How much debt to add to this staff member? ($)`));
-            if(isNaN(amt) || amt <= 0) return;
+    // ADMIN FACTORY RESET
+    window.adminFactoryReset = async () => {
+        if(!confirm("WARNING: This will reset all Master Vault inventory AND all Staff balances/sales history to 0.\n\nUser accounts and roles will remain intact.\n\nProceed?")) return;
+        if(!confirm("Are you ABSOLUTELY sure? This cannot be undone.")) return;
 
-            const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
-            const sn = await getDoc(r); 
-            if(sn.exists()) {
-                let dat = JSON.parse(sn.data().json);
-                dat.borrowings = (dat.borrowings || 0) + amt;
-                dat.expected = (dat.expected || 0) + amt;
-                
-                dat.transactions.push({
-                    id: Date.now(),
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    qty: 0, type: 'borrowing', actualWeight: 0, money: 0, expected: amt, desc: desc
-                });
+        window.showToast("Resetting data...");
 
-                // INSTANT UI FIX: Update local roster cache before Firestore sync finishes
-                const uIndex = globalRoster.findIndex(x => x.id === currentDetailUid);
-                if(uIndex > -1) {
-                    globalRoster[uIndex].borrowings = dat.borrowings;
-                    globalRoster[uIndex].expected = dat.expected;
-                    globalRoster[uIndex].recentLogs = dat.transactions.slice(-10).reverse();
-                }
+        // 1. Reset Master
+        await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, adminDiscount: masterData.adminDiscount, staffDiscount: masterData.staffDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0, cashBalance: 0, liabilities: [], financedClients: [] });
 
-                await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {
-                    borrowings: dat.borrowings,
-                    expected: dat.expected,
-                    recentLogs: dat.transactions.slice(-10).reverse()
-                }, {merge:true}); 
-                
-                window.showToast("Debt added to staff member.");
-                window.sendNotificationAlert(currentDetailUid, `Admin logged a $${amt} cash advance/debt to your account.`);
-                window.viewDriverDetails(currentDetailUid); // Refresh view instantly
-            }
-        };
+        // 2. Reset All Staff & Admin self
+        for(const u of globalRoster) {
+            const r = doc(db,'artifacts',appId,'users',u.id,'data','app_state');
+            const emptyData = { weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, borrowings:0, cashDropped: 0, collected:0, expected:0, expenses:0, transactions:[] };
+            await setDoc(r, { json: JSON.stringify(emptyData), lastUpdated: Date.now() });
 
-        // Admin Detail View
-        window.viewDriverDetails = (uid) => { 
-            const d = globalRoster.find(x => x.id === uid); 
-            if(!d) return; 
-            currentDetailUid = uid; 
-            document.getElementById('admin-user-detail').classList.remove('hidden'); 
-            document.getElementById('detail-user-name').innerText = d.name; 
-            
-            // Holdings
-            document.getElementById('det-holding-raw').innerText = (d.weight||0).toFixed(1);
-            document.getElementById('det-holding-full').innerText = (d.unitsFull||0);
-            document.getElementById('det-holding-usual').innerText = (d.unitsUsual||0);
-            
-            // Sold Totals
-            document.getElementById('det-sold-raw').innerText = (d.soldWeight||0).toFixed(1);
-            document.getElementById('det-sold-full').innerText = (d.soldUnitsFull||0);
-            document.getElementById('det-sold-usual').innerText = (d.soldUnitsUsual||0);
-            
-            document.getElementById('det-expected').innerText = `$${(d.expected||0).toFixed(2)}`;
-            
-            // Fix: Protect against missing elements causing silent JS crash
-            const elPers = document.getElementById('det-personal-owed'); if(elPers) elPers.innerText = `$${(d.personalUseOwed||0).toFixed(2)}`;
-            const elBorr = document.getElementById('det-borrowings'); if(elBorr) elBorr.innerText = `$${(d.borrowings||0).toFixed(2)}`;
-            
-            document.getElementById('det-collected').innerText = `$${(d.collected||0).toFixed(2)}`;
-            document.getElementById('det-expenses').innerText = `-$${(d.expenses||0).toFixed(2)}`;
-            document.getElementById('det-cash-dropped').innerText = `-$${(d.cashDropped||0).toFixed(2)}`;
-            
-            // Commission & Debt Calculation
-            const grossComm = (d.collected || 0) * ((masterData.staffCommission || 0) / 100);
-            const totalDebt = (d.personalUseOwed || 0) + (d.borrowings || 0);
-            
-            const appliedToDebt = Math.min(grossComm, totalDebt);
-            const netComm = grossComm - appliedToDebt;
-            const remainingDebt = totalDebt - appliedToDebt;
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',u.id), {
+                weight: 0, unitsFull:0, unitsUsual:0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, borrowings: 0, cashDropped: 0, collected: 0, expected: 0, expenses: 0, recentLogs: []
+            }, {merge: true});
+        }
 
-            document.getElementById('det-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
-            document.getElementById('det-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
-            document.getElementById('det-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
-            document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
-            document.getElementById('det-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+        // 3. Clear pending requests
+        const reqsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'requests'));
+        reqsSnap.forEach(async (d) => { await deleteDoc(d.ref); });
 
-            const netCash = (d.collected||0) - (d.expenses||0) - netComm - (d.cashDropped||0);
-            document.getElementById('det-net-cash').innerText = `$${netCash.toFixed(2)}`;
+        window.showToast("Factory Reset Complete.");
+    };
 
-            const diff = (d.expected||0) - (d.collected||0);
-            const box = document.getElementById('det-diff-box');
-            const diffEl = document.getElementById('det-diff');
-            
-            if(diff > 0) {
-                box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 mb-4";
-                diffEl.innerText = `-$${diff.toFixed(2)} (Short)`;
-            } else if (diff < 0) {
-                box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 mb-4";
-                diffEl.innerText = `+$${Math.abs(diff).toFixed(2)} (Over)`;
-            } else {
-                box.className = "p-3 rounded-lg flex justify-between items-center font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 mb-4";
-                diffEl.innerText = `$0 (Perfect)`;
-            }
-            
-            // Update Detail Chart
-            const ctx = document.getElementById('adminDetailChart');
-            if(ctx && d.recentLogs) {
-                const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
-                const labels = sales.map(t => t.time);
-                const data = sales.map(t => t.money);
+</script>
 
-                if(adminDetailChartInst) adminDetailChartInst.destroy();
-                adminDetailChartInst = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Sale ($)',
-                            data: data,
-                            backgroundColor: '#8b5cf6',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            }
-        };
 
-        window.adminClearStaffData = async () => {
-            if(!currentDetailUid) return;
-            if(!confirm("Are you sure? This sets their expected, collected, and sold items to 0. (Does not affect Holding Inventory)")) return;
-
-            const r = doc(db,'artifacts',appId,'users',currentDetailUid,'data','app_state'); 
-            const sn = await getDoc(r); 
-            if(sn.exists()) {
-                let dat = JSON.parse(sn.data().json);
-                dat.soldWeight = 0; dat.soldUnitsFull = 0; dat.soldUnitsUsual = 0; dat.collected = 0; dat.expected = 0; dat.personalUseOwed = 0; dat.borrowings = 0; dat.expenses = 0; dat.cashDropped = 0; dat.transactions = [];
-                
-                // INSTANT UI FIX: Update local roster cache before Firestore sync finishes
-                const uIndex = globalRoster.findIndex(x => x.id === currentDetailUid);
-                if(uIndex > -1) {
-                    globalRoster[uIndex].soldWeight = 0; globalRoster[uIndex].soldUnitsFull = 0; globalRoster[uIndex].soldUnitsUsual = 0;
-                    globalRoster[uIndex].collected = 0; globalRoster[uIndex].expected = 0; globalRoster[uIndex].personalUseOwed = 0;
-                    globalRoster[uIndex].borrowings = 0; globalRoster[uIndex].expenses = 0; globalRoster[uIndex].cashDropped = 0;
-                    globalRoster[uIndex].recentLogs = [];
-                }
-
-                await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-                await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), {soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, collected:0, expected:0, personalUseOwed:0, borrowings: 0, cashDropped: 0, expenses:0, recentLogs:[]}, {merge:true}); 
-                
-                window.showToast("Data Cleared.");
-                window.sendNotificationAlert(currentDetailUid, "Admin has cleared your shift and settled balances.");
-                document.getElementById('admin-user-detail').classList.add('hidden');
-            }
-        };
-
-        // ADMIN FACTORY RESET
-        window.adminFactoryReset = async () => {
-            if(!confirm("WARNING: This will reset all Master Vault inventory AND all Staff balances/sales history to 0.\n\nUser accounts and roles will remain intact.\n\nProceed?")) return;
-            if(!confirm("Are you ABSOLUTELY sure? This cannot be undone.")) return;
-
-            window.showToast("Resetting data...");
-
-            // 1. Reset Master
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: masterData.pricePerUnit, usualRatio: masterData.usualRatio, adminDiscount: masterData.adminDiscount, staffDiscount: masterData.staffDiscount, staffCommission: masterData.staffCommission, totalExpenses: 0, cashBalance: 0, liabilities: [], financedClients: [] });
-
-            // 2. Reset All Staff & Admin self
-            for(const u of globalRoster) {
-                const r = doc(db,'artifacts',appId,'users',u.id,'data','app_state');
-                const emptyData = { weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, borrowings:0, cashDropped: 0, collected:0, expected:0, expenses:0, transactions:[] };
-                await setDoc(r, { json: JSON.stringify(emptyData), lastUpdated: Date.now() });
-
-                await setDoc(doc(db,'artifacts',appId,'public','data','roster',u.id), {
-                    weight: 0, unitsFull:0, unitsUsual:0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, personalUseOwed: 0, borrowings: 0, cashDropped: 0, collected: 0, expected: 0, expenses: 0, recentLogs: []
-                }, {merge: true});
-            }
-
-            // 3. Clear pending requests
-            const reqsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'requests'));
-            reqsSnap.forEach(async (d) => { await deleteDoc(d.ref); });
-
-            window.showToast("Factory Reset Complete.");
-        };
-
-    </script>
 </body>
 </html>
