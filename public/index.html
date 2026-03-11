@@ -160,8 +160,6 @@
         </div>
     </div>
 
-    <!-- Modals (Adjust, Bill, IOU, Staff Bill, Staff IOU) -->
-    
     <!-- Admin Inventory Adjustment Modal -->
     <div id="admin-adjust-modal" class="modal-overlay hidden z-[110]">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm">
@@ -1275,6 +1273,34 @@
         Chart.defaults.borderColor = '#374151';
 
         // --- NEW UPGRADED LOGIC FUNCTIONS ---
+
+        // NEW: FLUID TWEENING FUNCTION FOR NUMBERS
+        window.animateValue = (id, start, end, duration, prefix = '', isCurrency = false) => {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            if(!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentVal = progress * (end - start) + start;
+                
+                if(isCurrency) {
+                    obj.innerText = `${prefix}${currentVal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                } else {
+                    obj.innerText = `${prefix}${currentVal.toFixed(1)}`;
+                }
+                
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    if(isCurrency) obj.innerText = `${prefix}${end.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                    else obj.innerText = `${prefix}${end.toFixed(1)}`;
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+
         window.switchStaffTab = (tab) => {
             ['terminal','stats','tools'].forEach(x => {
                 document.getElementById(`staff-view-${x}`).classList.remove('active');
@@ -1300,6 +1326,7 @@
             const contEl = document.getElementById('staff-my-contribution');
             const pctEl = document.getElementById('staff-my-percentage');
             
+            // Extract current values for smooth animation if possible, fallback to direct set
             if(revEl) revEl.innerText = `$${totalCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
             if(contEl) contEl.innerText = `$${myCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
             if(pctEl) pctEl.innerText = `${myPct}%`;
@@ -1413,6 +1440,7 @@
                 periods.forEach((p, index) => {
                     if (age <= p.ms) {
                         if (t.type === 'expense') {
+                            // Automatically sums up staff expenses and Admin Purchase/Restocks correctly
                             stats[index].expenses += Math.abs(t.money);
                         } else if (t.type !== 'personal' && t.type !== 'borrowing' && t.type !== 'dropoff') { 
                             stats[index].revenue += (t.money || 0); 
@@ -1421,6 +1449,7 @@
                     }
                 });
             });
+            // TRUE NET PROFIT: Revenue - Costs
             stats.forEach(s => s.profit = s.revenue - s.expenses);
             return stats;
         }
@@ -1503,7 +1532,13 @@
                 unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                     globalRoster = [];
                     snap.forEach(d => { globalRoster.push({ id: d.id, ...d.data() }); });
-                    if(userRole === 'admin' && typeof processAdminRosterUI === 'function') processAdminRosterUI();
+                    if(userRole === 'admin') {
+                        if(typeof processAdminRosterUI === 'function') processAdminRosterUI();
+                        // Live fluid update
+                        if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
+                            window.loadGlobalAnalytics();
+                        }
+                    }
                     if(userRole === 'staff' && typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats(); 
                 });
 
@@ -1552,6 +1587,11 @@
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         const dat = s.data();
+                        
+                        // Extract old value for tweening Cash Balance
+                        let oldCash = masterData.cashBalance || 0;
+                        let oldRaw = masterData.rawWeight || 0;
+
                         masterData = { 
                             rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, 
                             adminDiscount: dat.adminDiscount ?? dat.personalUseDiscount ?? 20, 
@@ -1575,8 +1615,18 @@
 
                         if(userRole === 'admin') { 
                             window.admUpdateMasterLabels(); 
+                            
+                            // Fluid Animations for core numbers
+                            window.animateValue('finance-cash-balance', oldCash, masterData.cashBalance, 600, '$', true);
+                            window.animateValue('admin-master-weight', oldRaw, masterData.rawWeight, 400, '', false);
+                            
                             updateFinanceUI(); 
                             window.updateIOUUI(); 
+                            
+                            // Live Fluid Chart Update
+                            if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
+                                window.loadGlobalAnalytics();
+                            }
                         }
                         if(userRole === 'staff' && typeof renderStaffUI === 'function') {
                             renderStaffUI();
@@ -1643,7 +1693,9 @@
             const ratio = masterData.usualRatio || 1; 
             const expenses = masterData.totalExpenses || 0;
             
-            if(wRaw) wRaw.innerText = rawW.toFixed(1); 
+            // Replaced by animateValue in onSnapshot listener
+            // if(wRaw) wRaw.innerText = rawW.toFixed(1); 
+            
             if(pDisp) pDisp.innerText = `$${price}`; 
             if(rDisp) rDisp.innerText = `${ratio}x`; 
             if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`; 
@@ -2198,6 +2250,9 @@
                         cashDropped: 0, transactions: [], ...d 
                     }; 
                     renderAdminTerminalUI(); 
+                    if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
+                        window.loadGlobalAnalytics();
+                    }
                 } else { 
                     saveAdminData(); 
                 } 
@@ -2298,7 +2353,7 @@
                 document.getElementById('global-stock-full').innerText = ((masterData.unitsFull || 0) + globalFull); 
                 document.getElementById('global-stock-usual').innerText = ((masterData.unitsUsual || 0) + globalUsual);
                 
-                const globalEqEl = document.getElementById('global-eq-weight');
+                const globalEqEl = document.getElementById('admin-master-eq-weight'); // FIXED: Was looking for 'global-eq-weight' which didn't exist in HTML
                 if (globalEqEl) { 
                     const globalEq = ((masterData.rawWeight || 0) + globalRaw) + (((masterData.unitsFull || 0) + globalFull) * 1.0) + (((masterData.unitsUsual || 0) + globalUsual) * masterData.usualRatio); 
                     globalEqEl.innerText = `${globalEq.toFixed(1)} u`; 
@@ -2306,10 +2361,6 @@
 
                 updateAdminOverallChart(globalRoster); 
                 updateFinanceUI(); 
-                
-                if(document.getElementById('admin-view-finance').classList.contains('active')) {
-                    window.loadGlobalAnalytics();
-                }
                 
                 if(pendCount === 0) { 
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>'; 
@@ -2413,9 +2464,9 @@
                 data: { 
                     labels: stats.map(s => s.label), 
                     datasets: [
-                        { label: 'Revenue', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, 
-                        { label: 'Cost/Exp', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, 
-                        { label: 'Net Profit', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 } 
+                        { label: 'Gross Rev.', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, 
+                        { label: 'Costs/Exp.', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, 
+                        { label: 'Net Earnings', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 } 
                     ] 
                 }, 
                 options: { 
@@ -2593,7 +2644,10 @@
                 list.innerHTML = '<div class="text-center py-8 text-xs text-gray-400 italic">No financed items / IOUs recorded.</div>'; 
             }
             
-            document.getElementById('iou-total-owed').innerText = `$${totalOwed.toFixed(2)}`;
+            // Replaced manual setting with smooth animation
+            const oldTotal = parseFloat(document.getElementById('iou-total-owed').innerText.replace('$', '')) || 0;
+            window.animateValue('iou-total-owed', oldTotal, totalOwed, 500, '$', true);
+
             const iouTab = document.getElementById('adm-tab-ious');
             
             if (overdueCount > 0 || dueSoonCount > 0) { 
@@ -2628,9 +2682,12 @@
             const totalProjStd = (totalFull * priceFull) + (totalUsual * priceUsual); 
             const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
             
-            document.getElementById('proj-std-total').innerText = `$${totalProjStd.toLocaleString()}`; 
-            document.getElementById('proj-whatif-total').innerText = `$${totalWhatIf.toLocaleString()}`;
-            document.getElementById('finance-cash-balance').innerText = `$${(masterData.cashBalance || 0).toFixed(2)}`;
+            // Extract old values for tweening projection numbers
+            const oldStdStr = document.getElementById('proj-std-total').innerText.replace(/[$,]/g, '');
+            const oldWhatIfStr = document.getElementById('proj-whatif-total').innerText.replace(/[$,]/g, '');
+            
+            window.animateValue('proj-std-total', parseFloat(oldStdStr)||0, totalProjStd, 600, '$', true);
+            window.animateValue('proj-whatif-total', parseFloat(oldWhatIfStr)||0, totalWhatIf, 600, '$', true);
             
             const liabList = document.getElementById('finance-liabilities-list'); 
             liabList.innerHTML = ''; 
@@ -2662,7 +2719,10 @@
             
             document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
             const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
-            document.getElementById('finance-net-after-bills').innerText = `$${netAfterBills.toFixed(2)}`;
+            
+            // Smoothly animate the Net Cash after Bills
+            const oldNetStr = document.getElementById('finance-net-after-bills').innerText.replace(/[$,]/g, '');
+            window.animateValue('finance-net-after-bills', parseFloat(oldNetStr)||0, netAfterBills, 500, '$', true);
             
             if(netAfterBills < 0) {
                 document.getElementById('finance-net-after-bills').classList.replace('text-green-600', 'text-red-500'); 
@@ -2753,12 +2813,26 @@
             }
             if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
             
+            // UPDATED FOR NET EARNINGS CHART: Log this cost to the admin's transaction history so the Net Earning Chart plots it correctly
+            adminData.transactions.push({ 
+                id: Date.now(), 
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                qty: weight, 
+                type: 'expense', // Marked as an expense to deduct from chart revenue
+                actualWeight: 0, 
+                money: -cost, 
+                expected: 0, 
+                desc: `Restock ${weight} units`
+            });
+
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{ 
                 rawWeight: increment(weight), 
                 totalExpenses: increment(cost), 
                 cashBalance: increment(-cost) 
             }, {merge:true});
-            window.showToast(`Restocked ${weight} units for $${cost}. Cash Balance updated.`);
+            
+            await saveAdminData(); // Save the new expense log
+            window.showToast(`Restocked ${weight} units for $${cost}. Chart and Cash Balance updated.`);
         };
 
         window.adminSetVariable = async (field, label) => { 
