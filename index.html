@@ -315,6 +315,38 @@
         </div>
     </div>
 
+    <!-- Contacts Modal -->
+    <div id="contacts-modal" class="modal-overlay hidden z-[130]">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-11/12 max-w-sm max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                <h2 class="text-lg font-bold dark:text-white flex items-center"><i data-lucide="address-book" class="w-5 h-5 mr-2 text-teal-500"></i> Address Book</h2>
+                <button onclick="document.getElementById('contacts-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Add Contact Form -->
+            <div class="mb-4 bg-teal-50 dark:bg-teal-900/20 p-3 rounded-xl border border-teal-100 dark:border-teal-800">
+                <h3 class="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest mb-2">Save New Contact</h3>
+                <div class="flex flex-col space-y-2">
+                    <input type="text" id="new-contact-name" placeholder="Name / Alias" class="w-full p-2 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-gray-800 dark:text-white text-sm outline-none">
+                    <input type="text" id="new-contact-phone" placeholder="Phone / Social Handle" class="w-full p-2 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-gray-800 dark:text-white text-sm outline-none">
+                    <input type="text" id="new-contact-notes" placeholder="Notes (Preferences, etc.)" class="w-full p-2 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-gray-800 dark:text-white text-sm outline-none">
+                    <button onclick="window.saveContact()" class="bg-teal-600 text-white font-bold py-2 rounded-lg hover:bg-teal-700 transition btn-interactive text-sm shadow">Save Contact</button>
+                </div>
+            </div>
+            
+            <!-- Contact List -->
+            <div class="flex-1 overflow-y-auto hide-scrollbar">
+                <div class="relative mb-3">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="contact-search" onkeyup="window.filterContacts()" placeholder="Search contacts..." class="w-full p-2 pl-9 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none">
+                </div>
+                <div id="contacts-list-container" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- STAFF UI -->
     <div id="staff-app" class="hidden">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md">
@@ -575,8 +607,11 @@
                     <button onclick="document.getElementById('staff-bill-modal').classList.remove('hidden')" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-blue-500 btn-interactive flex flex-col items-center">
                         <i data-lucide="receipt" class="w-6 h-6 mb-2 text-blue-500"></i> <span class="text-xs">Request Bill</span>
                     </button>
-                    <button onclick="document.getElementById('staff-iou-modal').classList.remove('hidden')" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-blue-500 btn-interactive flex flex-col items-center">
+                    <button onclick="document.getElementById('staff-iou-modal').classList.remove('hidden')" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-purple-500 btn-interactive flex flex-col items-center">
                         <i data-lucide="book-open" class="w-6 h-6 mb-2 text-purple-500"></i> <span class="text-xs">Client Finance</span>
+                    </button>
+                    <button onclick="window.openContactsModal()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-teal-500 btn-interactive flex flex-col items-center">
+                        <i data-lucide="address-book" class="w-6 h-6 mb-2 text-teal-500"></i> <span class="text-xs">Address Book</span>
                     </button>
                     <button onclick="window.staffExpense()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-orange-500 btn-interactive flex flex-col items-center">
                         <i data-lucide="fuel" class="w-6 h-6 mb-2 text-orange-500"></i> <span class="text-xs">Log Expense</span>
@@ -831,8 +866,20 @@
                     </div>
                     
                     <div id="iou-list" class="space-y-2"></div>
+
+                    <div class="mt-6 border-t dark:border-gray-700 pt-4 flex justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-800 dark:text-white flex items-center"><i data-lucide="address-book" class="w-4 h-4 mr-2 text-teal-500"></i> Address Book</h4>
+                            <p class="text-[10px] text-gray-500">Save non-financed buyers</p>
+                        </div>
+                        <button onclick="window.openContactsModal()" class="text-xs bg-teal-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-teal-700 btn-interactive flex items-center shadow-sm">
+                            Open Contacts
+                        </button>
+                    </div>
                 </div>
             </div>
+
+      
 
             <!-- TAB: FINANCE & PROJECTIONS -->
             <div id="admin-view-finance" class="admin-tab-content hidden">
@@ -1286,7 +1333,10 @@
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
         // Listeners
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts;
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts;
+        let globalContacts = [];
+
+        
 
         Chart.defaults.color = '#9ca3af'; 
         Chart.defaults.borderColor = '#374151';
@@ -1563,6 +1613,7 @@
             if(unsubMaster) unsubMaster(); 
             if(unsubAuthCheck) unsubAuthCheck(); 
             if(unsubAlerts) unsubAlerts();
+            if(unsubContacts) unsubContacts();
             
             document.getElementById('staff-app').classList.add('hidden'); 
             document.getElementById('admin-app').classList.add('hidden'); 
@@ -1695,6 +1746,14 @@
                             }
                         }
                     });
+                });
+
+                unsubContacts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), (snap) => {
+                    globalContacts = [];
+                    snap.forEach(d => { globalContacts.push({ id: d.id, ...d.data() }); });
+                    if(!document.getElementById('contacts-modal').classList.contains('hidden')) {
+                        window.filterContacts(); // Re-render live if modal is open
+                    }
                 });
             } else { 
                 document.getElementById('loading-overlay').classList.add('hidden'); 
@@ -1896,6 +1955,65 @@
             lucide.createIcons();
         }
 
+        window.openContactsModal = () => {
+            document.getElementById('contacts-modal').classList.remove('hidden');
+            window.filterContacts();
+        };
+
+        window.saveContact = async () => {
+            const name = document.getElementById('new-contact-name').value;
+            const phone = document.getElementById('new-contact-phone').value;
+            const notes = document.getElementById('new-contact-notes').value;
+            if(!name) return window.showToast("Contact Name is required.");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), {
+                name, phone, notes, createdBy: currentUser.uid, createdAt: Date.now()
+            });
+            
+            document.getElementById('new-contact-name').value = '';
+            document.getElementById('new-contact-phone').value = '';
+            document.getElementById('new-contact-notes').value = '';
+            window.showToast("Contact Saved!");
+        };
+
+        window.deleteContact = async (id) => {
+            if(confirm("Delete this contact permanently?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contacts', id));
+                window.showToast("Contact Deleted");
+            }
+        };
+
+        window.filterContacts = () => {
+            const term = document.getElementById('contact-search').value.toLowerCase();
+            const list = document.getElementById('contacts-list-container');
+            list.innerHTML = '';
+            
+            const filtered = globalContacts.filter(c => 
+                (c.name && c.name.toLowerCase().includes(term)) || 
+                (c.phone && c.phone.toLowerCase().includes(term)) ||
+                (c.notes && c.notes.toLowerCase().includes(term))
+            );
+            
+            if(filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-6 text-xs text-gray-400 italic">No contacts found.</div>';
+                return;
+            }
+
+            filtered.sort((a,b) => a.name.localeCompare(b.name)).forEach(c => {
+                list.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold dark:text-white text-sm flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1 text-teal-500"></i> ${c.name}</span>
+                            <button onclick="window.deleteContact('${c.id}')" class="text-red-400 hover:text-red-600 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                        ${c.phone ? `<div class="text-xs text-gray-500 mb-1 flex items-center"><i data-lucide="phone" class="w-3 h-3 mr-1"></i> ${c.phone}</div>` : ''}
+                        ${c.notes ? `<div class="text-[10px] text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded mt-1">${c.notes}</div>` : ''}
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        };
+
         function renderStaffAnalytics() {
             const stats = calculateAnalytics(appData.transactions);
             document.getElementById('staff-pieces-today').innerText = stats[0].pieces;
@@ -1910,16 +2028,31 @@
                 data: {
                     labels: stats.map(s => s.label),
                     datasets: [
-                        { label: 'Revenue', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 },
-                        { label: 'Cost/Exp', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 },
-                        { label: 'Net Profit', data: stats.map(s => s.profit), backgroundColor: '#3b82f6', borderRadius: 4 }
+                        { label: 'Revenue ($)', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Cost/Exp ($)', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Net Profit ($)', data: stats.map(s => s.profit), backgroundColor: '#3b82f6', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Pieces Sold', data: stats.map(s => s.pieces), type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.1, yAxisID: 'y1' }
                     ]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } }, 
-                    scales: { y: { beginAtZero: true } } 
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let lbl = context.dataset.label || '';
+                                    if(context.dataset.yAxisID === 'y1') return `${lbl}: ${context.parsed.y} units`;
+                                    return `${lbl}: $${context.parsed.y}`;
+                                }
+                            }
+                        } 
+                    }, 
+                    scales: { 
+                        y: { beginAtZero: true, position: 'left' },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+                    } 
                 }
             });
         }
@@ -1930,6 +2063,7 @@
             const sales = transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
             const labels = sales.map(t => t.time); 
             const data = sales.map(t => t.money);
+            
             if(staffChartInst) staffChartInst.destroy();
             staffChartInst = new Chart(ctx, { 
                 type: 'line', 
@@ -1942,13 +2076,25 @@
                         backgroundColor: 'rgba(34, 197, 94, 0.1)', 
                         borderWidth: 2, 
                         fill: true, 
-                        tension: 0.3 
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }] 
                 }, 
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const t = sales[context.dataIndex];
+                                    return `Sale: $${t.money} (${t.qty} ${t.type.toUpperCase()})`;
+                                }
+                            }
+                        }
+                    }, 
                     scales: { y: { beginAtZero: true } } 
                 } 
             });
@@ -2522,42 +2668,34 @@
                 data: { 
                     labels: stats.map(s => s.label), 
                     datasets: [
-                        { label: 'Gross Rev.', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, 
-                        { label: 'Costs/Exp.', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, 
-                        { label: 'Net Earnings', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 } 
+                        { label: 'Gross Rev ($)', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y' }, 
+                        { label: 'Costs/Exp ($)', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4, yAxisID: 'y' }, 
+                        { label: 'Net Earnings ($)', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Pieces Sold', data: stats.map(s => s.pieces), type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.1, yAxisID: 'y1' }
                     ] 
                 }, 
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } }, 
-                    scales: { y: { beginAtZero: true } } 
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let lbl = context.dataset.label || '';
+                                    if(context.dataset.yAxisID === 'y1') return `${lbl}: ${context.parsed.y} units`;
+                                    return `${lbl}: $${context.parsed.y}`;
+                                }
+                            }
+                        } 
+                    }, 
+                    scales: { 
+                        y: { beginAtZero: true, position: 'left' },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+                    } 
                 } 
             });
         };
-
-        function updateAdminOverallChart(roster) {
-            const ctx = document.getElementById('adminOverallChart'); 
-            if(!ctx) return;
-            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin'); 
-            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name); 
-            const data = activeStaff.map(u => u.collected || 0);
-            
-            if(adminOverallChartInst) adminOverallChartInst.destroy();
-            adminOverallChartInst = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ label: 'Collected ($)', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true } } 
-                } 
-            });
-        }
 
         // --- IOU / FINANCED LOGIC ---
         window.prepareApproveIOU = (reqId, clientName, contact, amount, dueDate, qty, type) => { 
@@ -3254,7 +3392,17 @@
                     options: { 
                         responsive: true, 
                         maintainAspectRatio: false, 
-                        plugins: { legend: { display: false } }, 
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const t = sales[context.dataIndex];
+                                        return `Sale: $${t.money} (${t.qty} ${t.type.toUpperCase()})`;
+                                    }
+                                }
+                            }
+                        }, 
                         scales: { y: { beginAtZero: true } } 
                     } 
                 });
