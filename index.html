@@ -347,6 +347,27 @@
         </div>
     </div>
 
+    <!-- Team Chat Modal -->
+    <div id="chat-modal" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-[140] flex flex-col hidden transform transition-transform duration-300 translate-y-full">
+        <div class="bg-blue-600 dark:bg-gray-800 text-white p-4 shadow-md flex justify-between items-center">
+            <h2 class="font-bold flex items-center"><i data-lucide="messages-square" class="w-5 h-5 mr-2"></i> Team Chat</h2>
+            <button onclick="window.closeChatModal()" class="p-2 rounded-full hover:bg-blue-700 dark:hover:bg-gray-700 transition">
+                <i data-lucide="chevron-down" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 dark:bg-gray-900 hide-scrollbar pb-20">
+            <!-- Messages load here -->
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] border-t dark:border-gray-700 absolute bottom-0 w-full flex items-center">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') window.sendChatMessage()" class="flex-1 bg-gray-100 dark:bg-gray-700 dark:text-white border border-transparent focus:border-blue-500 rounded-full px-4 py-3 outline-none text-sm transition mr-2">
+            <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition shadow-md active:scale-95">
+                <i data-lucide="send" class="w-5 h-5 ml-1"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- STAFF UI -->
     <div id="staff-app" class="hidden">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md">
@@ -355,9 +376,15 @@
                     <h1 class="text-lg font-bold">Staff Portal</h1>
                     <div class="text-xs text-blue-200" id="staff-name-display">Guest</div>
                 </div>
-                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
+                <div class="flex space-x-2">
+                    <button onclick="window.openChatModal()" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition relative">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        <span id="staff-chat-badge" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border border-white dark:border-gray-800 rounded-full"></span>
+                    </button>
+                    <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
             
             <!-- Staff Navigation Tabs -->
@@ -641,9 +668,15 @@
                 <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
                 <p class="text-xs text-gray-400">Weight & Revenue Manager</p>
             </div>
-            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-            </button>
+            <div class="flex space-x-2">
+                <button onclick="window.openChatModal()" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition relative">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    <span id="admin-chat-badge" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border border-gray-900 rounded-full"></span>
+                </button>
+                <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Notification Banner Admin -->
@@ -1333,8 +1366,31 @@
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
         // Listeners
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts;
+        import { query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
         let globalContacts = [];
+        let chatMessages = [];
+        let chatUnreadCount = 0;
+
+        // iOS compatible notification sound
+        const playPingSound = () => {
+            try {
+                // Using an AudioContext oscillator doesn't require downloading an audio file
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        };
 
         
 
@@ -1614,6 +1670,7 @@
             if(unsubAuthCheck) unsubAuthCheck(); 
             if(unsubAlerts) unsubAlerts();
             if(unsubContacts) unsubContacts();
+            if(unsubChat) unsubChat();
             
             document.getElementById('staff-app').classList.add('hidden'); 
             document.getElementById('admin-app').classList.add('hidden'); 
@@ -1752,14 +1809,118 @@
                     globalContacts = [];
                     snap.forEach(d => { globalContacts.push({ id: d.id, ...d.data() }); });
                     if(!document.getElementById('contacts-modal').classList.contains('hidden')) {
-                        window.filterContacts(); // Re-render live if modal is open
+                        window.filterContacts(); 
                     }
                 });
+
+                // Listen to the latest 50 chat messages
+                const chatQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), orderBy('timestamp', 'desc'), limit(50));
+                unsubChat = onSnapshot(chatQuery, (snap) => {
+                    let newMsgs = [];
+                    snap.forEach(d => { newMsgs.push({ id: d.id, ...d.data() }); });
+                    chatMessages = newMsgs.reverse(); // put oldest first for UI
+                    
+                    // If modal is open, render. Else, show badge and play sound if it's a NEW message
+                    const chatModal = document.getElementById('chat-modal');
+                    if (!chatModal.classList.contains('translate-y-full')) {
+                        window.renderChat();
+                    } else {
+                        // Check if newest message is not from me and is less than 5 seconds old
+                        const lastMsg = chatMessages[chatMessages.length - 1];
+                        if (lastMsg && lastMsg.uid !== user.uid && (Date.now() - lastMsg.timestamp < 5000)) {
+                            chatUnreadCount++;
+                            const sBadge = document.getElementById('staff-chat-badge');
+                            const aBadge = document.getElementById('admin-chat-badge');
+                            if(sBadge) sBadge.classList.remove('hidden');
+                            if(aBadge) aBadge.classList.remove('hidden');
+                            playPingSound();
+                            window.fireLocalNotification("New Team Message", `${lastMsg.name}: ${lastMsg.text}`);
+                        }
+                    }
+                });
+
             } else { 
                 document.getElementById('loading-overlay').classList.add('hidden'); 
                 document.getElementById('login-modal').classList.remove('hidden'); 
             }
         });
+		
+		
+		window.openChatModal = () => {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.remove('hidden');
+            // Small timeout to allow display:block to apply before animating transform
+            setTimeout(() => { modal.classList.remove('translate-y-full'); }, 10);
+            
+            chatUnreadCount = 0;
+            const sBadge = document.getElementById('staff-chat-badge');
+            const aBadge = document.getElementById('admin-chat-badge');
+            if(sBadge) sBadge.classList.add('hidden');
+            if(aBadge) aBadge.classList.add('hidden');
+            
+            window.renderChat();
+        };
+
+        window.closeChatModal = () => {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.add('translate-y-full');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300); // Wait for transition
+        };
+
+        window.sendChatMessage = async () => {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text || !currentUser) return;
+            
+            input.value = '';
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), {
+                uid: currentUser.uid,
+                name: window.currentUserName || 'User',
+                text: text,
+                role: userRole,
+                timestamp: Date.now()
+            });
+        };
+
+        window.renderChat = () => {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            
+            let lastDate = '';
+            
+            chatMessages.forEach(msg => {
+                const isMe = msg.uid === currentUser.uid;
+                const msgDate = new Date(msg.timestamp).toLocaleDateString();
+                const msgTime = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                // Show date divider if day changed
+                if (msgDate !== lastDate) {
+                    container.innerHTML += `<div class="text-center my-4"><span class="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">${msgDate}</span></div>`;
+                    lastDate = msgDate;
+                }
+
+                const align = isMe ? 'justify-end' : 'justify-start';
+                const bg = isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 dark:text-white rounded-bl-none shadow-sm border border-gray-100 dark:border-gray-700';
+                const nameLabel = !isMe ? `<div class="text-[10px] text-gray-500 mb-1 font-bold ml-1">${msg.name} ${msg.role === 'admin' ? '<span class="text-blue-500 ml-1">(Admin)</span>' : ''}</div>` : '';
+                const timeColor = isMe ? 'text-blue-200' : 'text-gray-400';
+
+                container.innerHTML += `
+                    <div class="flex ${align} mb-3">
+                        <div class="max-w-[80%]">
+                            ${nameLabel}
+                            <div class="p-3 rounded-2xl ${bg} text-sm">
+                                ${msg.text}
+                            </div>
+                            <div class="text-[9px] ${timeColor} mt-1 ${isMe ? 'text-right mr-1' : 'ml-1'}">${msgTime}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Auto scroll to bottom
+            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+            lucide.createIcons();
+        };
 
         window.sendNotificationAlert = async (targetUid, message) => { 
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), { 
