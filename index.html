@@ -2597,16 +2597,31 @@
                 data: { 
                     labels: stats.map(s => s.label), 
                     datasets: [
-                        { label: 'Gross Rev.', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, 
-                        { label: 'Costs/Exp.', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, 
-                        { label: 'Net Earnings', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 } 
+                        { label: 'Gross Rev ($)', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y' }, 
+                        { label: 'Costs/Exp ($)', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4, yAxisID: 'y' }, 
+                        { label: 'Net Earnings ($)', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Pieces Sold', data: stats.map(s => s.pieces), type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.1, yAxisID: 'y1' }
                     ] 
                 }, 
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } }, 
-                    scales: { y: { beginAtZero: true } } 
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let lbl = context.dataset.label || '';
+                                    if(context.dataset.yAxisID === 'y1') return `${lbl}: ${context.parsed.y} units`;
+                                    return `${lbl}: $${context.parsed.y}`;
+                                }
+                            }
+                        } 
+                    }, 
+                    scales: { 
+                        y: { beginAtZero: true, position: 'left' },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+                    } 
                 } 
             });
         };
@@ -2965,8 +2980,8 @@
             document.getElementById('admin-user-detail').classList.remove('hidden');
 
             const ctx = document.getElementById('adminDetailChart');
-            if(ctx && u.recentLogs) {
-                const sales = u.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
+            if(ctx && d.recentLogs) {
+                const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
                 if(adminDetailChartInst) adminDetailChartInst.destroy();
                 adminDetailChartInst = new Chart(ctx, { 
                     type: 'bar', 
