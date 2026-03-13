@@ -1508,7 +1508,9 @@
                     // Added a dot to make it a relative path so GitHub Pages can find it!
                     const repoPath = './firebase-messaging-sw.js'; 
                     const registration = await navigator.serviceWorker.register(repoPath);
-                        vapidKey: 'BOD-A9uAxZY3Ps_ZCQ3lgr9QiUATBUsz-ob1qArnLbZf6mMhfEb4AuVPMh5CYwFsgdw-ifpnlpp6MuPMhlzySRU',  
+                    const currentToken = await getToken(messaging, { 
+                        vapidKey: 'BOD-A9uAxZY3Ps_ZCQ3lgr9QiUATBUsz-ob1qArnLbZf6mMhfEb4AuVPMh5CYwFsgdw-ifpnlpp6MuPMhlzySRU', 
+                        serviceWorkerRegistration: registration 
                     });
                     if (currentToken) {
                         if (currentUser) {
