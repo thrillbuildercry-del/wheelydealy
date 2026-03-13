@@ -1940,7 +1940,7 @@
             if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
             
             const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
+            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`
 
             const btnUsual = document.getElementById('btn-quick-usual'); 
             const btnFull = document.getElementById('btn-quick-full');
