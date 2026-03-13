@@ -643,7 +643,7 @@
                     <button onclick="window.staffExpense()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-orange-500 btn-interactive flex flex-col items-center">
                         <i data-lucide="fuel" class="w-6 h-6 mb-2 text-orange-500"></i> <span class="text-xs">Log Expense</span>
                     </button>
-                    <button onclick="window.requestWeight()" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-green-500 btn-interactive flex flex-col items-center">
+                    <button onclick="window.requestWeight()" class="col-span-2 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:border-green-500 btn-interactive flex flex-col items-center">
                         <i data-lucide="bell" class="w-6 h-6 mb-2 text-green-500"></i> <span class="text-xs">Req Inventory</span>
                     </button>
                 </div>
@@ -737,7 +737,6 @@
                     </div>
 
                     <!-- Processing Tool -->
-                    
                     <div class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm mt-4">
                         <div class="flex justify-between items-center mb-1">
                             <h3 class="text-sm font-bold text-blue-300 flex items-center">
@@ -911,8 +910,6 @@
                     </div>
                 </div>
             </div>
-
-      
 
             <!-- TAB: FINANCE & PROJECTIONS -->
             <div id="admin-view-finance" class="admin-tab-content hidden">
@@ -1276,7 +1273,7 @@
                 Clear Shift / Settle Balances
             </button>
             <p class="text-center text-[10px] text-gray-500 mt-2">Use this after collecting money. Resets expected and collected, effectively finalizing the settlement.</p>
-            
+
             <button onclick="window.adminRemoveCurrentStaff()" class="w-full mt-4 bg-red-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-red-700 transition btn-interactive flex justify-center items-center">
                 <i data-lucide="user-x" class="w-4 h-4 mr-2"></i> Terminate / Remove Staff Member
             </button>
@@ -1290,7 +1287,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-		import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
         const manifestJSON = { 
@@ -1336,6 +1333,11 @@
         let currentUser = null; 
         let userRole = 'staff'; 
         
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
+        let globalContacts = [];
+        let chatMessages = [];
+        let chatUnreadCount = 0;
+
         // Staff State
         let appData = { 
             weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
@@ -1365,18 +1367,12 @@
         // Chart Instances
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
-        // Listeners
-        
-
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
-        let globalContacts = [];
-        let chatMessages = [];
-        let chatUnreadCount = 0;
+        Chart.defaults.color = '#9ca3af'; 
+        Chart.defaults.borderColor = '#374151';
 
         // iOS compatible notification sound
         const playPingSound = () => {
             try {
-                // Using an AudioContext oscillator doesn't require downloading an audio file
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
                 const ctx = new AudioContext();
@@ -1385,21 +1381,14 @@
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+                osc.frequency.setValueAtTime(880, ctx.currentTime); 
                 gain.gain.setValueAtTime(0.1, ctx.currentTime);
                 osc.start(ctx.currentTime);
                 osc.stop(ctx.currentTime + 0.1);
             } catch(e) {}
         };
 
-        
-
-        Chart.defaults.color = '#9ca3af'; 
-        Chart.defaults.borderColor = '#374151';
-
         // --- NEW UPGRADED LOGIC FUNCTIONS ---
-
-        // NEW: FLUID TWEENING FUNCTION FOR NUMBERS
         window.animateValue = (id, start, end, duration, prefix = '', isCurrency = false) => {
             if (start === end) return;
             const obj = document.getElementById(id);
@@ -1451,7 +1440,6 @@
             const contEl = document.getElementById('staff-my-contribution');
             const pctEl = document.getElementById('staff-my-percentage');
             
-            // Extract current values for smooth animation if possible, fallback to direct set
             if(revEl) revEl.innerText = `$${totalCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
             if(contEl) contEl.innerText = `$${myCol.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
             if(pctEl) pctEl.innerText = `${myPct}%`;
@@ -1548,24 +1536,6 @@
             }
         };
 
-        window.adminRemoveCurrentStaff = async () => {
-            if (!currentDetailUid) return;
-            const staffName = document.getElementById('detail-user-name').innerText;
-            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
-            
-            try {
-                // Delete user from the public roster list so they can't access the app
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
-                window.showToast(`${staffName} has been removed from the team.`);
-                
-                // Close the modal and reset
-                document.getElementById('admin-user-detail').classList.add('hidden');
-                currentDetailUid = null;
-            } catch (err) {
-                window.showToast("Error removing staff: " + err.message);
-            }
-        };
-
         // ---------------------------------------------------------
         // UTILS & ANALYTICS HELPER
         // ---------------------------------------------------------
@@ -1595,7 +1565,6 @@
                 periods.forEach((p, index) => {
                     if (age <= p.ms) {
                         if (t.type === 'expense') {
-                            // Automatically sums up staff expenses and Admin Purchase/Restocks correctly
                             stats[index].expenses += Math.abs(t.money);
                         } else if (t.type !== 'personal' && t.type !== 'borrowing' && t.type !== 'dropoff') { 
                             stats[index].revenue += (t.money || 0); 
@@ -1604,7 +1573,6 @@
                     }
                 });
             });
-            // TRUE NET PROFIT: Revenue - Costs
             stats.forEach(s => s.profit = s.revenue - s.expenses);
             return stats;
         }
@@ -1647,6 +1615,21 @@
             }
         };
 
+        window.adminRemoveCurrentStaff = async () => {
+            if (!currentDetailUid) return;
+            const staffName = document.getElementById('detail-user-name').innerText;
+            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
+            
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
+                window.showToast(`${staffName} has been removed from the team.`);
+                document.getElementById('admin-user-detail').classList.add('hidden');
+                currentDetailUid = null;
+            } catch (err) {
+                window.showToast("Error removing staff: " + err.message);
+            }
+        };
+
         // ---------------------------------------------------------
         // AUTH LOGIC
         // ---------------------------------------------------------
@@ -1681,17 +1664,17 @@
             window.location.reload(); 
         };
 
+        let processAdminRosterUI = () => {};
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 
-                // CRITICAL FIX: Ensure roster listener fires for EVERYONE to fuel global stats
                 unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                     globalRoster = [];
                     snap.forEach(d => { globalRoster.push({ id: d.id, ...d.data() }); });
                     if(userRole === 'admin') {
                         if(typeof processAdminRosterUI === 'function') processAdminRosterUI();
-                        // Live fluid update
                         if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
                             window.loadGlobalAnalytics();
                         }
@@ -1744,8 +1727,6 @@
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         const dat = s.data();
-                        
-                        // Extract old value for tweening Cash Balance
                         let oldCash = masterData.cashBalance || 0;
                         let oldRaw = masterData.rawWeight || 0;
 
@@ -1758,7 +1739,6 @@
                         };
                         updateMasterLabels();
                         
-                        // Handle Staff Announcement Banner
                         if (userRole === 'staff') {
                             const annBanner = document.getElementById('staff-announcement');
                             const annText = document.getElementById('staff-announcement-text');
@@ -1772,15 +1752,11 @@
 
                         if(userRole === 'admin') { 
                             window.admUpdateMasterLabels(); 
-                            
-                            // Fluid Animations for core numbers
                             window.animateValue('finance-cash-balance', oldCash, masterData.cashBalance, 600, '$', true);
                             window.animateValue('admin-master-weight', oldRaw, masterData.rawWeight, 400, '', false);
                             
                             updateFinanceUI(); 
                             window.updateIOUUI(); 
-                            
-                            // Live Fluid Chart Update
                             if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
                                 window.loadGlobalAnalytics();
                             }
@@ -1809,24 +1785,22 @@
                 unsubContacts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), (snap) => {
                     globalContacts = [];
                     snap.forEach(d => { globalContacts.push({ id: d.id, ...d.data() }); });
-                    if(!document.getElementById('contacts-modal').classList.contains('hidden')) {
+                    const contactsModal = document.getElementById('contacts-modal');
+                    if(contactsModal && !contactsModal.classList.contains('hidden')) {
                         window.filterContacts(); 
                     }
                 });
 
-                // Listen to the latest 50 chat messages
                 const chatQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), orderBy('timestamp', 'desc'), limit(50));
                 unsubChat = onSnapshot(chatQuery, (snap) => {
                     let newMsgs = [];
                     snap.forEach(d => { newMsgs.push({ id: d.id, ...d.data() }); });
-                    chatMessages = newMsgs.reverse(); // put oldest first for UI
+                    chatMessages = newMsgs.reverse(); 
                     
-                    // If modal is open, render. Else, show badge and play sound if it's a NEW message
                     const chatModal = document.getElementById('chat-modal');
-                    if (!chatModal.classList.contains('translate-y-full')) {
+                    if (chatModal && !chatModal.classList.contains('translate-y-full')) {
                         window.renderChat();
                     } else {
-                        // Check if newest message is not from me and is less than 5 seconds old
                         const lastMsg = chatMessages[chatMessages.length - 1];
                         if (lastMsg && lastMsg.uid !== user.uid && (Date.now() - lastMsg.timestamp < 5000)) {
                             chatUnreadCount++;
@@ -1845,12 +1819,18 @@
                 document.getElementById('login-modal').classList.remove('hidden'); 
             }
         });
-		
-		
-		window.openChatModal = () => {
+
+        window.sendNotificationAlert = async (targetUid, message) => { 
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), { 
+                target: targetUid, 
+                message: message, 
+                timestamp: Date.now() 
+            }); 
+        };
+
+        window.openChatModal = () => {
             const modal = document.getElementById('chat-modal');
             modal.classList.remove('hidden');
-            // Small timeout to allow display:block to apply before animating transform
             setTimeout(() => { modal.classList.remove('translate-y-full'); }, 10);
             
             chatUnreadCount = 0;
@@ -1865,7 +1845,7 @@
         window.closeChatModal = () => {
             const modal = document.getElementById('chat-modal');
             modal.classList.add('translate-y-full');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300); // Wait for transition
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         };
 
         window.sendChatMessage = async () => {
@@ -1894,7 +1874,6 @@
                 const msgDate = new Date(msg.timestamp).toLocaleDateString();
                 const msgTime = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
-                // Show date divider if day changed
                 if (msgDate !== lastDate) {
                     container.innerHTML += `<div class="text-center my-4"><span class="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">${msgDate}</span></div>`;
                     lastDate = msgDate;
@@ -1915,20 +1894,70 @@
                             <div class="text-[9px] ${timeColor} mt-1 ${isMe ? 'text-right mr-1' : 'ml-1'}">${msgTime}</div>
                         </div>
                     </div>
-                };
+                `;
             });
             
-            // Auto scroll to bottom
             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
             lucide.createIcons();
         };
 
-        window.sendNotificationAlert = async (targetUid, message) => { 
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), { 
-                target: targetUid, 
-                message: message, 
-                timestamp: Date.now() 
-            }); 
+        window.openContactsModal = () => {
+            document.getElementById('contacts-modal').classList.remove('hidden');
+            window.filterContacts();
+        };
+
+        window.saveContact = async () => {
+            const name = document.getElementById('new-contact-name').value;
+            const phone = document.getElementById('new-contact-phone').value;
+            const notes = document.getElementById('new-contact-notes').value;
+            if(!name) return window.showToast("Contact Name is required.");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), {
+                name, phone, notes, createdBy: currentUser.uid, createdAt: Date.now()
+            });
+            
+            document.getElementById('new-contact-name').value = '';
+            document.getElementById('new-contact-phone').value = '';
+            document.getElementById('new-contact-notes').value = '';
+            window.showToast("Contact Saved!");
+        };
+
+        window.deleteContact = async (id) => {
+            if(confirm("Delete this contact permanently?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contacts', id));
+                window.showToast("Contact Deleted");
+            }
+        };
+
+        window.filterContacts = () => {
+            const term = document.getElementById('contact-search').value.toLowerCase();
+            const list = document.getElementById('contacts-list-container');
+            list.innerHTML = '';
+            
+            const filtered = globalContacts.filter(c => 
+                (c.name && c.name.toLowerCase().includes(term)) || 
+                (c.phone && c.phone.toLowerCase().includes(term)) ||
+                (c.notes && c.notes.toLowerCase().includes(term))
+            );
+            
+            if(filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-6 text-xs text-gray-400 italic">No contacts found.</div>';
+                return;
+            }
+
+            filtered.sort((a,b) => a.name.localeCompare(b.name)).forEach(c => {
+                list.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold dark:text-white text-sm flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1 text-teal-500"></i> ${c.name}</span>
+                            <button onclick="window.deleteContact('${c.id}')" class="text-red-400 hover:text-red-600 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                        ${c.phone ? `<div class="text-xs text-gray-500 mb-1 flex items-center"><i data-lucide="phone" class="w-3 h-3 mr-1"></i> ${c.phone}</div>` : ''}
+                        ${c.notes ? `<div class="text-[10px] text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded mt-1">${c.notes}</div>` : ''}
+                    </div>
+                `;
+            });
+            lucide.createIcons();
         };
 
         function updateMasterLabels() {
@@ -1962,9 +1991,6 @@
             const ratio = masterData.usualRatio || 1; 
             const expenses = masterData.totalExpenses || 0;
             
-            // Replaced by animateValue in onSnapshot listener
-            // if(wRaw) wRaw.innerText = rawW.toFixed(1); 
-            
             if(pDisp) pDisp.innerText = `$${price}`; 
             if(rDisp) rDisp.innerText = `${ratio}x`; 
             if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`; 
@@ -1980,8 +2006,6 @@
                 masterEqWeight.innerText = `${totalEq.toFixed(1)} u`; 
             }
 
-			
-            // --- NEW: Update Processing Previews ---
             const previewFull = document.getElementById('preview-max-full');
             const previewUsual = document.getElementById('preview-max-usual');
             if (previewFull && previewUsual) {
