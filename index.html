@@ -2564,7 +2564,74 @@
             document.getElementById(`adm-tab-${t}`).classList.add('bg-gray-800','text-white','shadow'); 
             document.getElementById(`adm-tab-${t}`).classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300');
             
-            if (t === 'finance') window.loadGlobalAnalytics();
+            if (t === 'finance' && typeof window.loadGlobalAnalytics === 'function') window.loadGlobalAnalytics();
+        };
+
+        window.loadGlobalAnalytics = async () => {
+            let allTx = []; 
+            if(adminData && adminData.transactions) allTx.push(...adminData.transactions);
+            
+            for(const u of globalRoster) {
+                if(u.role !== 'admin') {
+                    try { 
+                        const snap = await getDoc(doc(db, 'artifacts', appId, 'users', u.id, 'data', 'app_state')); 
+                        if(snap.exists()) { 
+                            const dat = JSON.parse(snap.data().json); 
+                            if(dat.transactions) allTx.push(...dat.transactions); 
+                        } 
+                    } catch(e) {}
+                }
+            }
+            
+            const stats = calculateAnalytics(allTx);
+            document.getElementById('admin-pieces-today').innerText = stats[0].pieces; 
+            document.getElementById('admin-pieces-week').innerText = stats[1].pieces; 
+            document.getElementById('admin-pieces-month').innerText = stats[2].pieces;
+            
+            const ctx = document.getElementById('adminProfitChart'); 
+            if(!ctx) return;
+            
+            if(adminProfitChartInst) adminProfitChartInst.destroy();
+            adminProfitChartInst = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: stats.map(s => s.label), 
+                    datasets: [
+                        { label: 'Gross Rev.', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4 }, 
+                        { label: 'Costs/Exp.', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4 }, 
+                        { label: 'Net Earnings', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4 } 
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } }, 
+                    scales: { y: { beginAtZero: true } } 
+                } 
+            });
+        };
+
+        window.updateAdminOverallChart = (roster) => {
+            const ctx = document.getElementById('adminOverallChart'); 
+            if(!ctx) return;
+            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin'); 
+            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name); 
+            const data = activeStaff.map(u => u.collected || 0);
+            
+            if(adminOverallChartInst) adminOverallChartInst.destroy();
+            adminOverallChartInst = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ label: 'Collected ($)', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { y: { beginAtZero: true } } 
+                } 
+            });
         };
 
         function initAdminDashboard(user) {
@@ -3218,6 +3285,104 @@
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
             document.getElementById('process-qty').value = ''; 
             window.showToast(`Processed ${qty} ${type} units.`);
+        };
+
+        // --- MISSING ADMIN TERMINAL & FINANCE FUNCTIONS RESTORED ---
+        window.adminUpdateCash = async () => {
+            const current = masterData.cashBalance || 0;
+            const amt = parseFloat(prompt(`Current Master Cash: $${current}\n\nEnter amount to add/subtract (use negative number to subtract):`, "0"));
+            if(isNaN(amt)) return; 
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
+        };
+
+        window.adminPurchaseStock = async (weight, cost) => {
+            if (weight === 'custom') {
+                weight = parseFloat(prompt("Enter custom weight amount (units):")); 
+                if (isNaN(weight) || weight <= 0) return;
+                cost = parseFloat(prompt("Enter total cost of purchase ($):")); 
+                if (isNaN(cost) || cost < 0) return;
+            }
+            if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
+            
+            adminData.transactions.push({ 
+                id: Date.now(), 
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                qty: weight, 
+                type: 'expense', 
+                actualWeight: 0, 
+                money: -cost, 
+                expected: 0, 
+                desc: `Restock ${weight} units`
+            });
+
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{ 
+                rawWeight: increment(weight), 
+                totalExpenses: increment(cost), 
+                cashBalance: increment(-cost) 
+            }, {merge:true});
+            
+            await saveAdminData(); 
+            window.showToast(`Restocked ${weight} units for $${cost}.`);
+        };
+
+        window.admUpdateMasterLabels = () => {
+            const labelFull = document.getElementById('adm-label-full-weight'); 
+            const labelUsual = document.getElementById('adm-label-usual-weight'); 
+            const expHint = document.getElementById('adm-expected-money-hint');
+            
+            if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`; 
+            if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * (masterData.usualRatio || 0.8)).toFixed(1)} units)`;
+            
+            const unitPrice = admCurrentType === 'full' ? (masterData.pricePerUnit || 100) : ((masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8)); 
+            if(expHint) expHint.innerText = `Expected: $${(admCurrentQty * unitPrice).toFixed(2)}`;
+        };
+
+        window.admSelectQty = (q) => { 
+            admCurrentQty = q; 
+            document.querySelectorAll('.adm-qty-btn').forEach(b => b.classList.remove('active')); 
+            const btn = document.getElementById(`adm-btn-qty-${q}`);
+            if(btn) btn.classList.add('active'); 
+            window.admUpdateMasterLabels(); 
+            window.admCheckPriceColor(); 
+        };
+        
+        window.admSelectType = (t) => { 
+            admCurrentType = t; 
+            document.querySelectorAll('.adm-type-btn').forEach(b => b.classList.remove('active')); 
+            const btn = document.getElementById(`adm-btn-type-${t}`);
+            if(btn) btn.classList.add('active'); 
+            window.admUpdateMasterLabels(); 
+            window.admCheckPriceColor(); 
+        };
+
+        window.admCheckPriceColor = () => {
+            const input = document.getElementById('adm-money-input'); 
+            if(!input) return;
+            const val = parseFloat(input.value) || 0; 
+            const perUnit = val / admCurrentQty;
+            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
+            
+            if (val === 0) { 
+                input.classList.add('dark:text-white', 'text-gray-800'); 
+                return; 
+            }
+            if (admCurrentType === 'usual') {
+                const usualPrice = (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
+                if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500'); 
+                else if (perUnit < (masterData.pricePerUnit || 100)) input.classList.add('text-orange-500', 'dark:text-orange-500'); 
+                else input.classList.add('text-green-500', 'dark:text-green-500');
+            } else { 
+                if (perUnit < (masterData.pricePerUnit || 100)) input.classList.add('text-red-500', 'dark:text-red-500'); 
+                else input.classList.add('text-green-500', 'dark:text-green-500');
+            }
+        };
+
+        window.admSetQuickPrice = (pricePerUnit) => { 
+            const input = document.getElementById('adm-money-input');
+            if(input) {
+                input.value = pricePerUnit * admCurrentQty; 
+                window.admCheckPriceColor(); 
+            }
         };
     </script>
 </body>
