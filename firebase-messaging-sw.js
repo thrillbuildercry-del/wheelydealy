@@ -4,8 +4,6 @@
 importScripts('https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging-compat.js');
 
-// 1. Initialize the Firebase app in the service worker
-// Replace these with your actual Firebase config values
 firebase.initializeApp({
   apiKey: "AIzaSyDz4iG5KZy3JAxBhubaGEaMKTY7jcObRDE",
   authDomain: "deals-bcfea.firebaseapp.com",
@@ -15,19 +13,39 @@ firebase.initializeApp({
   appId: "1:686014043249:web:8dcc93549cdb265269b7d0"
 });
 
-// 2. Retrieve an instance of Firebase Messaging
 const messaging = firebase.messaging();
 
-// 3. Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message ', payload);
   
-  const notificationTitle = payload.notification.title || 'WeightOps Update';
+  const notificationTitle = payload.notification?.title || 'WeightOps Update';
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/icon-192x192.png', // Ensure you have an icon here
-    badge: '/icon-192x192.png'
+    body: payload.notification?.body || 'You have a new message or update.',
+    icon: '/icon-192x192.png', // Ensure this file exists at your root
+    badge: '/icon-192x192.png',
+    vibrate: [200, 100, 200], // Vibration pattern
+    requireInteraction: true, // Keeps it on screen until tapped
+    data: {
+      url: self.location.origin // Opens the app when tapped
+    }
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Handle notification clicks (focuses app or opens it)
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) { client = clientList[i]; }
+        }
+        return client.focus();
+      }
+      return clients.openWindow(event.notification.data.url || '/');
+    })
+  );
 });
