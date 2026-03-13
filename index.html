@@ -55,12 +55,10 @@
         }
         .hidden { display: none !important; }
         
-        /* Custom Selectable Buttons */
         .btn-select { transition: all 0.2s; border: 2px solid transparent; }
         .btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .btn-interactive:active { transform: scale(0.95); }
         
-        /* --- NEW STYLES FOR UPGRADED UI --- */
         .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { 
@@ -68,7 +66,6 @@
             to { opacity: 1; transform: translateY(0); } 
         }
 
-        /* Ticker Animation for Announcements */
         .ticker-wrapper { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
         .ticker-content { display: inline-block; padding-left: 100%; animation: ticker 15s linear infinite; }
         @keyframes ticker { 
@@ -133,7 +130,6 @@
                 </button>
             </div>
 
-            <!-- Admin Factory Reset Area -->
             <div id="admin-settings-section" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800 hidden">
                 <h3 class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex items-center">
                     <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Admin Danger Zone
@@ -147,17 +143,14 @@
                     <span class="font-medium dark:text-white">Change Display Name</span>
                     <i data-lucide="edit-3" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-                
                 <button onclick="window.enableNotifications()" class="w-full flex justify-between items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl btn-interactive mb-3 border border-indigo-100 dark:border-indigo-800">
                     <span class="font-medium text-indigo-700 dark:text-indigo-400">Enable Notifications</span>
                     <i data-lucide="bell-ring" class="w-5 h-5 text-indigo-500"></i>
                 </button>
-
                 <button onclick="window.testNotification()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive mb-3">
                     <span class="font-medium dark:text-white">Test Notification System</span>
                     <i data-lucide="flask-conical" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive">
                     <span class="font-medium dark:text-white">Toggle Dark Mode</span>
                     <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
@@ -1490,12 +1483,16 @@
         
         window.enableNotifications = async () => {
             if (!messaging) return window.showToast("Push requires adding to Home Screen first!");
+            if (!('serviceWorker' in navigator)) return window.showToast("Service workers are not supported on this browser.");
+            
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    // Added a dot to make it a relative path so GitHub Pages can find it!
                     const repoPath = './firebase-messaging-sw.js'; 
                     const registration = await navigator.serviceWorker.register(repoPath);
+                    
+                    await navigator.serviceWorker.ready;
+                    
                     const currentToken = await getToken(messaging, { 
                         vapidKey: 'BOD-A9uAxZY3Ps_ZCQ3lgr9QiUATBUsz-ob1qArnLbZf6mMhfEb4AuVPMh5CYwFsgdw-ifpnlpp6MuPMhlzySRU', 
                         serviceWorkerRegistration: registration 
@@ -1508,8 +1505,10 @@
                             }, { merge: true });
                         }
                         window.showToast("Push Notifications Enabled!");
-                        document.getElementById('push-setup-banner').classList.add('hidden'); 
-                        document.getElementById('admin-push-setup-banner').classList.add('hidden');
+                        const pushBanner = document.getElementById('push-setup-banner');
+                        const adminPushBanner = document.getElementById('admin-push-setup-banner');
+                        if (pushBanner) pushBanner.classList.add('hidden'); 
+                        if (adminPushBanner) adminPushBanner.classList.add('hidden');
                     }
                 } else { 
                     window.showToast("Notification permission denied."); 
@@ -1664,7 +1663,7 @@
             window.location.reload(); 
         };
 
-        let processAdminRosterUI = () => {};
+        window.processAdminRosterUI = () => {};
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -1674,13 +1673,13 @@
                     globalRoster = [];
                     snap.forEach(d => { globalRoster.push({ id: d.id, ...d.data() }); });
                     if(userRole === 'admin') {
-                        if(typeof processAdminRosterUI === 'function') processAdminRosterUI();
+                        if(typeof window.processAdminRosterUI === 'function') window.processAdminRosterUI();
                         if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
                             window.loadGlobalAnalytics();
                         }
                     }
                     if(userRole === 'staff' && typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats(); 
-                });
+                }, (error) => console.warn("Roster sync:", error.message));
 
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
                 unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
@@ -1751,7 +1750,7 @@
                         }
 
                         if(userRole === 'admin') { 
-                            window.admUpdateMasterLabels(); 
+                            if(typeof window.admUpdateMasterLabels === 'function') window.admUpdateMasterLabels(); 
                             window.animateValue('finance-cash-balance', oldCash, masterData.cashBalance, 600, '$', true);
                             window.animateValue('admin-master-weight', oldRaw, masterData.rawWeight, 400, '', false);
                             
@@ -1767,7 +1766,7 @@
                     } else { 
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e)); 
                     }
-                });
+                }, (error) => console.warn("Master sync:", error.message));
 
                 unsubAlerts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), (snap) => {
                     snap.docChanges().forEach((change) => {
@@ -1780,7 +1779,7 @@
                             }
                         }
                     });
-                });
+                }, (error) => console.warn("Alerts sync:", error.message));
 
                 unsubContacts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), (snap) => {
                     globalContacts = [];
@@ -1789,7 +1788,7 @@
                     if(contactsModal && !contactsModal.classList.contains('hidden')) {
                         window.filterContacts(); 
                     }
-                });
+                }, (error) => console.warn("Contacts sync:", error.message));
 
                 const chatQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), orderBy('timestamp', 'desc'), limit(50));
                 unsubChat = onSnapshot(chatQuery, (snap) => {
@@ -1812,7 +1811,7 @@
                             window.fireLocalNotification("New Team Message", `${lastMsg.name}: ${lastMsg.text}`);
                         }
                     }
-                });
+                }, (error) => console.warn("Chat sync:", error.message));
 
             } else { 
                 document.getElementById('loading-overlay').classList.add('hidden'); 
