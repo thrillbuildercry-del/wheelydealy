@@ -55,10 +55,12 @@
         }
         .hidden { display: none !important; }
         
+        /* Custom Selectable Buttons */
         .btn-select { transition: all 0.2s; border: 2px solid transparent; }
         .btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .btn-interactive:active { transform: scale(0.95); }
         
+        /* --- NEW STYLES FOR UPGRADED UI --- */
         .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { 
@@ -66,6 +68,7 @@
             to { opacity: 1; transform: translateY(0); } 
         }
 
+        /* Ticker Animation for Announcements */
         .ticker-wrapper { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
         .ticker-content { display: inline-block; padding-left: 100%; animation: ticker 15s linear infinite; }
         @keyframes ticker { 
@@ -130,6 +133,7 @@
                 </button>
             </div>
 
+            <!-- Admin Factory Reset Area -->
             <div id="admin-settings-section" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800 hidden">
                 <h3 class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex items-center">
                     <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Admin Danger Zone
@@ -143,14 +147,17 @@
                     <span class="font-medium dark:text-white">Change Display Name</span>
                     <i data-lucide="edit-3" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
+                
                 <button onclick="window.enableNotifications()" class="w-full flex justify-between items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl btn-interactive mb-3 border border-indigo-100 dark:border-indigo-800">
                     <span class="font-medium text-indigo-700 dark:text-indigo-400">Enable Notifications</span>
                     <i data-lucide="bell-ring" class="w-5 h-5 text-indigo-500"></i>
                 </button>
+
                 <button onclick="window.testNotification()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive mb-3">
                     <span class="font-medium dark:text-white">Test Notification System</span>
                     <i data-lucide="flask-conical" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
+
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive">
                     <span class="font-medium dark:text-white">Toggle Dark Mode</span>
                     <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
@@ -1266,7 +1273,7 @@
                 Clear Shift / Settle Balances
             </button>
             <p class="text-center text-[10px] text-gray-500 mt-2">Use this after collecting money. Resets expected and collected, effectively finalizing the settlement.</p>
-
+            
             <button onclick="window.adminRemoveCurrentStaff()" class="w-full mt-4 bg-red-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-red-700 transition btn-interactive flex justify-center items-center">
                 <i data-lucide="user-x" class="w-4 h-4 mr-2"></i> Terminate / Remove Staff Member
             </button>
@@ -1326,11 +1333,6 @@
         let currentUser = null; 
         let userRole = 'staff'; 
         
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
-        let globalContacts = [];
-        let chatMessages = [];
-        let chatUnreadCount = 0;
-
         // Staff State
         let appData = { 
             weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
@@ -1360,10 +1362,14 @@
         // Chart Instances
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
+        let globalContacts = [];
+        let chatMessages = [];
+        let chatUnreadCount = 0;
+
         Chart.defaults.color = '#9ca3af'; 
         Chart.defaults.borderColor = '#374151';
 
-        // iOS compatible notification sound
         const playPingSound = () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1381,7 +1387,8 @@
             } catch(e) {}
         };
 
-        // --- NEW UPGRADED LOGIC FUNCTIONS ---
+        // --- CORE UI EXPORTS (BINDING TO WINDOW FOR ES MODULE SCOPE) ---
+
         window.animateValue = (id, start, end, duration, prefix = '', isCurrency = false) => {
             if (start === end) return;
             const obj = document.getElementById(id);
@@ -1408,17 +1415,308 @@
             window.requestAnimationFrame(step);
         };
 
+        window.updateFinanceUI = () => {
+            if (!document.getElementById('admin-view-finance')) return;
+            
+            let staffFull = 0, staffUsual = 0, teamCollected = 0;
+            globalRoster.forEach(u => { 
+                if (u.role !== 'admin') { 
+                    staffFull += (u.unitsFull || 0); 
+                    staffUsual += (u.unitsUsual || 0); 
+                } 
+                teamCollected += (u.collected || 0); 
+            });
+            
+            const totalFull = (masterData.unitsFull || 0) + staffFull; 
+            const totalUsual = (masterData.unitsUsual || 0) + staffUsual;
+            
+            document.getElementById('proj-full-count').innerText = totalFull; 
+            document.getElementById('proj-usual-count').innerText = totalUsual;
+            
+            const priceFull = masterData.pricePerUnit || 100; 
+            const priceUsual = (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
+            const totalProjStd = (totalFull * priceFull) + (totalUsual * priceUsual); 
+            const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
+            
+            const stdEl = document.getElementById('proj-std-total');
+            const oldStdStr = stdEl ? stdEl.innerText.replace(/[$,]/g, '') : '0';
+            const whatIfEl = document.getElementById('proj-whatif-total');
+            const oldWhatIfStr = whatIfEl ? whatIfEl.innerText.replace(/[$,]/g, '') : '0';
+            
+            window.animateValue('proj-std-total', parseFloat(oldStdStr)||0, totalProjStd, 600, '$', true);
+            window.animateValue('proj-whatif-total', parseFloat(oldWhatIfStr)||0, totalWhatIf, 600, '$', true);
+            
+            const liabList = document.getElementById('finance-liabilities-list'); 
+            if (liabList) {
+                liabList.innerHTML = ''; 
+                let unpaidTotal = 0;
+                
+                if (masterData.liabilities && masterData.liabilities.length > 0) {
+                    masterData.liabilities.forEach(l => {
+                        if(!l.isPaid) unpaidTotal += l.amount;
+                        const recurringBadge = l.isRecurring ? `<span class="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Recurring</span>` : '';
+                        const dateDisplay = l.dueDate ? `<div class="text-[10px] text-gray-500 mt-1">Due: ${new Date(l.dueDate).toLocaleDateString()}</div>` : '';
+                        liabList.innerHTML += `
+                            <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
+                                <div class="flex items-start">
+                                    <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 mt-1 accent-purple-600 cursor-pointer">
+                                    <div>
+                                        <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name} ${recurringBadge}</span>
+                                        ${dateDisplay}
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
+                                    <button onclick="window.adminRemoveLiability(${l.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>`;
+                    });
+                } else { 
+                    liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>'; 
+                }
+                
+                document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
+                const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
+                
+                const netEl = document.getElementById('finance-net-after-bills');
+                if (netEl) {
+                    const oldNetStr = netEl.innerText.replace(/[$,]/g, '');
+                    window.animateValue('finance-net-after-bills', parseFloat(oldNetStr)||0, netAfterBills, 500, '$', true);
+                    
+                    if(netAfterBills < 0) {
+                        netEl.classList.remove('text-green-600');
+                        netEl.classList.add('text-red-500'); 
+                    } else {
+                        netEl.classList.remove('text-red-500');
+                        netEl.classList.add('text-green-600');
+                    }
+                }
+            }
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        };
+
+        window.updateMasterLabels = () => {
+            const labelFull = document.getElementById('label-full-weight'); 
+            const labelUsual = document.getElementById('label-usual-weight'); 
+            const expHint = document.getElementById('expected-money-hint');
+            
+            if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`; 
+            if(labelUsual) labelUsual.innerText = `(${(currentQty * (masterData.usualRatio||0.8)).toFixed(1)} units)`;
+            
+            const unitPrice = currentType === 'full' ? (masterData.pricePerUnit||100) : ((masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
+            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
+
+            const btnUsual = document.getElementById('btn-quick-usual'); 
+            const btnFull = document.getElementById('btn-quick-full');
+            if(btnUsual) btnUsual.innerText = `$${(masterData.pricePerUnit||100) * (masterData.usualRatio||0.8)} (Usual)`; 
+            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit||100} (Full)`;
+
+            const pDisp = document.getElementById('admin-price-display'); 
+            const rDisp = document.getElementById('admin-ratio-display'); 
+            const admDiscDisp = document.getElementById('admin-boss-discount-display'); 
+            const staffDiscDisp = document.getElementById('admin-staff-discount-display'); 
+            const commDisp = document.getElementById('admin-commission-display'); 
+            const expDisp = document.getElementById('admin-total-expenses'); 
+            const uFull = document.getElementById('admin-stock-full'); 
+            const uUsual = document.getElementById('admin-stock-usual');
+            
+            const rawW = masterData.rawWeight || 0; 
+            const price = masterData.pricePerUnit || 0; 
+            const ratio = masterData.usualRatio || 1; 
+            const expenses = masterData.totalExpenses || 0;
+            
+            if(pDisp) pDisp.innerText = `$${price}`; 
+            if(rDisp) rDisp.innerText = `${ratio}x`; 
+            if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`; 
+            if(staffDiscDisp) staffDiscDisp.innerText = `${masterData.staffDiscount}% Off`; 
+            if(commDisp) commDisp.innerText = `${masterData.staffCommission}%`; 
+            if(expDisp) expDisp.innerText = `-$${expenses}`;
+            if(uFull) uFull.innerText = masterData.unitsFull || 0; 
+            if(uUsual) uUsual.innerText = masterData.unitsUsual || 0;
+
+            const masterEqWeight = document.getElementById('admin-master-eq-weight');
+            if (masterEqWeight) { 
+                const totalEq = rawW + ((masterData.unitsFull || 0) * 1.0) + ((masterData.unitsUsual || 0) * ratio); 
+                masterEqWeight.innerText = `${totalEq.toFixed(1)} u`; 
+            }
+
+            const previewFull = document.getElementById('preview-max-full');
+            const previewUsual = document.getElementById('preview-max-usual');
+            if (previewFull && previewUsual) {
+                const maxFull = Math.floor(rawW / 1.0);
+                const maxUsual = Math.floor(rawW / (ratio > 0 ? ratio : 1));
+                previewFull.innerText = `${maxFull} Full`;
+                previewUsual.innerText = `${maxUsual} Usual`;
+            }
+        };
+
+        window.processAdminRosterUI = () => {
+            const list = document.getElementById('admin-staff-list'); 
+            const select = document.getElementById('transfer-staff-select'); 
+            const pendingList = document.getElementById('admin-pending-users'); 
+            const staffTab = document.getElementById('adm-tab-staff');
+            
+            if(!list || !select) return;
+            list.innerHTML=''; 
+            select.innerHTML='<option value="">Select Staff...</option>'; 
+            if(pendingList) pendingList.innerHTML='';
+            
+            let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0; 
+            let globalRaw = 0, globalFull = 0, globalUsual = 0;
+
+            globalRoster.forEach(u => {
+                if(u.status === 'pending') {
+                    if (u.role !== 'admin' && pendingList) {
+                        pendCount++;
+                        pendingList.innerHTML += `
+                            <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-100 dark:border-orange-800">
+                                <span class="font-bold text-orange-800 dark:text-orange-300">${u.name}</span>
+                                <div>
+                                    <button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600 btn-interactive">Approve</button>
+                                    <button onclick="window.adminDelUser('${u.id}')" class="text-red-500 text-xs px-2 hover:underline">Deny</button>
+                                </div>
+                            </div>`;
+                    }
+                } else {
+                    activeCount++; 
+                    totExp += (u.expected || 0); 
+                    totCol += (u.collected || 0);
+                    if (u.role !== 'admin') { 
+                        globalRaw += (u.weight || 0); 
+                        globalFull += (u.unitsFull || 0); 
+                        globalUsual += (u.unitsUsual || 0); 
+                    }
+                    
+                    const diff = (u.expected || 0) - (u.collected || 0);
+                    const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
+                    const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
+
+                    const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
+                    const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
+                    const appliedToDebt = Math.min(grossComm, totalDebt);
+                    const netComm = grossComm - appliedToDebt;
+                    const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
+
+                    list.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-400 transition" onclick="window.viewDriverDetails('${u.id}')">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-bold dark:text-white flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mr-2 border border-blue-200">${u.name[0]}</div>
+                                    ${u.name} ${badge}
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-500">${u.role === 'admin' ? 'Total Sold' : 'Holding'}</div>
+                                    <div class="font-black dark:text-white">${u.role === 'admin' ? (u.soldWeight||0).toFixed(1) : (u.weight||0).toFixed(1)} u</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
+                                <div class="text-xs text-gray-500">
+                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
+                                    Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
+                                </div>
+                                <div class="text-xs text-center mx-2">
+                                    <span class="block text-[9px] text-gray-400 uppercase font-bold tracking-widest">Net Comm</span>
+                                    <span class="font-bold text-blue-600 dark:text-blue-400">$${netComm.toFixed(2)}</span>
+                                </div>
+                                <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
+                                    Diff: ${diffSign}
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    if (u.role !== 'admin') { 
+                        const opt = document.createElement('option'); 
+                        opt.value=u.id; 
+                        opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
+                        select.appendChild(opt); 
+                    }
+                }
+            });
+            
+            const activeCountEl = document.getElementById('admin-active-count');
+            if(activeCountEl) activeCountEl.innerText = `${activeCount} Active`; 
+            
+            const totExpEl = document.getElementById('admin-total-expected');
+            if(totExpEl) totExpEl.innerText = `$${totExp.toFixed(2)}`; 
+            
+            const totColEl = document.getElementById('admin-total-collected');
+            if(totColEl) totColEl.innerText = `$${totCol.toFixed(2)}`;
+            
+            const glRawEl = document.getElementById('global-stock-raw');
+            if(glRawEl) glRawEl.innerText = ((masterData.rawWeight || 0) + globalRaw).toFixed(1); 
+            
+            const glFullEl = document.getElementById('global-stock-full');
+            if(glFullEl) glFullEl.innerText = ((masterData.unitsFull || 0) + globalFull); 
+            
+            const glUsualEl = document.getElementById('global-stock-usual');
+            if(glUsualEl) glUsualEl.innerText = ((masterData.unitsUsual || 0) + globalUsual);
+            
+            const globalEqEl = document.getElementById('admin-master-eq-weight');
+            if (globalEqEl) { 
+                const globalEq = ((masterData.rawWeight || 0) + globalRaw) + (((masterData.unitsFull || 0) + globalFull) * 1.0) + (((masterData.unitsUsual || 0) + globalUsual) * (masterData.usualRatio||0.8)); 
+                globalEqEl.innerText = `${globalEq.toFixed(1)} u`; 
+            }
+
+            if(typeof window.updateAdminOverallChart === 'function') window.updateAdminOverallChart(globalRoster); 
+            window.updateFinanceUI(); 
+            
+            if(staffTab) {
+                if(pendCount === 0) { 
+                    if(pendingList) pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>'; 
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>`; 
+                } else { 
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`; 
+                }
+            }
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        };
+
+        window.updateAdminOverallChart = (roster) => {
+            const ctx = document.getElementById('adminOverallChart'); 
+            if(!ctx) return;
+            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin'); 
+            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name); 
+            const data = activeStaff.map(u => u.collected || 0);
+            
+            if(adminOverallChartInst) adminOverallChartInst.destroy();
+            adminOverallChartInst = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ label: 'Collected ($)', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { y: { beginAtZero: true } } 
+                } 
+            });
+        };
+
         window.switchStaffTab = (tab) => {
             ['terminal','stats','tools'].forEach(x => {
-                document.getElementById(`staff-view-${x}`).classList.remove('active');
-                document.getElementById(`staff-view-${x}`).classList.add('hidden');
-                document.getElementById(`stf-tab-${x}`).classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
-                document.getElementById(`stf-tab-${x}`).classList.add('text-blue-100', 'dark:text-gray-400');
+                const view = document.getElementById(`staff-view-${x}`);
+                const tabBtn = document.getElementById(`stf-tab-${x}`);
+                if(view) {
+                    view.classList.remove('active');
+                    view.classList.add('hidden');
+                }
+                if(tabBtn) {
+                    tabBtn.classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
+                    tabBtn.classList.add('text-blue-100', 'dark:text-gray-400');
+                }
             });
-            document.getElementById(`staff-view-${tab}`).classList.remove('hidden');
-            document.getElementById(`staff-view-${tab}`).classList.add('active');
-            document.getElementById(`stf-tab-${tab}`).classList.remove('text-blue-100', 'dark:text-gray-400');
-            document.getElementById(`stf-tab-${tab}`).classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
+            const selectedView = document.getElementById(`staff-view-${tab}`);
+            const selectedTabBtn = document.getElementById(`stf-tab-${tab}`);
+            if(selectedView) {
+                selectedView.classList.remove('hidden');
+                selectedView.classList.add('active');
+            }
+            if(selectedTabBtn) {
+                selectedTabBtn.classList.remove('text-blue-100', 'dark:text-gray-400');
+                selectedTabBtn.classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
+            }
         };
 
         window.updateStaffGlobalStats = () => {
@@ -1483,16 +1781,12 @@
         
         window.enableNotifications = async () => {
             if (!messaging) return window.showToast("Push requires adding to Home Screen first!");
-            if (!('serviceWorker' in navigator)) return window.showToast("Service workers are not supported on this browser.");
-            
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     const repoPath = './firebase-messaging-sw.js'; 
                     const registration = await navigator.serviceWorker.register(repoPath);
-                    
                     await navigator.serviceWorker.ready;
-                    
                     const currentToken = await getToken(messaging, { 
                         vapidKey: 'BOD-A9uAxZY3Ps_ZCQ3lgr9QiUATBUsz-ob1qArnLbZf6mMhfEb4AuVPMh5CYwFsgdw-ifpnlpp6MuPMhlzySRU', 
                         serviceWorkerRegistration: registration 
@@ -1505,10 +1799,10 @@
                             }, { merge: true });
                         }
                         window.showToast("Push Notifications Enabled!");
-                        const pushBanner = document.getElementById('push-setup-banner');
-                        const adminPushBanner = document.getElementById('admin-push-setup-banner');
-                        if (pushBanner) pushBanner.classList.add('hidden'); 
-                        if (adminPushBanner) adminPushBanner.classList.add('hidden');
+                        const sBanner = document.getElementById('push-setup-banner');
+                        if(sBanner) sBanner.classList.add('hidden'); 
+                        const aBanner = document.getElementById('admin-push-setup-banner');
+                        if(aBanner) aBanner.classList.add('hidden');
                     }
                 } else { 
                     window.showToast("Notification permission denied."); 
@@ -1532,6 +1826,21 @@
                 window.showToast("Please Enable Notifications first!");
                 document.getElementById('settings-modal').classList.add('hidden');
                 window.enableNotifications();
+            }
+        };
+
+        window.adminRemoveCurrentStaff = async () => {
+            if (!currentDetailUid) return;
+            const staffName = document.getElementById('detail-user-name').innerText;
+            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
+            
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
+                window.showToast(`${staffName} has been removed from the team.`);
+                document.getElementById('admin-user-detail').classList.add('hidden');
+                currentDetailUid = null;
+            } catch (err) {
+                window.showToast("Error removing staff: " + err.message);
             }
         };
 
@@ -1614,21 +1923,6 @@
             }
         };
 
-        window.adminRemoveCurrentStaff = async () => {
-            if (!currentDetailUid) return;
-            const staffName = document.getElementById('detail-user-name').innerText;
-            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
-            
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
-                window.showToast(`${staffName} has been removed from the team.`);
-                document.getElementById('admin-user-detail').classList.add('hidden');
-                currentDetailUid = null;
-            } catch (err) {
-                window.showToast("Error removing staff: " + err.message);
-            }
-        };
-
         // ---------------------------------------------------------
         // AUTH LOGIC
         // ---------------------------------------------------------
@@ -1663,8 +1957,6 @@
             window.location.reload(); 
         };
 
-        window.processAdminRosterUI = () => {};
-
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -1674,12 +1966,13 @@
                     snap.forEach(d => { globalRoster.push({ id: d.id, ...d.data() }); });
                     if(userRole === 'admin') {
                         if(typeof window.processAdminRosterUI === 'function') window.processAdminRosterUI();
-                        if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
-                            window.loadGlobalAnalytics();
+                        const financeView = document.getElementById('admin-view-finance');
+                        if(financeView && !financeView.classList.contains('hidden')) {
+                            if(typeof window.loadGlobalAnalytics === 'function') window.loadGlobalAnalytics();
                         }
                     }
                     if(userRole === 'staff' && typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats(); 
-                }, (error) => console.warn("Roster sync:", error.message));
+                });
 
                 const rosterRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid);
                 unsubAuthCheck = onSnapshot(rosterRef, (snap) => {
@@ -1691,8 +1984,10 @@
                     const nameDisplay = document.getElementById('staff-name-display');
                     if(nameDisplay) nameDisplay.innerText = window.currentUserName;
 
-                    document.getElementById('loading-overlay').classList.add('hidden');
-                    document.getElementById('login-modal').classList.add('hidden');
+                    const overlay = document.getElementById('loading-overlay');
+                    if(overlay) overlay.classList.add('hidden');
+                    const modal = document.getElementById('login-modal');
+                    if(modal) modal.classList.add('hidden');
 
                     if (userRole === 'admin') {
                         document.getElementById('approval-modal').classList.add('hidden');
@@ -1719,13 +2014,14 @@
                         }
                     }
                 }, (error) => { 
-                    document.getElementById('loading-overlay').classList.add('hidden'); 
+                    const overlay = document.getElementById('loading-overlay');
+                    if(overlay) overlay.classList.add('hidden'); 
                     window.showToast("Permission denied. Check Firebase Rules."); 
                 });
-
-                unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
+				unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         const dat = s.data();
+                        
                         let oldCash = masterData.cashBalance || 0;
                         let oldRaw = masterData.rawWeight || 0;
 
@@ -1736,555 +2032,808 @@
                             staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], 
                             financedClients: [], announcement: '', ...dat 
                         };
-                        updateMasterLabels();
+                        
+                        if(typeof window.updateMasterLabels === 'function') window.updateMasterLabels();
                         
                         if (userRole === 'staff') {
                             const annBanner = document.getElementById('staff-announcement');
                             const annText = document.getElementById('staff-announcement-text');
-                            if (masterData.announcement && masterData.announcement.trim() !== '') {
-                                annText.innerText = masterData.announcement;
-                                annBanner.classList.remove('hidden');
-                            } else {
-                                annBanner.classList.add('hidden');
+                            if(annBanner && annText) {
+                                if (masterData.announcement && masterData.announcement.trim() !== '') {
+                                    annText.innerText = masterData.announcement;
+                                    annBanner.classList.remove('hidden');
+                                } else {
+                                    annBanner.classList.add('hidden');
+                                }
                             }
                         }
 
                         if(userRole === 'admin') { 
                             if(typeof window.admUpdateMasterLabels === 'function') window.admUpdateMasterLabels(); 
+                            
                             window.animateValue('finance-cash-balance', oldCash, masterData.cashBalance, 600, '$', true);
                             window.animateValue('admin-master-weight', oldRaw, masterData.rawWeight, 400, '', false);
                             
-                            updateFinanceUI(); 
-                            window.updateIOUUI(); 
-                            if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
-                                window.loadGlobalAnalytics();
-                            }
+                            if(typeof window.updateFinanceUI === 'function') window.updateFinanceUI(); 
+                            if(typeof window.updateIOUUI === 'function') window.updateIOUUI();
                         }
-                        if(userRole === 'staff' && typeof renderStaffUI === 'function') {
-                            renderStaffUI();
-                        }
-                    } else { 
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e)); 
                     }
-                }, (error) => console.warn("Master sync:", error.message));
+                });
 
-                unsubAlerts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), (snap) => {
-                    snap.docChanges().forEach((change) => {
-                        if (change.type === "added") {
-                            const alert = change.doc.data();
-                            if (alert.target === user.uid || (alert.target === 'admin' && userRole === 'admin')) {
-                                if (Date.now() - alert.timestamp < 10000) {
-                                    window.fireLocalNotification("WeightOps", alert.message);
-                                }
+                unsubReqs = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), orderBy('timestamp', 'desc')), (snap) => {
+                    const reqList = document.getElementById('admin-requests-list');
+                    const reqSect = document.getElementById('admin-requests-section');
+                    const badge = document.getElementById('admin-req-badge');
+                    
+                    if(!reqList) return;
+                    reqList.innerHTML = '';
+                    let activeReqs = 0;
+                    
+                    snap.forEach(docSnap => {
+                        const req = docSnap.data();
+                        if(req.status === 'pending') {
+                            activeReqs++;
+                            let actionHtml = '';
+                            if(req.type === 'bill') {
+                                actionHtml = `<div class="text-xs text-gray-800 dark:text-white mt-1">Needs Bill for: <span class="font-bold">${req.desc}</span> ($${req.amount})</div>`;
+                            } else if (req.type === 'iou') {
+                                actionHtml = `<div class="text-xs text-gray-800 dark:text-white mt-1">Client IOU: <span class="font-bold">${req.clientName}</span> - ${req.qty} ${req.iouType} ($${req.amount})</div>`;
+                            } else if (req.type === 'inventory') {
+                                actionHtml = `<div class="text-xs text-gray-800 dark:text-white mt-1">Requested Resupply.</div>`;
                             }
+
+                            reqList.innerHTML += `
+                                <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-blue-100 dark:border-gray-700 shadow-sm">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">${req.staffName} • ${new Date(req.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                        <span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase font-bold">${req.type}</span>
+                                    </div>
+                                    ${actionHtml}
+                                    <div class="flex space-x-2 mt-3">
+                                        <button onclick="window.adminHandleRequest('${docSnap.id}', 'approve', '${req.type}')" class="flex-1 bg-green-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-green-600 transition btn-interactive">Approve</button>
+                                        <button onclick="window.adminHandleRequest('${docSnap.id}', 'deny', '${req.type}')" class="flex-1 bg-red-100 text-red-600 text-xs font-bold py-2 rounded-lg hover:bg-red-200 transition btn-interactive">Dismiss</button>
+                                    </div>
+                                </div>`;
                         }
                     });
-                }, (error) => console.warn("Alerts sync:", error.message));
+
+                    if(activeReqs > 0) {
+                        reqSect.classList.remove('hidden');
+                        if(badge) badge.classList.remove('hidden');
+                    } else {
+                        reqSect.classList.add('hidden');
+                        if(badge) badge.classList.add('hidden');
+                    }
+                });
 
                 unsubContacts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), (snap) => {
                     globalContacts = [];
-                    snap.forEach(d => { globalContacts.push({ id: d.id, ...d.data() }); });
-                    const contactsModal = document.getElementById('contacts-modal');
-                    if(contactsModal && !contactsModal.classList.contains('hidden')) {
-                        window.filterContacts(); 
-                    }
-                }, (error) => console.warn("Contacts sync:", error.message));
+                    snap.forEach(d => globalContacts.push({id: d.id, ...d.data()}));
+                    if(typeof window.filterContacts === 'function') window.filterContacts();
+                });
 
-                const chatQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), orderBy('timestamp', 'desc'), limit(50));
-                unsubChat = onSnapshot(chatQuery, (snap) => {
-                    let newMsgs = [];
-                    snap.forEach(d => { newMsgs.push({ id: d.id, ...d.data() }); });
-                    chatMessages = newMsgs.reverse(); 
+                unsubChat = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
+                    const newMessages = [];
+                    snap.forEach(d => newMessages.unshift({id: d.id, ...d.data()}));
+                    chatMessages = newMessages;
                     
-                    const chatModal = document.getElementById('chat-modal');
-                    if (chatModal && !chatModal.classList.contains('translate-y-full')) {
-                        window.renderChat();
-                    } else {
+                    if (document.getElementById('chat-modal').classList.contains('hidden') && chatMessages.length > 0) {
                         const lastMsg = chatMessages[chatMessages.length - 1];
-                        if (lastMsg && lastMsg.uid !== user.uid && (Date.now() - lastMsg.timestamp < 5000)) {
+                        if (lastMsg.senderId !== currentUser.uid) {
+                            const badge = userRole === 'admin' ? document.getElementById('admin-chat-badge') : document.getElementById('staff-chat-badge');
+                            if(badge) badge.classList.remove('hidden');
                             chatUnreadCount++;
-                            const sBadge = document.getElementById('staff-chat-badge');
-                            const aBadge = document.getElementById('admin-chat-badge');
-                            if(sBadge) sBadge.classList.remove('hidden');
-                            if(aBadge) aBadge.classList.remove('hidden');
-                            playPingSound();
-                            window.fireLocalNotification("New Team Message", `${lastMsg.name}: ${lastMsg.text}`);
+                            if(chatUnreadCount === 1) playPingSound();
                         }
                     }
-                }, (error) => console.warn("Chat sync:", error.message));
+                    if(typeof window.renderChatMessages === 'function') window.renderChatMessages();
+                });
 
-            } else { 
-                document.getElementById('loading-overlay').classList.add('hidden'); 
-                document.getElementById('login-modal').classList.remove('hidden'); 
+            } else {
+                currentUser = null;
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('login-modal').classList.remove('hidden');
             }
         });
 
-        window.sendNotificationAlert = async (targetUid, message) => { 
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'alerts'), { 
-                target: targetUid, 
-                message: message, 
-                timestamp: Date.now() 
-            }); 
-        };
-
-        window.openChatModal = () => {
-            const modal = document.getElementById('chat-modal');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.remove('translate-y-full'); }, 10);
+        // ---------------------------------------------------------
+        // ADMIN DASHBOARD INIT
+        // ---------------------------------------------------------
+        const initAdminDashboard = (user) => {
+            document.getElementById('admin-app').classList.remove('hidden');
+            window.switchAdminTab('storage');
             
-            chatUnreadCount = 0;
-            const sBadge = document.getElementById('staff-chat-badge');
-            const aBadge = document.getElementById('admin-chat-badge');
-            if(sBadge) sBadge.classList.add('hidden');
-            if(aBadge) aBadge.classList.add('hidden');
-            
-            window.renderChat();
-        };
-
-        window.closeChatModal = () => {
-            const modal = document.getElementById('chat-modal');
-            modal.classList.add('translate-y-full');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        };
-
-        window.sendChatMessage = async () => {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if(!text || !currentUser) return;
-            
-            input.value = '';
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), {
-                uid: currentUser.uid,
-                name: window.currentUserName || 'User',
-                text: text,
-                role: userRole,
-                timestamp: Date.now()
-            });
-        };
-
-        window.renderChat = () => {
-            const container = document.getElementById('chat-messages');
-            container.innerHTML = '';
-            
-            let lastDate = '';
-            
-            chatMessages.forEach(msg => {
-                const isMe = msg.uid === currentUser.uid;
-                const msgDate = new Date(msg.timestamp).toLocaleDateString();
-                const msgTime = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                if (msgDate !== lastDate) {
-                    container.innerHTML += `<div class="text-center my-4"><span class="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">${msgDate}</span></div>`;
-                    lastDate = msgDate;
+            unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => {
+                if(snap.exists()) {
+                    adminData = { ...adminData, ...snap.data() };
+                    if(typeof window.admUpdateMasterLabels === 'function') window.admUpdateMasterLabels();
                 }
+            });
+        };
 
-                const align = isMe ? 'justify-end' : 'justify-start';
-                const bg = isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 dark:text-white rounded-bl-none shadow-sm border border-gray-100 dark:border-gray-700';
-                const nameLabel = !isMe ? `<div class="text-[10px] text-gray-500 mb-1 font-bold ml-1">${msg.name} ${msg.role === 'admin' ? '<span class="text-blue-500 ml-1">(Admin)</span>' : ''}</div>` : '';
-                const timeColor = isMe ? 'text-blue-200' : 'text-gray-400';
+        // ---------------------------------------------------------
+        // STAFF DASHBOARD INIT
+        // ---------------------------------------------------------
+        const initStaffApp = (user) => {
+            document.getElementById('staff-app').classList.remove('hidden');
+            
+            unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'roster', user.uid), (snap) => {
+                if(snap.exists()) {
+                    appData = { ...appData, ...snap.data() };
+                    window.updateStaffUI();
+                    window.renderStaffChart();
+                }
+            });
+        };
 
-                container.innerHTML += `
-                    <div class="flex ${align} mb-3">
-                        <div class="max-w-[80%]">
-                            ${nameLabel}
-                            <div class="p-3 rounded-2xl ${bg} text-sm">
-                                ${msg.text}
+        // ---------------------------------------------------------
+        // ADMIN IOU / FINANCING LOGIC
+        // ---------------------------------------------------------
+        window.updateIOUUI = () => {
+            if(!document.getElementById('admin-view-ious')) return;
+            const list = document.getElementById('iou-list');
+            if(!list) return;
+            list.innerHTML = '';
+            
+            let totalOwed = 0;
+            if(masterData.financedClients && masterData.financedClients.length > 0) {
+                masterData.financedClients.forEach(c => {
+                    if(!c.isPaid) totalOwed += c.amount;
+                    const dateDisplay = c.payDate ? `<div class="text-[10px] text-gray-500 mt-1">Pay Date: ${new Date(c.payDate).toLocaleDateString()}</div>` : '';
+                    
+                    list.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border ${c.isPaid ? 'border-green-200 dark:border-green-800 opacity-60' : 'border-blue-200 dark:border-blue-800'} mb-3 transition">
+                            <div class="flex justify-between items-start mb-2 border-b dark:border-gray-700 pb-2">
+                                <div>
+                                    <h4 class="font-bold dark:text-white ${c.isPaid ? 'line-through text-gray-400' : ''}">${c.name}</h4>
+                                    <div class="text-xs text-gray-500">${c.contact || 'No contact provided'}</div>
+                                    ${dateDisplay}
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-black ${c.isPaid ? 'text-green-500' : 'text-blue-600 dark:text-blue-400'}">$${c.amount.toFixed(2)}</div>
+                                    <div class="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded font-bold uppercase inline-block mt-1">${c.qty} ${c.type}</div>
+                                </div>
                             </div>
-                            <div class="text-[9px] ${timeColor} mt-1 ${isMe ? 'text-right mr-1' : 'ml-1'}">${msgTime}</div>
-                        </div>
-                    </div>
-                `;
+                            <div class="flex justify-between items-center pt-1">
+                                <label class="flex items-center text-xs font-bold text-gray-600 dark:text-gray-400 cursor-pointer">
+                                    <input type="checkbox" ${c.isPaid ? 'checked' : ''} onchange="window.adminToggleIOU(${c.id})" class="w-4 h-4 mr-2 accent-blue-600"> 
+                                    ${c.isPaid ? 'Marked Paid' : 'Mark as Paid'}
+                                </label>
+                                <div class="space-x-2">
+                                    <button onclick="window.adminEditIOU(${c.id})" class="text-gray-400 hover:text-blue-500 btn-interactive"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                    <button onclick="window.adminRemoveIOU(${c.id})" class="text-red-400 hover:text-red-600 btn-interactive"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            } else {
+                list.innerHTML = '<div class="text-center py-6 text-xs text-gray-400 italic">No financed clients active.</div>';
+            }
+            
+            const totEl = document.getElementById('iou-total-owed');
+            if(totEl) {
+                const oldVal = parseFloat(totEl.innerText.replace(/[$,]/g, '')) || 0;
+                window.animateValue('iou-total-owed', oldVal, totalOwed, 500, '$', true);
+            }
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        };
+
+        window.saveAdminIOU = async () => {
+            const name = document.getElementById('iou-name').value;
+            const contact = document.getElementById('iou-contact').value;
+            const qty = parseFloat(document.getElementById('iou-qty').value);
+            const type = document.getElementById('iou-type').value;
+            const amt = parseFloat(document.getElementById('iou-amt').value);
+            const date = document.getElementById('iou-date').value;
+            const reqId = document.getElementById('iou-request-id').value;
+            const editId = document.getElementById('iou-edit-id').value;
+
+            if(!name || isNaN(qty) || isNaN(amt)) return window.showToast("Fill required client details!");
+
+            let clients = masterData.financedClients || [];
+            
+            if (editId) {
+                clients = clients.map(c => c.id == editId ? { ...c, name, contact, qty, type, amount: amt, payDate: date } : c);
+            } else {
+                clients.push({
+                    id: Date.now(),
+                    name, contact, qty, type, amount: amt, payDate: date, isPaid: false
+                });
+                
+                // Ensure inventory is deducted correctly
+                if (type === 'raw') masterData.rawWeight = Math.max(0, (masterData.rawWeight || 0) - qty);
+                if (type === 'full') masterData.unitsFull = Math.max(0, (masterData.unitsFull || 0) - qty);
+                if (type === 'usual') masterData.unitsUsual = Math.max(0, (masterData.unitsUsual || 0) - qty);
+            }
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { 
+                financedClients: clients,
+                rawWeight: masterData.rawWeight,
+                unitsFull: masterData.unitsFull,
+                unitsUsual: masterData.unitsUsual
+            }, {merge:true});
+
+            if(reqId) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId), { status: 'approved' });
+                document.getElementById('iou-request-id').value = '';
+            }
+
+            document.getElementById('admin-iou-modal').classList.add('hidden');
+            window.showToast(editId ? "Client IOU Updated!" : "Client IOU Logged!");
+            
+            // Clean fields
+            ['iou-name', 'iou-contact', 'iou-qty', 'iou-amt', 'iou-date', 'iou-edit-id'].forEach(id => document.getElementById(id).value = '');
+        };
+
+        window.adminEditIOU = (id) => {
+            const client = (masterData.financedClients || []).find(c => c.id == id);
+            if(!client) return;
+            document.getElementById('iou-name').value = client.name;
+            document.getElementById('iou-contact').value = client.contact || '';
+            document.getElementById('iou-qty').value = client.qty;
+            document.getElementById('iou-type').value = client.type;
+            document.getElementById('iou-amt').value = client.amount;
+            document.getElementById('iou-date').value = client.payDate || '';
+            document.getElementById('iou-edit-id').value = client.id;
+            document.getElementById('admin-iou-modal').classList.remove('hidden');
+        };
+
+        window.adminToggleIOU = async (id) => {
+            const clients = (masterData.financedClients || []).map(c => {
+                if (c.id === id) {
+                    const willBePaid = !c.isPaid;
+                    if (willBePaid) {
+                        // Collecting money implicitly
+                        window.showToast(`$${c.amount} added to Master Cash Balance.`);
+                    } else {
+                        window.showToast(`$${c.amount} removed from Master Cash Balance.`);
+                    }
+                    return { ...c, isPaid: willBePaid };
+                }
+                return c;
             });
             
-            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
-            lucide.createIcons();
+            const targetClient = masterData.financedClients.find(c => c.id === id);
+            let cashAdjustment = 0;
+            if (targetClient) cashAdjustment = targetClient.isPaid ? -targetClient.amount : targetClient.amount;
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { 
+                financedClients: clients,
+                cashBalance: increment(cashAdjustment)
+            }, {merge:true});
         };
 
-        window.openContactsModal = () => {
-            document.getElementById('contacts-modal').classList.remove('hidden');
-            window.filterContacts();
+        window.adminRemoveIOU = async (id) => {
+            if(!confirm("Delete this IOU? It will not refund inventory.")) return;
+            const clients = (masterData.financedClients || []).filter(c => c.id !== id);
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { financedClients: clients }, {merge:true});
         };
 
-        window.saveContact = async () => {
-            const name = document.getElementById('new-contact-name').value;
-            const phone = document.getElementById('new-contact-phone').value;
-            const notes = document.getElementById('new-contact-notes').value;
-            if(!name) return window.showToast("Contact Name is required.");
-            
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), {
-                name, phone, notes, createdBy: currentUser.uid, createdAt: Date.now()
+        // ---------------------------------------------------------
+        // ADMIN GENERAL TOOLS
+        // ---------------------------------------------------------
+        window.switchAdminTab = (tab) => {
+            ['storage', 'terminal', 'staff', 'transfers', 'finance', 'ious'].forEach(t => {
+                const el = document.getElementById(`admin-view-${t}`);
+                const btn = document.getElementById(`adm-tab-${t}`);
+                if (el) { el.classList.remove('active'); el.classList.add('hidden'); }
+                if (btn) {
+                    btn.classList.remove('bg-gray-800', 'text-white', 'shadow');
+                    btn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+                }
             });
-            
-            document.getElementById('new-contact-name').value = '';
-            document.getElementById('new-contact-phone').value = '';
-            document.getElementById('new-contact-notes').value = '';
-            window.showToast("Contact Saved!");
+            const selectedView = document.getElementById(`admin-view-${tab}`);
+            const selectedBtn = document.getElementById(`adm-tab-${tab}`);
+            if (selectedView) { selectedView.classList.remove('hidden'); selectedView.classList.add('active'); }
+            if (selectedBtn) {
+                selectedBtn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+                selectedBtn.classList.add('bg-gray-800', 'text-white', 'shadow');
+            }
+            if(tab === 'finance' && typeof window.loadGlobalAnalytics === 'function') window.loadGlobalAnalytics();
         };
 
-        window.deleteContact = async (id) => {
-            if(confirm("Delete this contact permanently?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contacts', id));
-                window.showToast("Contact Deleted");
+        window.adminSetVariable = async (field, label) => {
+            const val = prompt(`Enter new value for ${label}:`, masterData[field] || '');
+            if(val !== null && val.trim() !== '') {
+                const num = parseFloat(val);
+                if(!isNaN(num)) {
+                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[field]: num}, {merge:true});
+                    window.showToast(`${label} updated!`);
+                }
             }
         };
 
-        window.filterContacts = () => {
-            const term = document.getElementById('contact-search').value.toLowerCase();
-            const list = document.getElementById('contacts-list-container');
-            list.innerHTML = '';
+        window.adminUpdateCash = async () => {
+            const val = prompt("Enter amount to add (e.g. 500) or remove (e.g. -200):");
+            if(val && !isNaN(parseFloat(val))) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {
+                    cashBalance: increment(parseFloat(val))
+                }, {merge:true});
+                window.showToast("Master cash updated.");
+            }
+        };
+
+        window.saveInventoryAdjustment = async () => {
+            const type = document.getElementById('adj-item-type').value;
+            const action = document.getElementById('adj-action').value;
+            const amt = parseFloat(document.getElementById('adj-amt').value);
+            if(isNaN(amt) || amt < 0) return window.showToast("Enter a valid amount.");
+
+            let currentVal = masterData[type] || 0;
+            let newVal = currentVal;
+
+            if(action === 'add') newVal += amt;
+            else if(action === 'remove') newVal = Math.max(0, currentVal - amt);
+            else if(action === 'set') newVal = amt;
+
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { [type]: newVal }, {merge:true});
+            document.getElementById('admin-adjust-modal').classList.add('hidden');
+            document.getElementById('adj-amt').value = '';
+            window.showToast(`Inventory updated: ${type} is now ${newVal.toFixed(1)}`);
+        };
+
+        window.adminProcessUnits = async () => {
+            const type = document.getElementById('process-type').value;
+            const qty = parseFloat(document.getElementById('process-qty').value);
+            if (isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity.");
             
-            const filtered = globalContacts.filter(c => 
-                (c.name && c.name.toLowerCase().includes(term)) || 
-                (c.phone && c.phone.toLowerCase().includes(term)) ||
-                (c.notes && c.notes.toLowerCase().includes(term))
-            );
+            const rawNeeded = type === 'full' ? qty * 1.0 : qty * (masterData.usualRatio || 0.8);
+            if ((masterData.rawWeight || 0) < rawNeeded) return window.showToast("Not enough raw weight in Master Vault!");
+
+            let updateObj = { rawWeight: increment(-rawNeeded) };
+            if (type === 'full') updateObj.unitsFull = increment(qty);
+            if (type === 'usual') updateObj.unitsUsual = increment(qty);
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), updateObj, {merge:true});
+            document.getElementById('process-qty').value = '';
+            window.showToast(`Successfully processed ${qty} ${type} units.`);
+        };
+
+        window.adminPurchaseStock = async (amount, cost) => {
+            if(cost === 0) {
+                const cAmt = parseFloat(prompt("Enter amount of units purchased:"));
+                const cCost = parseFloat(prompt("Enter cost in dollars ($):"));
+                if(isNaN(cAmt) || isNaN(cCost)) return;
+                amount = cAmt; cost = cCost;
+            } else {
+                if(!confirm(`Buy ${amount} units for $${cost}? This will deduct from Master Cash.`)) return;
+            }
             
-            if(filtered.length === 0) {
-                list.innerHTML = '<div class="text-center py-6 text-xs text-gray-400 italic">No contacts found.</div>';
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {
+                rawWeight: increment(amount),
+                cashBalance: increment(-cost),
+                totalExpenses: increment(cost)
+            }, {merge:true});
+            window.showToast(`Purchased ${amount} units. $${cost} deducted from Cash.`);
+        };
+
+        window.adminTransferWeight = async (direction) => {
+            const staffId = document.getElementById('transfer-staff-select').value;
+            const type = document.getElementById('transfer-item-type').value;
+            const amt = parseFloat(document.getElementById('transfer-amount').value);
+            
+            if(!staffId || isNaN(amt) || amt <= 0) return window.showToast("Invalid input.");
+            const staff = globalRoster.find(u => u.id === staffId);
+            if(!staff) return;
+
+            let masterField = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+            let staffField = type === 'raw' ? 'weight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+
+            if(direction === 'send') {
+                if((masterData[masterField] || 0) < amt) return window.showToast("Not enough in Master Vault!");
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { [masterField]: increment(-amt) }, {merge:true});
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', staffId), { [staffField]: increment(amt) }, {merge:true});
+                window.showToast(`Sent ${amt} to ${staff.name}.`);
+            } else {
+                if((staff[staffField] || 0) < amt) return window.showToast(`${staff.name} doesn't have enough!`);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', staffId), { [staffField]: increment(-amt) }, {merge:true});
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { [masterField]: increment(amt) }, {merge:true});
+                window.showToast(`Reclaimed ${amt} from ${staff.name}.`);
+            }
+            document.getElementById('transfer-amount').value = '';
+            window.updateTransferPreview();
+        };
+
+        window.updateTransferPreview = () => {
+            const staffId = document.getElementById('transfer-staff-select').value;
+            const type = document.getElementById('transfer-item-type').value;
+            const preview = document.getElementById('transfer-preview');
+            if(!preview) return;
+            
+            if(!staffId) { preview.innerText = ''; return; }
+            const staff = globalRoster.find(u => u.id === staffId);
+            if(!staff) return;
+            
+            let staffField = type === 'raw' ? 'weight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+            let masterField = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+            
+            preview.innerHTML = `Staff holds: <span class="font-bold text-gray-800 dark:text-white">${staff[staffField]||0}</span> | Vault holds: <span class="font-bold text-gray-800 dark:text-white">${masterData[masterField]||0}</span>`;
+        };
+
+        // ---------------------------------------------------------
+        // ADMIN TERMINAL SALES
+        // ---------------------------------------------------------
+        window.admSelectQty = (q) => { 
+            admCurrentQty = q; 
+            document.querySelectorAll('.adm-qty-btn').forEach(b => b.classList.remove('active')); 
+            document.getElementById(`adm-btn-qty-${q}`).classList.add('active'); 
+            window.admUpdateMasterLabels(); 
+        };
+        
+        window.admSelectType = (t) => { 
+            admCurrentType = t; 
+            document.querySelectorAll('.adm-type-btn').forEach(b => b.classList.remove('active')); 
+            document.getElementById(`adm-btn-type-${t}`).classList.add('active'); 
+            window.admUpdateMasterLabels(); 
+        };
+
+        window.admCheckPriceColor = () => {
+            const input = document.getElementById('adm-money-input');
+            const val = parseFloat(input.value) || 0;
+            const expected = currentType === 'full' ? (admCurrentQty * (masterData.pricePerUnit||100)) : (admCurrentQty * (masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
+            
+            if(val === 0) input.className = input.className.replace(/text-(green|red)-500/, '') + ' text-gray-800 dark:text-white';
+            else if(val < expected) input.className = input.className.replace(/text-gray-800|dark:text-white|text-green-500/, '') + ' text-red-500';
+            else input.className = input.className.replace(/text-gray-800|dark:text-white|text-red-500/, '') + ' text-green-500';
+        };
+
+        window.admSetQuickPrice = (amt) => { 
+            document.getElementById('adm-money-input').value = amt * admCurrentQty; 
+            window.admCheckPriceColor(); 
+        };
+
+        window.admUpdateMasterLabels = () => {
+            const labelFull = document.getElementById('adm-label-full-weight'); 
+            const labelUsual = document.getElementById('adm-label-usual-weight'); 
+            const expHint = document.getElementById('adm-expected-money-hint');
+            const source = document.getElementById('adm-sale-source').value;
+            const typeSel = document.getElementById('adm-type-selection');
+            
+            if(source === 'raw') {
+                typeSel.classList.remove('hidden');
+                if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} u)`; 
+                if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * (masterData.usualRatio||0.8)).toFixed(1)} u)`;
+                
+                const unitPrice = admCurrentType === 'full' ? (masterData.pricePerUnit||100) : ((masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
+                if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
+            } else {
+                typeSel.classList.add('hidden');
+                // For pre-packs, we don't know if it's full or usual based on source alone easily without UI changes.
+                // Re-using the type selection is better for pre-packs too, so let's keep it visible.
+                typeSel.classList.remove('hidden'); 
+                if(labelFull) labelFull.innerText = `(1 Full Unit)`; 
+                if(labelUsual) labelUsual.innerText = `(1 Usual Unit)`;
+                
+                const unitPrice = admCurrentType === 'full' ? (masterData.pricePerUnit||100) : ((masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
+                if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
+            }
+
+            const btnUsual = document.getElementById('adm-btn-quick-usual'); 
+            const btnFull = document.getElementById('adm-btn-quick-full');
+            if(btnUsual) btnUsual.innerText = `$${(masterData.pricePerUnit||100) * (masterData.usualRatio||0.8)} (Usual)`; 
+            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit||100} (Full)`;
+        };
+
+        window.adminProcessSale = async () => {
+            if(admCurrentQty <= 0) return window.showToast("Select quantity.");
+            
+            const moneyInput = document.getElementById('adm-money-input').value;
+            if(!moneyInput) return window.showToast("Enter money received.");
+            const money = parseFloat(moneyInput);
+            
+            const source = document.getElementById('adm-sale-source').value;
+            const exactWeight = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * (masterData.usualRatio || 0.8);
+            const expected = admCurrentType === 'full' ? admCurrentQty * (masterData.pricePerUnit || 100) : admCurrentQty * (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
+
+            let masterUpdate = { cashBalance: increment(money) };
+            
+            if(source === 'raw') {
+                if((masterData.rawWeight || 0) < exactWeight) return window.showToast("Not enough Raw Weight in Master Vault.");
+                masterUpdate.rawWeight = increment(-exactWeight);
+            } else {
+                if(admCurrentType === 'full') {
+                    if((masterData.unitsFull || 0) < admCurrentQty) return window.showToast("Not enough Full Units in Master Vault.");
+                    masterUpdate.unitsFull = increment(-admCurrentQty);
+                } else {
+                    if((masterData.unitsUsual || 0) < admCurrentQty) return window.showToast("Not enough Usual Units in Master Vault.");
+                    masterUpdate.unitsUsual = increment(-admCurrentQty);
+                }
+            }
+
+            const trans = { 
+                id: Date.now(), type: 'sale_admin', qty: admCurrentQty, unitType: admCurrentType, source: source, 
+                weightUsed: exactWeight, money, expected, date: new Date().toISOString() 
+            };
+
+            const myUpdate = {
+                soldWeight: increment(exactWeight),
+                collected: increment(money),
+                expected: increment(expected),
+                transactions: [...(adminData.transactions || []), trans]
+            };
+            if(admCurrentType === 'full') myUpdate.soldUnitsFull = increment(admCurrentQty);
+            if(admCurrentType === 'usual') myUpdate.soldUnitsUsual = increment(admCurrentQty);
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterUpdate, {merge:true});
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), myUpdate, {merge:true});
+
+            document.getElementById('adm-money-input').value = '';
+            document.getElementById('adm-money-input').className = document.getElementById('adm-money-input').className.replace(/text-(green|red)-500/, '') + ' text-gray-800 dark:text-white';
+            window.showToast("Admin Sale logged!");
+            window.admSelectQty(1);
+        };
+
+        window.adminPersonalUseUnified = async () => {
+            const source = document.getElementById('adm-sale-source').value;
+            const exactWeight = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * (masterData.usualRatio || 0.8);
+            
+            let masterUpdate = {};
+            if(source === 'raw') {
+                if((masterData.rawWeight || 0) < exactWeight) return window.showToast("Not enough Raw Weight in Master Vault.");
+                masterUpdate.rawWeight = increment(-exactWeight);
+            } else {
+                if(admCurrentType === 'full') {
+                    if((masterData.unitsFull || 0) < admCurrentQty) return window.showToast("Not enough Full Units in Master Vault.");
+                    masterUpdate.unitsFull = increment(-admCurrentQty);
+                } else {
+                    if((masterData.unitsUsual || 0) < admCurrentQty) return window.showToast("Not enough Usual Units in Master Vault.");
+                    masterUpdate.unitsUsual = increment(-admCurrentQty);
+                }
+            }
+
+            const standardPrice = admCurrentType === 'full' ? admCurrentQty * (masterData.pricePerUnit || 100) : admCurrentQty * (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
+            const discount = masterData.adminDiscount || 20;
+            const oweAmount = standardPrice * (1 - (discount/100));
+
+            const trans = { 
+                id: Date.now(), type: 'personal_admin', qty: admCurrentQty, unitType: admCurrentType, source: source, 
+                weightUsed: exactWeight, owed: oweAmount, expected: standardPrice, date: new Date().toISOString() 
+            };
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterUpdate, {merge:true});
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), {
+                personalUseWeight: increment(exactWeight),
+                personalUseOwed: increment(oweAmount),
+                transactions: [...(adminData.transactions || []), trans]
+            }, {merge:true});
+
+            window.showToast(`Used ${admCurrentQty} ${admCurrentType}. You owe $${oweAmount.toFixed(2)}.`);
+            window.admSelectQty(1);
+        };
+
+        // ---------------------------------------------------------
+        // ADMIN BILLS & LIABILITIES
+        // ---------------------------------------------------------
+        window.saveAdminBill = async () => {
+            const name = document.getElementById('bill-name').value;
+            const amt = parseFloat(document.getElementById('bill-amt').value);
+            const date = document.getElementById('bill-date').value;
+            const recur = document.getElementById('bill-recurring').checked;
+            const reqId = document.getElementById('bill-request-id').value;
+
+            if(!name || isNaN(amt)) return window.showToast("Enter bill name and amount.");
+
+            const liabilities = masterData.liabilities || [];
+            liabilities.push({ id: Date.now(), name, amount: amt, dueDate: date, isRecurring: recur, isPaid: false });
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { liabilities }, {merge:true});
+            
+            if(reqId) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId), { status: 'approved' });
+                document.getElementById('bill-request-id').value = '';
+            }
+            
+            document.getElementById('admin-bill-modal').classList.add('hidden');
+            document.getElementById('bill-name').value = '';
+            document.getElementById('bill-amt').value = '';
+            window.showToast("Bill added successfully.");
+        };
+
+        window.adminToggleLiability = async (id) => {
+            let deduction = 0;
+            const liabilities = (masterData.liabilities || []).map(l => {
+                if (l.id === id) {
+                    const willBePaid = !l.isPaid;
+                    if(willBePaid) deduction = l.amount; 
+                    else deduction = -l.amount; 
+                    return { ...l, isPaid: willBePaid };
+                }
+                return l;
+            });
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { 
+                liabilities,
+                cashBalance: increment(-deduction) 
+            }, {merge:true});
+            
+            if(deduction > 0) window.showToast(`$${deduction} deducted from Master Cash to pay bill.`);
+        };
+
+        window.adminRemoveLiability = async (id) => {
+            if(!confirm("Remove this bill entirely?")) return;
+            const liabilities = (masterData.liabilities || []).filter(l => l.id !== id);
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), { liabilities }, {merge:true});
+        };
+
+        window.adminHandleRequest = async (reqId, action, type) => {
+            const reqRef = doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId);
+            const snap = await getDoc(reqRef);
+            if(!snap.exists()) return;
+            const req = snap.data();
+
+            if(action === 'deny') {
+                await updateDoc(reqRef, { status: 'denied' });
+                window.showToast("Request denied.");
                 return;
             }
 
-            filtered.sort((a,b) => a.name.localeCompare(b.name)).forEach(c => {
-                list.innerHTML += `
-                    <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold dark:text-white text-sm flex items-center"><i data-lucide="user" class="w-3 h-3 mr-1 text-teal-500"></i> ${c.name}</span>
-                            <button onclick="window.deleteContact('${c.id}')" class="text-red-400 hover:text-red-600 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                        ${c.phone ? `<div class="text-xs text-gray-500 mb-1 flex items-center"><i data-lucide="phone" class="w-3 h-3 mr-1"></i> ${c.phone}</div>` : ''}
-                        ${c.notes ? `<div class="text-[10px] text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded mt-1">${c.notes}</div>` : ''}
-                    </div>
-                `;
-            });
-            lucide.createIcons();
+            // Approve flow
+            if(type === 'bill') {
+                document.getElementById('bill-name').value = req.desc;
+                document.getElementById('bill-amt').value = req.amount;
+                document.getElementById('bill-request-id').value = reqId;
+                document.getElementById('admin-bill-modal').classList.remove('hidden');
+            } else if (type === 'iou') {
+                document.getElementById('iou-name').value = req.clientName;
+                document.getElementById('iou-contact').value = req.contact || '';
+                document.getElementById('iou-qty').value = req.qty;
+                document.getElementById('iou-type').value = req.iouType;
+                document.getElementById('iou-amt').value = req.amount;
+                document.getElementById('iou-request-id').value = reqId;
+                document.getElementById('admin-iou-modal').classList.remove('hidden');
+            } else if (type === 'inventory') {
+                document.getElementById('transfer-staff-select').value = req.staffId;
+                window.switchAdminTab('transfers');
+                await updateDoc(reqRef, { status: 'approved' });
+                window.showToast("Switched to transfer tab. Fulfill request there.");
+            }
         };
 
-        function updateMasterLabels() {
-            const labelFull = document.getElementById('label-full-weight'); 
-            const labelUsual = document.getElementById('label-usual-weight'); 
-            const expHint = document.getElementById('expected-money-hint');
-            
-            if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`; 
-            if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
-            
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
-
-            const btnUsual = document.getElementById('btn-quick-usual'); 
-            const btnFull = document.getElementById('btn-quick-full');
-            if(btnUsual) btnUsual.innerText = `$${masterData.pricePerUnit * masterData.usualRatio} (Usual)`; 
-            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit} (Full)`;
-
-            const wRaw = document.getElementById('admin-master-weight'); 
-            const pDisp = document.getElementById('admin-price-display'); 
-            const rDisp = document.getElementById('admin-ratio-display'); 
-            const admDiscDisp = document.getElementById('admin-boss-discount-display'); 
-            const staffDiscDisp = document.getElementById('admin-staff-discount-display'); 
-            const commDisp = document.getElementById('admin-commission-display'); 
-            const expDisp = document.getElementById('admin-total-expenses'); 
-            const uFull = document.getElementById('admin-stock-full'); 
-            const uUsual = document.getElementById('admin-stock-usual');
-            
-            const rawW = masterData.rawWeight || 0; 
-            const price = masterData.pricePerUnit || 0; 
-            const ratio = masterData.usualRatio || 1; 
-            const expenses = masterData.totalExpenses || 0;
-            
-            if(pDisp) pDisp.innerText = `$${price}`; 
-            if(rDisp) rDisp.innerText = `${ratio}x`; 
-            if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`; 
-            if(staffDiscDisp) staffDiscDisp.innerText = `${masterData.staffDiscount}% Off`; 
-            if(commDisp) commDisp.innerText = `${masterData.staffCommission}%`; 
-            if(expDisp) expDisp.innerText = `-$${expenses}`;
-            if(uFull) uFull.innerText = masterData.unitsFull || 0; 
-            if(uUsual) uUsual.innerText = masterData.unitsUsual || 0;
-
-            const masterEqWeight = document.getElementById('admin-master-eq-weight');
-            if (masterEqWeight) { 
-                const totalEq = rawW + ((masterData.unitsFull || 0) * 1.0) + ((masterData.unitsUsual || 0) * ratio); 
-                masterEqWeight.innerText = `${totalEq.toFixed(1)} u`; 
-            }
-
-            const previewFull = document.getElementById('preview-max-full');
-            const previewUsual = document.getElementById('preview-max-usual');
-            if (previewFull && previewUsual) {
-                const maxFull = Math.floor(rawW / 1.0);
-                const maxUsual = Math.floor(rawW / (ratio > 0 ? ratio : 1));
-                previewFull.innerText = `${maxFull} Full`;
-                previewUsual.innerText = `${maxUsual} Usual`;
-            }
-        }
-
         // ---------------------------------------------------------
-        // STAFF TERMINAL LOGIC
+        // ADMIN STAFF DETAIL VIEW
         // ---------------------------------------------------------
-        function initStaffApp(user) {
-            document.getElementById('staff-app').classList.remove('hidden');
-            unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
-                if(snap.exists()) { 
-                    const d = JSON.parse(snap.data().json);
-                    appData = { 
-                        weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
-                        personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, 
-                        borrowings: 0, cashDropped: 0, transactions: [], notes: '', ...d 
-                    };
-                    document.getElementById('staff-notes-input').value = appData.notes || '';
-                    renderStaffUI(); 
-                } else { 
-                    saveStaffData(); 
-                } 
-            });
-        }
+        window.viewDriverDetails = (uid) => {
+            currentDetailUid = uid;
+            window.updateDetailView();
+            document.getElementById('admin-user-detail').classList.remove('hidden');
+        };
 
-        function renderStaffUI() {
-            document.getElementById('staff-stock').innerText = (appData.weight || 0).toFixed(1);
-            document.getElementById('staff-stock-full').innerText = (appData.unitsFull || 0);
-            document.getElementById('staff-stock-usual').innerText = (appData.unitsUsual || 0);
+        window.updateDetailView = () => {
+            if(!currentDetailUid) return;
+            const staff = globalRoster.find(u => u.id === currentDetailUid);
+            if(!staff) return;
             
-            document.getElementById('staff-stat-money').innerText = `$${appData.collected || 0}`;
-            document.getElementById('staff-stat-expenses').innerText = `-$${appData.expenses || 0}`;
+            document.getElementById('detail-user-name').innerText = staff.name;
+            document.getElementById('det-holding-raw').innerText = (staff.weight||0).toFixed(1);
+            document.getElementById('det-holding-full').innerText = staff.unitsFull||0;
+            document.getElementById('det-holding-usual').innerText = staff.unitsUsual||0;
             
-            const grossComm = (appData.collected || 0) * ((masterData.staffCommission || 0) / 100);
-            const totalDebt = (appData.personalUseOwed || 0) + (appData.borrowings || 0);
+            document.getElementById('det-sold-raw').innerText = (staff.soldWeight||0).toFixed(1);
+            document.getElementById('det-sold-full').innerText = staff.soldUnitsFull||0;
+            document.getElementById('det-sold-usual').innerText = staff.soldUnitsUsual||0;
+            
+            document.getElementById('det-expected').innerText = `$${(staff.expected||0).toFixed(2)}`;
+            document.getElementById('det-collected').innerText = `$${(staff.collected||0).toFixed(2)}`;
+            document.getElementById('det-expenses').innerText = `-$${(staff.expenses||0).toFixed(2)}`;
+            document.getElementById('det-cash-dropped').innerText = `-$${(staff.cashDropped||0).toFixed(2)}`;
+            
+            // Commission & Debt Calculation
+            const grossComm = (staff.collected || 0) * ((masterData.staffCommission || 0) / 100);
+            const totalDebt = (staff.personalUseOwed || 0) + (staff.borrowings || 0);
             const appliedToDebt = Math.min(grossComm, totalDebt);
             const netComm = grossComm - appliedToDebt;
-            const remainingDebt = totalDebt - appliedToDebt;
+            const remDebt = totalDebt - appliedToDebt;
 
-            document.getElementById('staff-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
-            document.getElementById('staff-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
-            document.getElementById('staff-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
-            document.getElementById('staff-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
-            document.getElementById('staff-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
+            document.getElementById('det-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+            document.getElementById('det-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+            document.getElementById('det-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+            document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+            document.getElementById('det-calc-rem-debt').innerText = `$${remDebt.toFixed(2)}`;
 
-            const cashOnHand = (appData.collected || 0) - (appData.expenses || 0) - netComm - (appData.cashDropped || 0);
-            document.getElementById('staff-stat-net').innerText = `$${cashOnHand.toFixed(2)}`;
-
-            const diff = (appData.expected || 0) - (appData.collected || 0);
-            const warn = document.getElementById('staff-shortage-warning');
-            if(diff > 0) { 
-                warn.classList.remove('hidden'); 
-                document.getElementById('staff-shortage-amount').innerText = `$${diff.toFixed(2)}`; 
-            } else { 
-                warn.classList.add('hidden'); 
-            }
-
-            window.updateStaffGlobalStats();
-            updateStaffChart(appData.transactions);
-            renderStaffAnalytics();
-
-            const list = document.getElementById('staff-log-list');
-            list.innerHTML = '';
-            const reversed = [...appData.transactions].reverse();
-            reversed.forEach(t => {
-                if(t.type === 'personal') {
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800">
-                            <div>
-                                <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use (${t.qty} units)</div>
-                                <div class="text-xs text-gray-500">${t.time} • ${masterData.staffDiscount}% Discount Applied</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div>
-                            </div>
-                        </div>`;
-                } else if(t.type === 'expense') {
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl mb-2 border border-orange-100 dark:border-orange-800">
-                            <div>
-                                <div class="font-bold text-orange-800 dark:text-orange-300"><i data-lucide="fuel" class="inline w-3 h-3 mr-1"></i> Expense: ${t.desc}</div>
-                                <div class="text-xs text-gray-500">${t.time}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-orange-600 dark:text-orange-400">-$${Math.abs(t.money)}</div>
-                            </div>
-                        </div>`;
-                } else if (t.type === 'borrowing') {
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl mb-2 border border-red-100 dark:border-red-800">
-                            <div>
-                                <div class="font-bold text-red-800 dark:text-red-300"><i data-lucide="banknote" class="inline w-3 h-3 mr-1"></i> Cash Advance / Debt</div>
-                                <div class="text-xs text-gray-500">${t.time} • ${t.desc}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-red-600 dark:text-red-400">+$${t.expected} Owed</div>
-                            </div>
-                        </div>`;
-                } else if (t.type === 'dropoff') {
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl mb-2 border border-green-100 dark:border-green-800">
-                            <div>
-                                <div class="font-bold text-green-800 dark:text-green-300"><i data-lucide="hand-coins" class="inline w-3 h-3 mr-1"></i> Handed Cash to Boss</div>
-                                <div class="text-xs text-gray-500">${t.time}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-green-600 dark:text-green-400">-$${t.amt}</div>
-                            </div>
-                        </div>`;
-                } else {
-                    const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
-                    const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2 border border-gray-200 dark:border-gray-600">
-                            <div>
-                                <div class="font-bold dark:text-white">Sold ${t.qty} <span class="text-[10px] ${color} uppercase tracking-wider ml-1">(${label})</span></div>
-                                <div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)} u</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-black text-green-600">+$${t.money}</div>
-                            </div>
-                        </div>`;
-                }
-            });
-            if(reversed.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
-            }
-            lucide.createIcons();
-        }
-
-        function renderStaffAnalytics() {
-            const stats = calculateAnalytics(appData.transactions);
-            document.getElementById('staff-pieces-today').innerText = stats[0].pieces;
-            document.getElementById('staff-pieces-week').innerText = stats[1].pieces;
-            document.getElementById('staff-pieces-month').innerText = stats[2].pieces;
-
-            const ctx = document.getElementById('staffAnalyticsChart');
-            if(!ctx) return;
-            if(staffAnalyticsChartInst) staffAnalyticsChartInst.destroy();
-            staffAnalyticsChartInst = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: stats.map(s => s.label),
-                    datasets: [
-                        { label: 'Revenue ($)', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y' },
-                        { label: 'Cost/Exp ($)', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4, yAxisID: 'y' },
-                        { label: 'Net Profit ($)', data: stats.map(s => s.profit), backgroundColor: '#3b82f6', borderRadius: 4, yAxisID: 'y' },
-                        { label: 'Pieces Sold', data: stats.map(s => s.pieces), type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.1, yAxisID: 'y1' }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let lbl = context.dataset.label || '';
-                                    if(context.dataset.yAxisID === 'y1') return `${lbl}: ${context.parsed.y} units`;
-                                    return `${lbl}: $${context.parsed.y}`;
-                                }
-                            }
-                        } 
-                    }, 
-                    scales: { 
-                        y: { beginAtZero: true, position: 'left' },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
-                    } 
-                }
-            });
-        }
-
-        function updateStaffChart(transactions) {
-            const ctx = document.getElementById('staffChart');
-            if(!ctx) return;
-            const sales = transactions.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse(); 
-            const labels = sales.map(t => t.time); 
-            const data = sales.map(t => t.money);
+            const currentNet = (staff.collected || 0) - (staff.expenses || 0) - (staff.cashDropped || 0) - netComm;
+            document.getElementById('det-net-cash').innerText = `$${currentNet.toFixed(2)}`;
             
-            if(staffChartInst) staffChartInst.destroy();
-            staffChartInst = new Chart(ctx, { 
-                type: 'line', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ 
-                        label: 'Sale ($)', 
-                        data: data, 
-                        borderColor: '#22c55e', 
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)', 
-                        borderWidth: 2, 
-                        fill: true, 
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const t = sales[context.dataIndex];
-                                    return `Sale: $${t.money} (${t.qty} ${t.type.toUpperCase()})`;
-                                }
-                            }
-                        }
-                    }, 
-                    scales: { y: { beginAtZero: true } } 
-                } 
+            const diff = (staff.expected||0) - (staff.collected||0);
+            const dbx = document.getElementById('det-diff-box');
+            dbx.className = "p-3 rounded-lg flex justify-between items-center font-bold mb-4 " + 
+                (diff > 0 ? "bg-red-50 text-red-600 border border-red-200" : (diff < 0 ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-500"));
+            document.getElementById('det-diff').innerText = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
+
+            // Render Detail Chart
+            const ctx = document.getElementById('adminDetailChart');
+            if(ctx && staff.transactions) {
+                const labels = staff.transactions.slice(-10).map(t => new Date(t.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+                const data = staff.transactions.slice(-10).map(t => t.money || 0);
+                if(adminDetailChartInst) adminDetailChartInst.destroy();
+                adminDetailChartInst = new Chart(ctx, {
+                    type: 'line', data: { labels, datasets: [{ label:'$ Collected', data, borderColor:'#3b82f6', tension:0.4 }] },
+                    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+                });
+            }
+        };
+
+        window.adminAddBorrowing = async () => {
+            if(!currentDetailUid) return;
+            const staff = globalRoster.find(u => u.id === currentDetailUid);
+            const amt = parseFloat(prompt(`Enter amount to advance/loan to ${staff.name}:`));
+            if(isNaN(amt) || amt <= 0) return;
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), {
+                borrowings: increment(amt)
+            }, {merge:true});
+            window.showToast(`$${amt} added to ${staff.name}'s debt.`);
+        };
+
+        window.adminClearStaffData = async () => {
+            if(!currentDetailUid) return;
+            const staff = globalRoster.find(u => u.id === currentDetailUid);
+            if(!confirm(`Clear shift data for ${staff.name}? This resets Expected, Collected, Expenses, and Cash Dropped to 0. It does NOT touch inventory.`)) return;
+            
+            const currentNet = (staff.collected || 0) - (staff.expenses || 0) - (staff.cashDropped || 0);
+            const msg = `Did you collect the $${currentNet.toFixed(2)} cash they had on hand? (It will be added to Master Cash)`;
+            if(confirm(msg)) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {
+                    cashBalance: increment(currentNet)
+                }, {merge:true});
+            }
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), {
+                expected: 0, collected: 0, expenses: 0, cashDropped: 0,
+                // Keep debt/borrowings as they persist across shifts until paid
+                transactions: [] 
+            }, {merge:true});
+            window.showToast(`Shift data cleared for ${staff.name}.`);
+        };
+
+        window.adminSetStatus = async (uid, status) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status });
+            window.showToast("User status updated.");
+        };
+
+        window.adminDelUser = async (uid) => {
+            if(!confirm("Deny and remove this user request?")) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid));
+            window.showToast("User removed.");
+        };
+
+        window.loadGlobalAnalytics = () => {
+            let allTransactions = [...(adminData.transactions || [])];
+            globalRoster.forEach(u => {
+                if(u.transactions) allTransactions = allTransactions.concat(u.transactions);
             });
-        }
-
-        async function saveStaffData() { 
-            if(!currentUser) return; 
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { 
-                json: JSON.stringify(appData), 
-                lastUpdated: Date.now() 
-            }); 
-            try { 
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
-                    weight: appData.weight, 
-                    unitsFull: appData.unitsFull || 0, 
-                    unitsUsual: appData.unitsUsual || 0, 
-                    soldWeight: appData.soldWeight, 
-                    soldUnitsFull: appData.soldUnitsFull || 0, 
-                    soldUnitsUsual: appData.soldUnitsUsual || 0, 
-                    personalUseWeight: appData.personalUseWeight || 0, 
-                    personalUseOwed: appData.personalUseOwed || 0, 
-                    borrowings: appData.borrowings || 0, 
-                    cashDropped: appData.cashDropped || 0, 
-                    collected: appData.collected, 
-                    expected: appData.expected, 
-                    expenses: appData.expenses || 0, 
-                    recentLogs: appData.transactions.slice(-10).reverse(), 
-                    lastSync: Date.now() 
-                }, { merge: true }); 
-            } catch(e){} 
-        }
-
-        window.checkPriceColor = () => {
-            const input = document.getElementById('money-input');
-            const val = parseFloat(input.value) || 0;
-            const perUnit = val / currentQty;
-            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
-            if (val === 0) { 
-                input.classList.add('dark:text-white', 'text-gray-800'); 
-                return; 
-            }
-            if (currentType === 'usual') {
-                const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
-                if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
-                else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
-                else input.classList.add('text-green-500', 'dark:text-green-500');
-            } else {
-                if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500');
-                else input.classList.add('text-green-500', 'dark:text-green-500');
+            allTransactions.sort((a,b) => a.id - b.id);
+            
+            const stats = calculateAnalytics(allTransactions);
+            
+            document.getElementById('admin-pieces-today').innerText = stats[0].pieces.toFixed(1);
+            document.getElementById('admin-pieces-week').innerText = stats[1].pieces.toFixed(1);
+            document.getElementById('admin-pieces-month').innerText = stats[2].pieces.toFixed(1);
+            
+            const ctx = document.getElementById('adminProfitChart');
+            if(ctx) {
+                if(adminProfitChartInst) adminProfitChartInst.destroy();
+                adminProfitChartInst = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Today', '7 Days', '30 Days'],
+                        datasets: [
+                            { label: 'Revenue', data: [stats[0].revenue, stats[1].revenue, stats[2].revenue], backgroundColor: '#10b981', borderRadius:4 },
+                            { label: 'Expenses', data: [stats[0].expenses, stats[1].expenses, stats[2].expenses], backgroundColor: '#ef4444', borderRadius:4 }
+                        ]
+                    },
+                    options: { responsive:true, maintainAspectRatio:false }
+                });
             }
         };
 
-        window.setQuickPrice = (pricePerUnit) => { 
-            document.getElementById('money-input').value = pricePerUnit * currentQty; 
-            window.checkPriceColor(); 
-        };
-        
+        // ---------------------------------------------------------
+        // STAFF APP LOGIC
+        // ---------------------------------------------------------
         window.selectQty = (q) => { 
             currentQty = q; 
             document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active')); 
             document.getElementById(`btn-qty-${q}`).classList.add('active'); 
             window.updateMasterLabels(); 
-            window.checkPriceColor(); 
         };
         
         window.selectType = (t) => { 
@@ -2292,1113 +2841,447 @@
             document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active')); 
             document.getElementById(`btn-type-${t}`).classList.add('active'); 
             window.updateMasterLabels(); 
+        };
+
+        window.checkPriceColor = () => {
+            const input = document.getElementById('money-input');
+            const val = parseFloat(input.value) || 0;
+            const expected = currentType === 'full' ? (currentQty * (masterData.pricePerUnit||100)) : (currentQty * (masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
+            
+            if(val === 0) input.className = input.className.replace(/text-(green|red)-500/, '') + ' text-gray-800 dark:text-white';
+            else if(val < expected) input.className = input.className.replace(/text-gray-800|dark:text-white|text-green-500/, '') + ' text-red-500';
+            else input.className = input.className.replace(/text-gray-800|dark:text-white|text-red-500/, '') + ' text-green-500';
+        };
+
+        window.setQuickPrice = (amt) => { 
+            document.getElementById('money-input').value = amt * currentQty; 
             window.checkPriceColor(); 
         };
 
         window.processSale = async () => {
+            if(currentQty <= 0) return window.showToast("Select quantity.");
+            
+            const moneyInput = document.getElementById('money-input').value;
+            if(!moneyInput) return window.showToast("Enter money received.");
+            const money = parseFloat(moneyInput);
+            
             const source = document.getElementById('staff-sale-source').value;
-            const moneyInput = document.getElementById('money-input');
-            const money = parseFloat(moneyInput.value);
-            if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
+            const exactWeight = currentType === 'full' ? currentQty * 1.0 : currentQty * (masterData.usualRatio || 0.8);
+            const expected = currentType === 'full' ? currentQty * (masterData.pricePerUnit || 100) : currentQty * (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
 
-            let actualWeightDeducted = 0;
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            let myUpdate = {
+                soldWeight: increment(exactWeight),
+                collected: increment(money),
+                expected: increment(expected)
+            };
 
-            if (source === 'raw') {
-                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
-                if(appData.weight < actualWeightDeducted) return window.showToast(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
-                appData.weight -= actualWeightDeducted;
-            } else if (source === 'processed' && currentType === 'full') {
-                if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
-                appData.unitsFull -= currentQty; 
-                actualWeightDeducted = currentQty * 1.0;
-            } else if (source === 'processed' && currentType === 'usual') {
-                if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
-                appData.unitsUsual -= currentQty; 
-                actualWeightDeducted = currentQty * masterData.usualRatio;
+            if(source === 'raw') {
+                if(appData.weight < exactWeight) return window.showToast("Not enough Raw Weight!");
+                myUpdate.weight = increment(-exactWeight);
+            } else {
+                if(currentType === 'full') {
+                    if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Units!");
+                    myUpdate.unitsFull = increment(-currentQty);
+                } else {
+                    if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Units!");
+                    myUpdate.unitsUsual = increment(-currentQty);
+                }
             }
 
-            const expectedMoney = currentQty * unitPrice;
+            if(currentType === 'full') myUpdate.soldUnitsFull = increment(currentQty);
+            if(currentType === 'usual') myUpdate.soldUnitsUsual = increment(currentQty);
 
-            if (source === 'raw') appData.soldWeight += actualWeightDeducted;
-            else if (source === 'processed' && currentType === 'full') appData.soldUnitsFull += currentQty;
-            else if (source === 'processed' && currentType === 'usual') appData.soldUnitsUsual += currentQty;
+            const trans = { 
+                id: Date.now(), type: 'sale', qty: currentQty, unitType: currentType, source: source, 
+                weightUsed: exactWeight, money, expected, date: new Date().toISOString() 
+            };
+            myUpdate.transactions = [...appData.transactions, trans];
 
-            appData.collected += money; 
-            appData.expected += expectedMoney;
-            
-            appData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                source: source, 
-                qty: currentQty, 
-                type: currentType, 
-                actualWeight: actualWeightDeducted, 
-                money: money, 
-                expected: expectedMoney 
-            });
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), myUpdate, {merge:true});
 
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { 
-                cashBalance: increment(money) 
-            }, {merge:true});
-
-            moneyInput.value = '';
-            await saveStaffData(); 
-            window.showToast("Sale Complete! Master Cash Updated.");
+            document.getElementById('money-input').value = '';
+            document.getElementById('money-input').className = document.getElementById('money-input').className.replace(/text-(green|red)-500/, '') + ' text-gray-800 dark:text-white';
+            window.showToast("Sale logged!");
+            window.selectQty(1);
         };
 
         window.staffPersonalUse = async () => {
             const source = document.getElementById('staff-sale-source').value;
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const exactWeight = currentType === 'full' ? currentQty * 1.0 : currentQty * (masterData.usualRatio || 0.8);
             
-            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.staffDiscount}% discount.`)) return;
-
-            let actualWeightDeducted = 0; 
-            let standardCost = currentQty * unitPrice;
-
-            if (source === 'raw') {
-                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
-                if(appData.weight < actualWeightDeducted) return window.showToast("Not enough raw weight!");
-                appData.weight -= actualWeightDeducted;
-            } else if (source === 'processed' && currentType === 'full') {
-                if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
-                appData.unitsFull -= currentQty; 
-                actualWeightDeducted = currentQty * 1.0;
-            } else if (source === 'processed' && currentType === 'usual') {
-                if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
-                appData.unitsUsual -= currentQty; 
-                actualWeightDeducted = currentQty * masterData.usualRatio;
+            let myUpdate = {};
+            if(source === 'raw') {
+                if(appData.weight < exactWeight) return window.showToast("Not enough Raw Weight!");
+                myUpdate.weight = increment(-exactWeight);
+            } else {
+                if(currentType === 'full') {
+                    if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Units!");
+                    myUpdate.unitsFull = increment(-currentQty);
+                } else {
+                    if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Units!");
+                    myUpdate.unitsUsual = increment(-currentQty);
+                }
             }
 
-            const discountMultiplier = 1 - (masterData.staffDiscount / 100);
-            const discountedDebt = standardCost * discountMultiplier;
-            
-            appData.personalUseWeight = (appData.personalUseWeight || 0) + actualWeightDeducted;
-            appData.expected += discountedDebt; 
-            appData.personalUseOwed = (appData.personalUseOwed || 0) + discountedDebt;
-            
-            appData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                source: source, 
-                qty: currentQty, 
-                type: 'personal', 
-                actualWeight: actualWeightDeducted, 
-                money: 0, 
-                expected: discountedDebt 
-            });
-            
-            await saveStaffData(); 
-            window.showToast(`Logged ${currentType.toUpperCase()} unit(s) for personal use.`);
-        };
+            const standardPrice = currentType === 'full' ? currentQty * (masterData.pricePerUnit || 100) : currentQty * (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
+            const discount = masterData.staffDiscount || 20;
+            const oweAmount = standardPrice * (1 - (discount/100));
 
-        window.staffExpense = async () => {
-            const desc = prompt("What is this expense for? (e.g., Gas, Food)"); 
-            if(!desc) return;
-            const amt = parseFloat(prompt(`How much did you spend on ${desc}? ($)`)); 
-            if(isNaN(amt) || amt <= 0) return;
-            
-            appData.expenses = (appData.expenses || 0) + amt;
-            appData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                qty: 0, 
-                type: 'expense', 
-                actualWeight: 0, 
-                money: -amt, 
-                expected: 0, 
-                desc: desc 
-            });
-            await saveStaffData(); 
-            window.showToast("Expense Logged.");
-        };
+            const trans = { 
+                id: Date.now(), type: 'personal', qty: currentQty, unitType: currentType, source: source, 
+                weightUsed: exactWeight, owed: oweAmount, expected: standardPrice, date: new Date().toISOString() 
+            };
 
-        window.staffDropCash = async () => {
-            const amt = parseFloat(prompt("How much physical cash are you dropping off/handing to the Boss? ($)")); 
-            if(isNaN(amt) || amt <= 0) return;
-            
-            appData.cashDropped = (appData.cashDropped || 0) + amt;
-            appData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                qty: 0, 
-                type: 'dropoff', 
-                actualWeight: 0, 
-                money: 0, 
-                expected: 0, 
-                amt: amt, 
-                desc: 'Dropped off cash' 
-            });
-            await saveStaffData(); 
-            window.showToast(`Logged $${amt} dropped off.`); 
-            window.sendNotificationAlert('admin', `${window.currentUserName} dropped off $${amt} cash.`);
+            myUpdate.personalUseWeight = increment(exactWeight);
+            myUpdate.personalUseOwed = increment(oweAmount);
+            myUpdate.transactions = [...appData.transactions, trans];
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), myUpdate, {merge:true});
+            window.showToast(`Used ${currentQty} ${currentType}. You owe $${oweAmount.toFixed(2)}.`);
+            window.selectQty(1);
         };
 
         window.undoLastTransaction = async () => {
             if(!appData.transactions || appData.transactions.length === 0) return window.showToast("No transactions to undo.");
-            if(!confirm("Are you SURE you want to completely VOID your last entry? This will reverse the math perfectly.")) return;
-            
-            const t = appData.transactions.pop();
-            if(t.type === 'expense') { 
-                appData.expenses -= Math.abs(t.money); 
-            } else if (t.type === 'dropoff') { 
-                appData.cashDropped -= t.amt; 
-            } else if (t.type === 'borrowing') { 
-                appData.borrowings -= t.expected; 
-                appData.expected -= t.expected; 
-            } else if (t.type === 'personal') {
-                appData.personalUseWeight -= t.actualWeight; 
-                appData.expected -= t.expected; 
-                appData.personalUseOwed -= t.expected;
+            const last = appData.transactions[appData.transactions.length - 1];
+            if(!confirm(`Void last ${last.type} of ${last.qty || ''} units ($${last.money || last.owed || 0})?`)) return;
+
+            let myUpdate = {};
+            if(last.type === 'sale') {
+                if(last.source === 'raw') myUpdate.weight = increment(last.weightUsed);
+                else if(last.unitType === 'full') myUpdate.unitsFull = increment(last.qty);
+                else myUpdate.unitsUsual = increment(last.qty);
                 
-                if (t.source === 'raw') appData.weight += t.actualWeight;
-                else if (t.source === 'processed' && t.actualWeight === t.qty * 1.0) appData.unitsFull += t.qty;
-                else if (t.source === 'processed' && t.actualWeight !== t.qty * 1.0) appData.unitsUsual += t.qty;
-            } else {
-                appData.collected -= t.money; 
-                appData.expected -= t.expected;
+                myUpdate.soldWeight = increment(-last.weightUsed);
+                if(last.unitType === 'full') myUpdate.soldUnitsFull = increment(-last.qty);
+                if(last.unitType === 'usual') myUpdate.soldUnitsUsual = increment(-last.qty);
                 
-                if (t.source === 'raw') { 
-                    appData.weight += t.actualWeight; 
-                    appData.soldWeight -= t.actualWeight; 
-                } else if (t.source === 'processed' && t.type === 'full') { 
-                    appData.unitsFull += t.qty; 
-                    appData.soldUnitsFull -= t.qty; 
-                } else if (t.source === 'processed' && t.type === 'usual') { 
-                    appData.unitsUsual += t.qty; 
-                    appData.soldUnitsUsual -= t.qty; 
-                }
-                
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { 
-                    cashBalance: increment(-t.money) 
-                }, {merge:true});
+                myUpdate.collected = increment(-last.money);
+                myUpdate.expected = increment(-last.expected);
+            } else if (last.type === 'personal') {
+                if(last.source === 'raw') myUpdate.weight = increment(last.weightUsed);
+                else if(last.unitType === 'full') myUpdate.unitsFull = increment(last.qty);
+                else myUpdate.unitsUsual = increment(last.qty);
+
+                myUpdate.personalUseWeight = increment(-last.weightUsed);
+                myUpdate.personalUseOwed = increment(-last.owed);
+            } else if (last.type === 'expense') {
+                myUpdate.expenses = increment(-last.money);
+                myUpdate.collected = increment(last.money); // Refund it to drawer
+            } else if (last.type === 'dropoff') {
+                myUpdate.cashDropped = increment(-last.money);
             }
-            await saveStaffData(); 
-            window.showToast("Last transaction successfully voided.");
+            
+            const newTrans = appData.transactions.slice(0, -1);
+            myUpdate.transactions = newTrans;
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), myUpdate, {merge:true});
+            window.showToast("Last transaction voided and reverted.");
+        };
+
+        window.staffDropCash = async () => {
+            const currentNet = appData.collected - appData.expenses - appData.cashDropped;
+            if(currentNet <= 0) return window.showToast("No cash to drop off.");
+            
+            const amtStr = prompt(`You hold $${currentNet.toFixed(2)}.\nHow much are you dropping to Boss?`, currentNet.toFixed(2));
+            if(!amtStr) return;
+            const amt = parseFloat(amtStr);
+            if(isNaN(amt) || amt <= 0 || amt > currentNet) return window.showToast("Invalid amount.");
+
+            const trans = { id: Date.now(), type: 'dropoff', money: amt, date: new Date().toISOString() };
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), {
+                cashDropped: increment(amt),
+                transactions: [...appData.transactions, trans]
+            }, {merge:true});
+            
+            // Add to Master
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), {
+                cashBalance: increment(amt)
+            }, {merge:true});
+            
+            window.showToast(`Dropped $${amt.toFixed(2)} to Boss Vault.`);
+        };
+
+        window.staffExpense = async () => {
+            const amtStr = prompt("Enter expense amount (e.g. gas):");
+            if(!amtStr) return;
+            const amt = parseFloat(amtStr);
+            const desc = prompt("What was this for?");
+            if(isNaN(amt) || amt <= 0 || !desc) return window.showToast("Invalid expense.");
+
+            const trans = { id: Date.now(), type: 'expense', money: amt, desc, date: new Date().toISOString() };
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), {
+                expenses: increment(amt),
+                collected: increment(-amt), // takes money directly from drawer
+                transactions: [...appData.transactions, trans]
+            }, {merge:true});
+            window.showToast(`Logged $${amt} expense.`);
         };
 
         window.submitStaffBillReq = async () => {
-            const desc = document.getElementById('req-bill-desc').value; 
+            const desc = document.getElementById('req-bill-desc').value;
             const amt = parseFloat(document.getElementById('req-bill-amt').value);
+            if(!desc || isNaN(amt)) return window.showToast("Enter valid bill details.");
+
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), {
+                type: 'bill', desc, amount: amt, staffId: currentUser.uid, staffName: window.currentUserName, 
+                timestamp: Date.now(), status: 'pending'
+            });
             
-            if(!desc || isNaN(amt) || amt <= 0) return window.showToast("Enter description and valid amount.");
-            
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
-                uid: currentUser.uid, 
-                name: window.currentUserName || 'Staff', 
-                timestamp: Date.now(), 
-                status: 'pending', 
-                type: 'bill_request', 
-                desc: desc, 
-                amount: amt 
-            }); 
-            
-            document.getElementById('staff-bill-modal').classList.add('hidden'); 
-            document.getElementById('req-bill-desc').value = ''; 
+            document.getElementById('staff-bill-modal').classList.add('hidden');
+            document.getElementById('req-bill-desc').value = '';
             document.getElementById('req-bill-amt').value = '';
-            
-            window.showToast("Bill Request Sent to Admin"); 
-            window.sendNotificationAlert('admin', `New bill request from ${window.currentUserName}: $${amt}`);
+            window.showToast("Bill request sent to Boss.");
         };
 
         window.submitStaffIOUReq = async () => {
-            const name = document.getElementById('req-iou-name').value; 
-            const contact = document.getElementById('req-iou-contact').value; 
-            const amt = parseFloat(document.getElementById('req-iou-amt').value); 
-            const date = document.getElementById('req-iou-date').value; 
-            const qty = parseFloat(document.getElementById('req-iou-qty').value) || 0; 
+            const name = document.getElementById('req-iou-name').value;
+            const contact = document.getElementById('req-iou-contact').value;
+            const qty = parseFloat(document.getElementById('req-iou-qty').value);
             const type = document.getElementById('req-iou-type').value;
-            
-            if(!name || isNaN(amt) || amt <= 0) return window.showToast("Enter client name and valid amount.");
-            
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
-                uid: currentUser.uid, 
-                name: window.currentUserName || 'Staff', 
-                timestamp: Date.now(), 
-                status: 'pending', 
-                type: 'iou_request', 
-                clientName: name, 
-                contact: contact, 
-                amount: amt, 
-                dueDate: date, 
-                qty: qty, 
-                iouType: type 
-            }); 
-            
-            document.getElementById('staff-iou-modal').classList.add('hidden'); 
-            document.getElementById('req-iou-name').value = ''; 
-            document.getElementById('req-iou-contact').value = ''; 
-            document.getElementById('req-iou-amt').value = ''; 
-            document.getElementById('req-iou-date').value = ''; 
-            document.getElementById('req-iou-qty').value = '';
-            
-            window.showToast("Finance Request Sent to Boss"); 
-            window.sendNotificationAlert('admin', `New finance request from ${window.currentUserName} for client ${name} ($${amt})`);
-        };
+            const amt = parseFloat(document.getElementById('req-iou-amt').value);
+            if(!name || isNaN(qty) || isNaN(amt)) return window.showToast("Fill required client details.");
 
-        window.requestWeight = async () => { 
-            if(confirm("Notify admin you need more weight?")) { 
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), { 
-                    uid: currentUser.uid, 
-                    name: window.currentUserName || 'Staff', 
-                    timestamp: Date.now(), 
-                    status: 'pending', 
-                    type: 'weight' 
-                }); 
-                window.showToast("Request Sent"); 
-                window.sendNotificationAlert('admin', `${window.currentUserName} is requesting more inventory.`); 
-            } 
-        };
-
-        // -------------------------------------------------------
-        // ADMIN LOGIC
-        // ---------------------------------------------------------
-        window.switchAdminTab = (t) => { 
-            ['storage','terminal','staff','transfers','finance','ious'].forEach(x => { 
-                document.getElementById(`admin-view-${x}`).classList.add('hidden'); 
-                document.getElementById(`adm-tab-${x}`).classList.remove('bg-gray-800','text-white','shadow'); 
-                document.getElementById(`adm-tab-${x}`).classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300'); 
-            }); 
-            
-            document.getElementById(`admin-view-${t}`).classList.remove('hidden'); 
-            document.getElementById(`adm-tab-${t}`).classList.add('bg-gray-800','text-white','shadow'); 
-            document.getElementById(`adm-tab-${t}`).classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300');
-            
-            if (t === 'finance' && typeof window.loadGlobalAnalytics === 'function') window.loadGlobalAnalytics();
-        };
-
-        window.loadGlobalAnalytics = async () => {
-            let allTx = []; 
-            if(adminData && adminData.transactions) allTx.push(...adminData.transactions);
-            
-            for(const u of globalRoster) {
-                if(u.role !== 'admin') {
-                    try { 
-                        const snap = await getDoc(doc(db, 'artifacts', appId, 'users', u.id, 'data', 'app_state')); 
-                        if(snap.exists()) { 
-                            const dat = JSON.parse(snap.data().json); 
-                            if(dat.transactions) allTx.push(...dat.transactions); 
-                        } 
-                    } catch(e) {}
-                }
-            }
-            
-            const stats = calculateAnalytics(allTx);
-            document.getElementById('admin-pieces-today').innerText = stats[0].pieces; 
-            document.getElementById('admin-pieces-week').innerText = stats[1].pieces; 
-            document.getElementById('admin-pieces-month').innerText = stats[2].pieces;
-            
-            const ctx = document.getElementById('adminProfitChart'); 
-            if(!ctx) return;
-            
-            if(adminProfitChartInst) adminProfitChartInst.destroy();
-            adminProfitChartInst = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: stats.map(s => s.label), 
-                    datasets: [
-                        { label: 'Gross Rev ($)', data: stats.map(s => s.revenue), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y' }, 
-                        { label: 'Costs/Exp ($)', data: stats.map(s => s.expenses), backgroundColor: '#ef4444', borderRadius: 4, yAxisID: 'y' }, 
-                        { label: 'Net Earnings ($)', data: stats.map(s => s.profit), backgroundColor: '#8b5cf6', borderRadius: 4, yAxisID: 'y' },
-                        { label: 'Pieces Sold', data: stats.map(s => s.pieces), type: 'line', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.1, yAxisID: 'y1' }
-                    ] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let lbl = context.dataset.label || '';
-                                    if(context.dataset.yAxisID === 'y1') return `${lbl}: ${context.parsed.y} units`;
-                                    return `${lbl}: $${context.parsed.y}`;
-                                }
-                            }
-                        } 
-                    }, 
-                    scales: { 
-                        y: { beginAtZero: true, position: 'left' },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
-                    } 
-                } 
-            });
-        };
-
-        window.updateAdminOverallChart = (roster) => {
-            const ctx = document.getElementById('adminOverallChart'); 
-            if(!ctx) return;
-            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin'); 
-            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name); 
-            const data = activeStaff.map(u => u.collected || 0);
-            
-            if(adminOverallChartInst) adminOverallChartInst.destroy();
-            adminOverallChartInst = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ label: 'Collected ($)', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true } } 
-                } 
-            });
-        };
-
-        function initAdminDashboard(user) {
-            document.getElementById('admin-app').classList.remove('hidden');
-            
-            unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
-                if(snap.exists()) { 
-                    const d = JSON.parse(snap.data().json); 
-                    adminData = { 
-                        soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, personalUseWeight: 0, 
-                        personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, borrowings: 0, 
-                        cashDropped: 0, transactions: [], ...d 
-                    }; 
-                    renderAdminTerminalUI(); 
-                    if(!document.getElementById('admin-view-finance').classList.contains('hidden')) {
-                        window.loadGlobalAnalytics();
-                    }
-                } else { 
-                    saveAdminData(); 
-                } 
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), {
+                type: 'iou', clientName: name, contact, qty, iouType: type, amount: amt, 
+                staffId: currentUser.uid, staffName: window.currentUserName, timestamp: Date.now(), status: 'pending'
             });
 
-            const adminSet = document.getElementById('admin-settings-section'); 
-            if(adminSet) adminSet.classList.remove('hidden');
+            document.getElementById('staff-iou-modal').classList.add('hidden');
+            window.showToast("Client Finance request sent to Boss.");
+        };
 
-            processAdminRosterUI = () => {
-                const list = document.getElementById('admin-staff-list'); 
-                const select = document.getElementById('transfer-staff-select'); 
-                const pendingList = document.getElementById('admin-pending-users'); 
-                const staffTab = document.getElementById('adm-tab-staff');
-                
-                if(!list || !select) return;
-                list.innerHTML=''; 
-                select.innerHTML='<option value="">Select Staff...</option>'; 
-                pendingList.innerHTML='';
-                
-                let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0; 
-                let globalRaw = 0, globalFull = 0, globalUsual = 0;
-
-                globalRoster.forEach(u => {
-                    if(u.status === 'pending') {
-                        if (u.role !== 'admin') {
-                            pendCount++;
-                            pendingList.innerHTML += `
-                                <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-100 dark:border-orange-800">
-                                    <span class="font-bold text-orange-800 dark:text-orange-300">${u.name}</span>
-                                    <div>
-                                        <button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600 btn-interactive">Approve</button>
-                                        <button onclick="window.adminDelUser('${u.id}')" class="text-red-500 text-xs px-2 hover:underline">Deny</button>
-                                    </div>
-                                </div>`;
-                        }
-                    } else {
-                        activeCount++; 
-                        totExp += (u.expected || 0); 
-                        totCol += (u.collected || 0);
-                        if (u.role !== 'admin') { 
-                            globalRaw += (u.weight || 0); 
-                            globalFull += (u.unitsFull || 0); 
-                            globalUsual += (u.unitsUsual || 0); 
-                        }
-                        
-                        const diff = (u.expected || 0) - (u.collected || 0);
-                        const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
-                        const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
-
-                        const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-                        const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
-                        const appliedToDebt = Math.min(grossComm, totalDebt);
-                        const netComm = grossComm - appliedToDebt;
-                        const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
-
-                        list.innerHTML += `
-                            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-400 transition" onclick="window.viewDriverDetails('${u.id}')">
-                                <div class="flex justify-between items-center mb-2">
-                                    <div class="font-bold dark:text-white flex items-center">
-                                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mr-2 border border-blue-200">${u.name[0]}</div>
-                                        ${u.name} ${badge}
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-xs text-gray-500">${u.role === 'admin' ? 'Total Sold' : 'Holding'}</div>
-                                        <div class="font-black dark:text-white">${u.role === 'admin' ? (u.soldWeight||0).toFixed(1) : (u.weight||0).toFixed(1)} u</div>
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
-                                    <div class="text-xs text-gray-500">
-                                        Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
-                                        Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
-                                    </div>
-                                    <div class="text-xs text-center mx-2">
-                                        <span class="block text-[9px] text-gray-400 uppercase font-bold tracking-widest">Net Comm</span>
-                                        <span class="font-bold text-blue-600 dark:text-blue-400">$${netComm.toFixed(2)}</span>
-                                    </div>
-                                    <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
-                                        Diff: ${diffSign}
-                                    </div>
-                                </div>
-                            </div>`;
-                        
-                        if (u.role !== 'admin') { 
-                            const opt = document.createElement('option'); 
-                            opt.value=u.id; 
-                            opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
-                            select.appendChild(opt); 
-                        }
-                    }
-                });
-                
-                document.getElementById('admin-active-count').innerText = `${activeCount} Active`; 
-                document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`; 
-                document.getElementById('admin-total-collected').innerText = `$${totCol.toFixed(2)}`;
-                
-                document.getElementById('global-stock-raw').innerText = ((masterData.rawWeight || 0) + globalRaw).toFixed(1); 
-                document.getElementById('global-stock-full').innerText = ((masterData.unitsFull || 0) + globalFull); 
-                document.getElementById('global-stock-usual').innerText = ((masterData.unitsUsual || 0) + globalUsual);
-                
-                const globalEqEl = document.getElementById('admin-master-eq-weight');
-                if (globalEqEl) { 
-                    const globalEq = ((masterData.rawWeight || 0) + globalRaw) + (((masterData.unitsFull || 0) + globalFull) * 1.0) + (((masterData.unitsUsual || 0) + globalUsual) * masterData.usualRatio); 
-                    globalEqEl.innerText = `${globalEq.toFixed(1)} u`; 
-                }
-
-                updateAdminOverallChart(globalRoster); 
-                updateFinanceUI(); 
-                
-                if(pendCount === 0) { 
-                    pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>'; 
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>`; 
-                } else { 
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`; 
-                }
-                lucide.createIcons();
-            };
-
-            if(globalRoster.length > 0) processAdminRosterUI();
-
-            unsubReqs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), (snap) => {
-                const section = document.getElementById('admin-requests-section'); 
-                const list = document.getElementById('admin-requests-list'); 
-                list.innerHTML = ''; 
-                let count = 0;
-                
-                snap.forEach(d => { 
-                    const req = d.data(); 
-                    if(req.status === 'pending') { 
-                        count++; 
-                        if(req.type === 'bill_request') {
-                            list.innerHTML += `
-                                <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
-                                    <div class="mb-2 sm:mb-0">
-                                        <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-purple-500 ml-1 border border-purple-200 bg-purple-50 px-1 rounded">Bill Request</span></span>
-                                        <div class="text-xs text-gray-500 mt-1">${req.desc} <span class="font-bold text-gray-800 dark:text-gray-300">($${req.amount})</span></div>
-                                    </div>
-                                    <div class="space-x-1 flex">
-                                        <button onclick="window.prepareApproveBill('${d.id}', '${req.desc}', ${req.amount})" class="flex-1 bg-purple-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-purple-700 btn-interactive text-center">Approve</button>
-                                        <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
-                                    </div>
-                                </div>`; 
-                        } else if (req.type === 'iou_request') {
-                            list.innerHTML += `
-                                <div class="bg-white dark:bg-gray-800 p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
-                                    <div class="mb-2 sm:mb-0">
-                                        <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-blue-500 ml-1 border border-blue-200 bg-blue-50 px-1 rounded">Finance Request</span></span>
-                                        <div class="text-xs text-gray-500 mt-1">Client: <span class="font-bold text-gray-800 dark:text-gray-300">${req.clientName}</span> ($${req.amount})</div>
-                                    </div>
-                                    <div class="space-x-1 flex">
-                                        <button onclick="window.prepareApproveIOU('${d.id}', '${req.clientName.replace(/'/g, "\\'")}', '${(req.contact||'').replace(/'/g, "\\'")}', ${req.amount}, '${req.dueDate||''}', ${req.qty||0}, '${req.iouType||'full'}')" class="flex-1 bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive text-center">Approve</button>
-                                        <button onclick="window.dismissReq('${d.id}')" class="flex-1 bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive text-center">Dismiss</button>
-                                    </div>
-                                </div>`; 
-                        } else {
-                            list.innerHTML += `
-                                <div class="bg-white dark:bg-gray-800 p-2 rounded-lg flex justify-between items-center text-sm shadow-sm border border-gray-100 dark:border-gray-700">
-                                    <span class="font-bold dark:text-white">${req.name} <span class="text-xs font-normal text-gray-500 ml-2">Needs weight</span></span>
-                                    <div class="space-x-1">
-                                        <button onclick="window.fulfillReq('${d.id}', '${req.uid}')" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-700 btn-interactive">Fulfill</button>
-                                        <button onclick="window.dismissReq('${d.id}')" class="bg-gray-200 text-gray-700 text-xs px-2 py-1.5 rounded hover:bg-gray-300 btn-interactive">Dismiss</button>
-                                    </div>
-                                </div>`;
-                        }
-                    }
-                });
-                
-                if(count > 0) { 
-                    section.classList.remove('hidden'); 
-                    document.getElementById('admin-req-badge').classList.remove('hidden'); 
-                } else { 
-                    section.classList.add('hidden'); 
-                    document.getElementById('admin-req-badge').classList.add('hidden'); 
-                }
+        window.requestWeight = async () => {
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), {
+                type: 'inventory', staffId: currentUser.uid, staffName: window.currentUserName, 
+                timestamp: Date.now(), status: 'pending'
             });
-        }
-
-        window.prepareApproveBill = (reqId, name, amount) => {
-            document.getElementById('bill-name').value = name;
-            document.getElementById('bill-amt').value = amount;
-            document.getElementById('bill-request-id').value = reqId;
-            document.getElementById('admin-bill-modal').classList.remove('hidden');
+            window.showToast("Resupply request sent.");
         };
 
-        window.dismissReq = async (id) => { 
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', id)); 
+        window.saveStaffData = async () => {
+            if(!currentUser) return;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), appData, {merge:true});
         };
 
-        window.fulfillReq = async (reqId, staffUid) => {
-            document.getElementById('transfer-staff-select').value = staffUid;
-            window.updateTransferPreview();
-            window.switchAdminTab('transfers');
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', reqId)); 
-        };
-
-        window.adminSetStatus = async (uid, status) => { 
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), { status: status }, {merge:true}); 
-            await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'), { status: status }, {merge:true}); 
-            window.showToast(`User ${status}`); 
-        };
-        
-        window.adminDelUser = async (uid) => { 
-            if(confirm("Delete user request permanently?")) { 
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid)); 
-            } 
-        };
-
-        window.updateTransferPreview = () => {
-            const uid = document.getElementById('transfer-staff-select').value;
-            const type = document.getElementById('transfer-item-type').value;
-            const p = document.getElementById('transfer-preview');
-            if(!uid) { p.innerText = ''; return; }
-            const user = globalRoster.find(u => u.id === uid);
-            if(!user) return;
+        window.updateStaffUI = () => {
+            window.animateValue('staff-stock', parseFloat(document.getElementById('staff-stock').innerText), appData.weight, 400, '');
+            document.getElementById('staff-stock-full').innerText = appData.unitsFull || 0;
+            document.getElementById('staff-stock-usual').innerText = appData.unitsUsual || 0;
             
-            let val = 0;
-            if(type === 'raw') val = (user.weight || 0).toFixed(1) + ' Raw u';
-            if(type === 'full') val = (user.unitsFull || 0) + ' Full (1.0)';
-            if(type === 'usual') val = (user.unitsUsual || 0) + ' Usual';
-            p.innerText = `Currently holds: ${val}`;
-        };
-
-        window.adminTransferWeight = async (direction) => {
-            const uid = document.getElementById('transfer-staff-select').value;
-            const amt = parseFloat(document.getElementById('transfer-amount').value);
-            const type = document.getElementById('transfer-item-type').value;
+            const currentNet = appData.collected - appData.expenses - appData.cashDropped;
+            window.animateValue('staff-stat-net', parseFloat(document.getElementById('staff-stat-net').innerText.replace('$','')), currentNet, 500, '$', true);
+            window.animateValue('staff-stat-money', parseFloat(document.getElementById('staff-stat-money').innerText.replace('$','')), appData.collected, 500, '$', true);
+            window.animateValue('staff-stat-expenses', parseFloat(document.getElementById('staff-stat-expenses').innerText.replace('$','')), appData.expenses, 500, '$', true);
             
-            if(!uid || isNaN(amt) || amt <= 0) return window.showToast("Select staff and valid amount.");
-            
-            const user = globalRoster.find(u => u.id === uid);
-            
-            let masterUpdate = {};
-            let userUpdate = {};
-            
-            if (direction === 'send') {
-                if (type === 'raw' && masterData.rawWeight < amt) return window.showToast("Not enough raw master weight!");
-                if (type === 'full' && masterData.unitsFull < amt) return window.showToast("Not enough full units in vault!");
-                if (type === 'usual' && masterData.unitsUsual < amt) return window.showToast("Not enough usual units in vault!");
-                
-                if (type === 'raw') { masterUpdate.rawWeight = increment(-amt); userUpdate.weight = increment(amt); }
-                if (type === 'full') { masterUpdate.unitsFull = increment(-amt); userUpdate.unitsFull = increment(amt); }
-                if (type === 'usual') { masterUpdate.unitsUsual = increment(-amt); userUpdate.unitsUsual = increment(amt); }
-            } else {
-                if (type === 'raw' && (user.weight || 0) < amt) return window.showToast("Staff doesn't have that much raw!");
-                if (type === 'full' && (user.unitsFull || 0) < amt) return window.showToast("Staff doesn't have that many full units!");
-                if (type === 'usual' && (user.unitsUsual || 0) < amt) return window.showToast("Staff doesn't have that many usual units!");
-
-                if (type === 'raw') { masterUpdate.rawWeight = increment(amt); userUpdate.weight = increment(-amt); }
-                if (type === 'full') { masterUpdate.unitsFull = increment(amt); userUpdate.unitsFull = increment(-amt); }
-                if (type === 'usual') { masterUpdate.unitsUsual = increment(amt); userUpdate.unitsUsual = increment(-amt); }
-            }
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), masterUpdate, {merge:true});
-            
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', uid), userUpdate, { merge: true });
-                const snap = await getDoc(doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state'));
-                if (snap.exists()) {
-                    let st = JSON.parse(snap.data().json);
-                    if (type === 'raw') st.weight = (st.weight || 0) + (direction === 'send' ? amt : -amt);
-                    if (type === 'full') st.unitsFull = (st.unitsFull || 0) + (direction === 'send' ? amt : -amt);
-                    if (type === 'usual') st.unitsUsual = (st.unitsUsual || 0) + (direction === 'send' ? amt : -amt);
-                    await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'data', 'app_state'), { json: JSON.stringify(st), lastUpdated: Date.now() });
-                }
-            } catch(e) {}
-            
-            document.getElementById('transfer-amount').value = '';
-            window.updateTransferPreview();
-            window.showToast(`Successfully ${direction === 'send' ? 'Sent' : 'Reclaimed'} ${amt} ${type}`);
-            window.sendNotificationAlert(uid, `Inventory Update: ${direction === 'send' ? 'Received' : 'Lost'} ${amt} ${type}`);
-        };
-
-        window.viewDriverDetails = async (uid) => {
-            const u = globalRoster.find(x => x.id === uid); 
-            if(!u) return; 
-            currentDetailUid = uid;
-            
-            document.getElementById('detail-user-name').innerText = u.name;
-            
-            document.getElementById('det-holding-raw').innerText = (u.weight || 0).toFixed(1);
-            document.getElementById('det-holding-full').innerText = (u.unitsFull || 0);
-            document.getElementById('det-holding-usual').innerText = (u.unitsUsual || 0);
-            
-            document.getElementById('det-sold-raw').innerText = (u.soldWeight || 0).toFixed(1);
-            document.getElementById('det-sold-full').innerText = (u.soldUnitsFull || 0);
-            document.getElementById('det-sold-usual').innerText = (u.soldUnitsUsual || 0);
-            
-            document.getElementById('det-expected').innerText = `$${(u.expected || 0).toFixed(2)}`;
-            document.getElementById('det-collected').innerText = `$${(u.collected || 0).toFixed(2)}`;
-            document.getElementById('det-expenses').innerText = `-$${(u.expenses || 0).toFixed(2)}`;
-            document.getElementById('det-cash-dropped').innerText = `-$${(u.cashDropped || 0).toFixed(2)}`;
-
-            const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-            const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
+            const grossComm = appData.collected * ((masterData.staffCommission || 0) / 100);
+            const totalDebt = (appData.personalUseOwed || 0) + (appData.borrowings || 0);
             const appliedToDebt = Math.min(grossComm, totalDebt);
             const netComm = grossComm - appliedToDebt;
-            const remainingDebt = totalDebt - appliedToDebt;
+            const remDebt = totalDebt - appliedToDebt;
 
-            document.getElementById('det-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
-            document.getElementById('det-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
-            document.getElementById('det-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
-            document.getElementById('det-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
-            document.getElementById('det-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
-            
-            const cashOnHand = (u.collected || 0) - (u.expenses || 0) - netComm - (u.cashDropped || 0);
-            document.getElementById('det-net-cash').innerText = `$${cashOnHand.toFixed(2)}`;
+            document.getElementById('staff-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+            document.getElementById('staff-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+            document.getElementById('staff-calc-rem-debt').innerText = `$${remDebt.toFixed(2)}`;
 
-            const diff = (u.expected || 0) - (u.collected || 0);
-            const db = document.getElementById('det-diff-box');
-            const dt = document.getElementById('det-diff');
-            
-            db.className = `p-3 rounded-lg flex justify-between items-center font-bold mb-4 ${diff > 0 ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' : (diff < 0 ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400')}`;
-            dt.innerText = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
-
-            document.getElementById('admin-user-detail').classList.remove('hidden');
-
-            const ctx = document.getElementById('adminDetailChart');
-            if(ctx && d.recentLogs) {
-                const sales = d.recentLogs.filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff').reverse();
-                if(adminDetailChartInst) adminDetailChartInst.destroy();
-                adminDetailChartInst = new Chart(ctx, { 
-                    type: 'bar', 
-                    data: { 
-                        labels: sales.map(t => t.time), 
-                        datasets: [{ label: 'Sale ($)', data: sales.map(t => t.money), backgroundColor: '#8b5cf6', borderRadius: 4 }] 
-                    }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const t = sales[context.dataIndex];
-                                        return `Sale: $${t.money} (${t.qty} ${t.type.toUpperCase()})`;
-                                    }
-                                }
-                            }
-                        }, 
-                        scales: { y: { beginAtZero: true } } 
-                    } 
-                });
+            const diff = appData.expected - appData.collected;
+            const warn = document.getElementById('staff-shortage-warning');
+            if(diff > 0) {
+                warn.classList.remove('hidden');
+                document.getElementById('staff-shortage-amount').innerText = `$${diff.toFixed(2)}`;
+            } else {
+                warn.classList.add('hidden');
             }
+
+            const logList = document.getElementById('staff-log-list');
+            logList.innerHTML = '';
+            appData.transactions.slice(-15).reverse().forEach(t => {
+                let text = ''; let color = 'text-gray-500'; let icon = 'circle';
+                if(t.type === 'sale') { text = `Sold ${t.qty} ${t.unitType} for $${t.money}`; color = 'text-green-500'; icon = 'check-circle'; }
+                else if(t.type === 'personal') { text = `Used ${t.qty} ${t.unitType} (Owe $${t.owed})`; color = 'text-purple-500'; icon = 'user'; }
+                else if(t.type === 'expense') { text = `Expense: ${t.desc} ($${t.money})`; color = 'text-orange-500'; icon = 'fuel'; }
+                else if(t.type === 'dropoff') { text = `Dropped off $${t.money} to Boss`; color = 'text-blue-500'; icon = 'hand-coins'; }
+                
+                logList.innerHTML += `<div class="flex items-center border-b dark:border-gray-700 py-2"><i data-lucide="${icon}" class="w-4 h-4 mr-2 ${color}"></i> <span>${text}</span></div>`;
+            });
+            
+            const notesEl = document.getElementById('staff-notes-input');
+            if(notesEl && document.activeElement !== notesEl) notesEl.value = appData.notes || '';
+
+            const stats = calculateAnalytics(appData.transactions || []);
+            document.getElementById('staff-pieces-today').innerText = stats[0].pieces.toFixed(1);
+            document.getElementById('staff-pieces-week').innerText = stats[1].pieces.toFixed(1);
+            document.getElementById('staff-pieces-month').innerText = stats[2].pieces.toFixed(1);
+
+            if(typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats();
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
         };
 
-        window.adminAddBorrowing = async () => {
-            if(!currentDetailUid) return;
-            const amt = parseFloat(prompt("Enter Cash Advance / Borrowed Amount ($):\nThis adds to the debt they owe you."));
-            if(isNaN(amt) || amt <= 0) return;
-            const desc = prompt("Short description (e.g., Gas advance, Fronted cash):", "Cash Advance");
-            
-            try {
-                const snap = await getDoc(doc(db, 'artifacts', appId, 'users', currentDetailUid, 'data', 'app_state'));
-                if(snap.exists()) {
-                    let st = JSON.parse(snap.data().json);
-                    st.borrowings = (st.borrowings || 0) + amt;
-                    st.expected = (st.expected || 0) + amt;
-                    st.transactions.push({ 
-                        id: Date.now(), 
-                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                        qty: 0, 
-                        type: 'borrowing', 
-                        actualWeight: 0, 
-                        money: 0, 
-                        expected: amt, 
-                        desc: desc 
-                    });
-                    await setDoc(doc(db, 'artifacts', appId, 'users', currentDetailUid, 'data', 'app_state'), { json: JSON.stringify(st), lastUpdated: Date.now() });
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), { 
-                        borrowings: st.borrowings, expected: st.expected, recentLogs: st.transactions.slice(-10).reverse() 
-                    }, { merge: true });
-                    
-                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: increment(-amt) }, {merge:true});
-                    
-                    window.showToast(`Added $${amt} borrowing debt. Master Cash lowered.`);
-                    window.sendNotificationAlert(currentDetailUid, `Admin added $${amt} cash advance to your tab.`);
-                    document.getElementById('admin-user-detail').classList.add('hidden');
-                }
-            } catch(e) {}
+        window.renderStaffChart = () => {
+            const ctx = document.getElementById('staffChart');
+            const ctxA = document.getElementById('staffAnalyticsChart');
+            if(!ctx || !ctxA || !appData.transactions) return;
+
+            const labels = appData.transactions.slice(-10).map(t => new Date(t.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            const data = appData.transactions.slice(-10).map(t => t.money || 0);
+
+            if(staffChartInst) staffChartInst.destroy();
+            staffChartInst = new Chart(ctx, {
+                type: 'line', data: { labels, datasets: [{ label: '$ Collected', data, borderColor: '#3b82f6', tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const stats = calculateAnalytics(appData.transactions);
+            if(staffAnalyticsChartInst) staffAnalyticsChartInst.destroy();
+            staffAnalyticsChartInst = new Chart(ctxA, {
+                type: 'bar',
+                data: {
+                    labels: ['Today', '7 Days', '30 Days'],
+                    datasets: [
+                        { label: 'Revenue', data: [stats[0].revenue, stats[1].revenue, stats[2].revenue], backgroundColor: '#10b981', borderRadius:4 },
+                        { label: 'Expenses', data: [stats[0].expenses, stats[1].expenses, stats[2].expenses], backgroundColor: '#ef4444', borderRadius:4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         };
 
-        window.adminClearStaffData = async () => {
-            if(!currentDetailUid) return;
-            const u = globalRoster.find(x => x.id === currentDetailUid);
-            const diff = (u.expected || 0) - (u.collected || 0);
+        // ---------------------------------------------------------
+        // CONTACTS / ADDRESS BOOK
+        // ---------------------------------------------------------
+        window.saveContact = async () => {
+            const name = document.getElementById('new-contact-name').value;
+            const phone = document.getElementById('new-contact-phone').value;
+            const notes = document.getElementById('new-contact-notes').value;
+            if(!name) return window.showToast("Name is required.");
             
-            if(!confirm(`WARNING: Settling shift for ${u.name}.\n\nThis zeroes out their Expected, Collected, Expenses, Cash Dropped, and clears their log history.\n\nThey are currently short: $${diff > 0 ? diff : 0}.\n\nAre you sure you have collected their money and want to reset their tab?`)) return;
-            
-            try {
-                const snap = await getDoc(doc(db, 'artifacts', appId, 'users', currentDetailUid, 'data', 'app_state'));
-                if(snap.exists()) {
-                    let st = JSON.parse(snap.data().json);
-                    st.collected = 0; 
-                    st.expected = 0; 
-                    st.expenses = 0; 
-                    st.cashDropped = 0;
-                    st.soldWeight = 0;
-                    st.soldUnitsFull = 0;
-                    st.soldUnitsUsual = 0;
-                    
-                    const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-                    const totalDebt = (st.personalUseOwed || 0) + (st.borrowings || 0);
-                    const appliedToDebt = Math.min(grossComm, totalDebt);
-                    const netComm = grossComm - appliedToDebt;
-
-                    let remainingDebt = totalDebt - appliedToDebt;
-                    
-                    if (diff > 0) {
-                        if (confirm(`They are short $${diff.toFixed(2)}. Add this shortage to their remaining debt tab?`)) {
-                            remainingDebt += diff;
-                        }
-                    }
-
-                    st.personalUseOwed = remainingDebt;
-                    st.borrowings = 0;
-                    
-                    st.transactions = [];
-                    
-                    await setDoc(doc(db, 'artifacts', appId, 'users', currentDetailUid, 'data', 'app_state'), { json: JSON.stringify(st), lastUpdated: Date.now() });
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid), { 
-                        collected: 0, 
-                        expected: 0, 
-                        expenses: 0, 
-                        cashDropped: 0,
-                        soldWeight: 0, 
-                        soldUnitsFull: 0, 
-                        soldUnitsUsual: 0,
-                        personalUseOwed: remainingDebt,
-                        borrowings: 0,
-                        recentLogs: [] 
-                    }, { merge: true });
-                    
-                    window.showToast("Staff shift cleared & settled.");
-                    document.getElementById('admin-user-detail').classList.add('hidden');
-                    window.sendNotificationAlert(currentDetailUid, "Your shift has been cleared and settled by the Boss.");
-                }
-            } catch(e) {}
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'contacts'), {
+                name, phone, notes, addedBy: currentUser.uid, timestamp: Date.now()
+            });
+            document.getElementById('new-contact-name').value = '';
+            document.getElementById('new-contact-phone').value = '';
+            document.getElementById('new-contact-notes').value = '';
+            window.showToast("Contact Saved.");
         };
 
+        window.filterContacts = () => {
+            const search = document.getElementById('contact-search').value.toLowerCase();
+            const list = document.getElementById('contacts-list-container');
+            if(!list) return;
+            list.innerHTML = '';
+            
+            const filtered = globalContacts.filter(c => c.name.toLowerCase().includes(search) || (c.phone && c.phone.toLowerCase().includes(search)));
+            if(filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-4 text-xs text-gray-400">No contacts found.</div>';
+                return;
+            }
+            
+            filtered.forEach(c => {
+                list.innerHTML += `
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm dark:text-white">${c.name}</div>
+                            <div class="text-xs text-blue-500">${c.phone || ''}</div>
+                            <div class="text-[10px] text-gray-500 mt-1">${c.notes || ''}</div>
+                        </div>
+                        <a href="tel:${c.phone}" class="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition ${!c.phone ? 'hidden' : ''}">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </a>
+                    </div>`;
+            });
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        };
+
+        window.openContactsModal = () => {
+            document.getElementById('contacts-modal').classList.remove('hidden');
+            window.filterContacts();
+        };
+
+        // ---------------------------------------------------------
+        // TEAM CHAT
+        // ---------------------------------------------------------
+        window.openChatModal = () => {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('translate-y-full'), 10);
+            chatUnreadCount = 0;
+            const adminBadge = document.getElementById('admin-chat-badge');
+            const staffBadge = document.getElementById('staff-chat-badge');
+            if(adminBadge) adminBadge.classList.add('hidden');
+            if(staffBadge) staffBadge.classList.add('hidden');
+            window.renderChatMessages();
+        };
+
+        window.closeChatModal = () => {
+            const modal = document.getElementById('chat-modal');
+            modal.classList.add('translate-y-full');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.sendChatMessage = async () => {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat'), {
+                text, senderId: currentUser.uid, senderName: window.currentUserName, senderRole: userRole, timestamp: Date.now()
+            });
+            input.value = '';
+        };
+
+        window.renderChatMessages = () => {
+            const container = document.getElementById('chat-messages');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            chatMessages.slice().reverse().forEach(msg => {
+                const isMe = msg.senderId === currentUser.uid;
+                const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const roleBadge = msg.senderRole === 'admin' ? '<i data-lucide="shield-check" class="w-3 h-3 text-yellow-400 inline ml-1"></i>' : '';
+                
+                container.innerHTML += `
+                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-3">
+                        <div class="max-w-[75%]">
+                            <div class="text-[9px] text-gray-500 mb-0.5 ml-1 ${isMe ? 'text-right mr-1' : ''}">${isMe ? 'You' : msg.senderName}${roleBadge} • ${time}</div>
+                            <div class="p-3 rounded-2xl text-sm shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white dark:bg-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-sm'}">
+                                ${msg.text}
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            container.scrollTop = container.scrollHeight;
+            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+        };
+
+        // ADMIN FACTORY RESET
         window.adminFactoryReset = async () => {
-            if(!confirm("DANGER: This wipes ALL inventory, sales, money, expected, and collected data to ZERO for you and ALL staff. Accounts will remain. Type 'YES' to confirm.")) return;
-            const typed = prompt("Type 'YES' to confirm total wipe:");
-            if(typed !== "YES") return window.showToast("Reset Cancelled.");
-            
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { 
+            if(!confirm("WARNING: This will wipe ALL inventory, sales, cash balances, and liabilities to 0. User accounts will remain. Type 'RESET' to confirm.")) return;
+            const promptVal = prompt("Type 'RESET' to confirm factory wipe:");
+            if(promptVal !== 'RESET') {
+                window.showToast("Factory reset cancelled.");
+                return;
+            }
+            // Execute reset on master
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {
                 rawWeight: 0, unitsFull: 0, unitsUsual: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], financedClients: []
             }, {merge:true});
             
-            adminData = { ...adminData, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, cashDropped:0, borrowings:0, transactions:[] };
-            await saveAdminData();
-
-            for(const u of globalRoster) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', u.id), { 
-                    weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, 
-                    personalUseWeight:0, personalUseOwed:0, borrowings:0, cashDropped:0, collected:0, 
-                    expected:0, expenses:0, recentLogs:[] 
-                }, {merge:true});
-                
-                try {
-                    const snap = await getDoc(doc(db, 'artifacts', appId, 'users', u.id, 'data', 'app_state'));
-                    if(snap.exists()) {
-                        let st = JSON.parse(snap.data().json);
-                        st = { ...st, weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, soldUnitsFull:0, soldUnitsUsual:0, personalUseWeight:0, personalUseOwed:0, borrowings:0, cashDropped:0, collected:0, expected:0, expenses:0, transactions:[] };
-                        await setDoc(doc(db, 'artifacts', appId, 'users', u.id, 'data', 'app_state'), { json: JSON.stringify(st), lastUpdated: Date.now() });
-                    }
-                } catch(e){}
+            // Execute reset on all staff
+            for(let u of globalRoster) {
+                if(u.role !== 'admin') {
+                    await setDoc(doc(db,'artifacts',appId,'public','data','roster',u.id), {
+                        weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0,
+                        personalUseWeight: 0, personalUseOwed: 0, expected: 0, collected: 0, expenses: 0, borrowings: 0, cashDropped: 0, transactions: []
+                    }, {merge:true});
+                }
             }
-            
+            window.showToast("FACTORY RESET COMPLETE");
             document.getElementById('settings-modal').classList.add('hidden');
-            window.showToast("Factory Reset Complete.");
         };
 
-        window.renderAdminTerminalUI = () => { 
-            updateAdminTerminalChart(adminData.transactions); 
-        };
-
-        window.updateAdminTerminalChart = (transactions) => {
-            const ctx = document.getElementById('adminTerminalChart'); 
-            if(!ctx) return;
-            const sales = transactions.filter(t => t.type !== 'personal' && t.type !== 'expense').reverse(); 
-            const labels = sales.map(t => t.time); 
-            const data = sales.map(t => t.money);
-            
-            if(adminTerminalChartInst) adminTerminalChartInst.destroy();
-            adminTerminalChartInst = new Chart(ctx, { 
-                type: 'line', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ label: 'Admin Sale ($)', data: data, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true } } 
-                } 
-            });
-        };
-
-        window.adminProcessSale = async () => {
-            const source = document.getElementById('adm-sale-source').value;
-            const moneyInput = document.getElementById('adm-money-input');
-            const money = parseFloat(moneyInput.value);
-            if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
-
-            let actualWeightDeducted = 0;
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-
-            let masterUpdate = {};
-
-            if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if((masterData.rawWeight||0) < actualWeightDeducted) return window.showToast("Not enough master raw weight!");
-                masterUpdate.rawWeight = increment(-actualWeightDeducted);
-            } else if (source === 'processed' && admCurrentType === 'full') {
-                if((masterData.unitsFull||0) < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Vault!");
-                actualWeightDeducted = admCurrentQty * 1.0;
-                masterUpdate.unitsFull = increment(-admCurrentQty);
-            } else if (source === 'processed' && admCurrentType === 'usual') {
-                if((masterData.unitsUsual||0) < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Vault!");
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
-                masterUpdate.unitsUsual = increment(-admCurrentQty);
-            }
-
-            masterUpdate.cashBalance = increment(money);
-
-            const expectedMoney = admCurrentQty * unitPrice;
-
-            adminData.collected += money; 
-            adminData.expected += expectedMoney;
-            
-            if (source === 'raw') adminData.soldWeight += actualWeightDeducted;
-            else if (source === 'processed' && admCurrentType === 'full') adminData.soldUnitsFull += admCurrentQty;
-            else if (source === 'processed' && admCurrentType === 'usual') adminData.soldUnitsUsual += admCurrentQty;
-
-            adminData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                source: source, 
-                qty: admCurrentQty, 
-                type: admCurrentType, 
-                actualWeight: actualWeightDeducted, 
-                money: money, 
-                expected: expectedMoney 
-            });
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), masterUpdate, {merge:true});
-            await saveAdminData(); 
-            
-            moneyInput.value = '';
-            window.showToast("Admin Sale Logged!");
-        };
-
-        window.adminPersonalUseUnified = async () => {
-            const source = document.getElementById('adm-sale-source').value;
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            
-            if(!confirm(`Log Admin Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from MASTER ${source.toUpperCase()} inventory?\n\nThis will NOT deduct from cash, but will deduct inventory.`)) return;
-
-            let actualWeightDeducted = 0; 
-            let masterUpdate = {};
-
-            if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if((masterData.rawWeight||0) < actualWeightDeducted) return window.showToast("Not enough master raw weight!");
-                masterUpdate.rawWeight = increment(-actualWeightDeducted);
-            } else if (source === 'processed' && admCurrentType === 'full') {
-                if((masterData.unitsFull||0) < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Vault!");
-                actualWeightDeducted = admCurrentQty * 1.0;
-                masterUpdate.unitsFull = increment(-admCurrentQty);
-            } else if (source === 'processed' && admCurrentType === 'usual') {
-                if((masterData.unitsUsual||0) < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Vault!");
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
-                masterUpdate.unitsUsual = increment(-admCurrentQty);
-            }
-
-            adminData.personalUseWeight = (adminData.personalUseWeight || 0) + actualWeightDeducted;
-            
-            adminData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                source: source, 
-                qty: admCurrentQty, 
-                type: 'personal', 
-                actualWeight: actualWeightDeducted, 
-                money: 0, 
-                expected: 0 
-            });
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), masterUpdate, {merge:true});
-            await saveAdminData(); 
-            window.showToast(`Admin Personal Use logged.`);
-        };
-
-        async function saveAdminData() { 
-            if(!currentUser) return; 
-            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { 
-                json: JSON.stringify(adminData), 
-                lastUpdated: Date.now() 
-            }); 
-            try { 
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
-                    soldWeight: adminData.soldWeight, 
-                    soldUnitsFull: adminData.soldUnitsFull || 0, 
-                    soldUnitsUsual: adminData.soldUnitsUsual || 0, 
-                    collected: adminData.collected, 
-                    expected: adminData.expected, 
-                    recentLogs: adminData.transactions.slice(-10).reverse(), 
-                    lastSync: Date.now() 
-                }, { merge: true }); 
-            } catch(e){} 
-            renderAdminTerminalUI(); 
-        }
-
-        window.adminSetVariable = async (field, label) => { 
-            const v = prompt(`Set ${label}:`, masterData[field]); 
-            if(v && !isNaN(v)) {
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true}); 
-            }
-        };
-        
-        window.adminProcessUnits = async () => {
-            const type = document.getElementById('process-type').value; 
-            const qty = parseInt(document.getElementById('process-qty').value);
-            if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
-            
-            const totalW = qty * (type === 'full' ? 1.0 : masterData.usualRatio);
-            if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
-            
-            const updateData = { rawWeight: increment(-totalW) }; 
-            if (type === 'full') updateData.unitsFull = increment(qty); 
-            else updateData.unitsUsual = increment(qty);
-            
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
-            document.getElementById('process-qty').value = ''; 
-            window.showToast(`Processed ${qty} ${type} units.`);
-        };
-
-        // --- MISSING ADMIN TERMINAL & FINANCE FUNCTIONS RESTORED ---
-        window.adminUpdateCash = async () => {
-            const current = masterData.cashBalance || 0;
-            const amt = parseFloat(prompt(`Current Master Cash: $${current}\n\nEnter amount to add/subtract (use negative number to subtract):`, "0"));
-            if(isNaN(amt)) return; 
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { cashBalance: current + amt }, {merge:true});
-        };
-
-        window.adminPurchaseStock = async (weight, cost) => {
-            if (weight === 'custom') {
-                weight = parseFloat(prompt("Enter custom weight amount (units):")); 
-                if (isNaN(weight) || weight <= 0) return;
-                cost = parseFloat(prompt("Enter total cost of purchase ($):")); 
-                if (isNaN(cost) || cost < 0) return;
-            }
-            if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
-            
-            adminData.transactions.push({ 
-                id: Date.now(), 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-                qty: weight, 
-                type: 'expense', 
-                actualWeight: 0, 
-                money: -cost, 
-                expected: 0, 
-                desc: `Restock ${weight} units`
-            });
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{ 
-                rawWeight: increment(weight), 
-                totalExpenses: increment(cost), 
-                cashBalance: increment(-cost) 
-            }, {merge:true});
-            
-            await saveAdminData(); 
-            window.showToast(`Restocked ${weight} units for $${cost}.`);
-        };
-
-        window.admUpdateMasterLabels = () => {
-            const labelFull = document.getElementById('adm-label-full-weight'); 
-            const labelUsual = document.getElementById('adm-label-usual-weight'); 
-            const expHint = document.getElementById('adm-expected-money-hint');
-            
-            if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`; 
-            if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * (masterData.usualRatio || 0.8)).toFixed(1)} units)`;
-            
-            const unitPrice = admCurrentType === 'full' ? (masterData.pricePerUnit || 100) : ((masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8)); 
-            if(expHint) expHint.innerText = `Expected: $${(admCurrentQty * unitPrice).toFixed(2)}`;
-        };
-
-        window.admSelectQty = (q) => { 
-            admCurrentQty = q; 
-            document.querySelectorAll('.adm-qty-btn').forEach(b => b.classList.remove('active')); 
-            const btn = document.getElementById(`adm-btn-qty-${q}`);
-            if(btn) btn.classList.add('active'); 
-            window.admUpdateMasterLabels(); 
-            window.admCheckPriceColor(); 
-        };
-        
-        window.admSelectType = (t) => { 
-            admCurrentType = t; 
-            document.querySelectorAll('.adm-type-btn').forEach(b => b.classList.remove('active')); 
-            const btn = document.getElementById(`adm-btn-type-${t}`);
-            if(btn) btn.classList.add('active'); 
-            window.admUpdateMasterLabels(); 
-            window.admCheckPriceColor(); 
-        };
-
-        window.admCheckPriceColor = () => {
-            const input = document.getElementById('adm-money-input'); 
-            if(!input) return;
-            const val = parseFloat(input.value) || 0; 
-            const perUnit = val / admCurrentQty;
-            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
-            
-            if (val === 0) { 
-                input.classList.add('dark:text-white', 'text-gray-800'); 
-                return; 
-            }
-            if (admCurrentType === 'usual') {
-                const usualPrice = (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
-                if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500'); 
-                else if (perUnit < (masterData.pricePerUnit || 100)) input.classList.add('text-orange-500', 'dark:text-orange-500'); 
-                else input.classList.add('text-green-500', 'dark:text-green-500');
-            } else { 
-                if (perUnit < (masterData.pricePerUnit || 100)) input.classList.add('text-red-500', 'dark:text-red-500'); 
-                else input.classList.add('text-green-500', 'dark:text-green-500');
-            }
-        };
-
-        window.admSetQuickPrice = (pricePerUnit) => { 
-            const input = document.getElementById('adm-money-input');
-            if(input) {
-                input.value = pricePerUnit * admCurrentQty; 
-                window.admCheckPriceColor(); 
-            }
-        };
     </script>
 </body>
 </html>
