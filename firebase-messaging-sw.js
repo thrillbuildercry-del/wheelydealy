@@ -1,8 +1,6 @@
-// firebase-messaging-sw.js
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
 
-// Initialize the Firebase app in the service worker
 firebase.initializeApp({
   apiKey: "AIzaSyDz4iG5KZy3JAxBhubaGEaMKTY7jcObRDE",
   authDomain: "deals-bcfea.firebaseapp.com",
@@ -14,15 +12,14 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// This handles the notification if the app is entirely closed/in the background
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
+messaging.onBackgroundMessage(function(payload) {
+  console.log("Background message received:", payload);
+
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icon.png', // Add a 192x192 icon to your github repo!
-    badge: '/icon.png'
+    icon: "/icon.png",
+    badge: "/icon.png"
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
