@@ -55,12 +55,10 @@
         }
         .hidden { display: none !important; }
         
-        /* Custom Selectable Buttons */
         .btn-select { transition: all 0.2s; border: 2px solid transparent; }
         .btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .btn-interactive:active { transform: scale(0.95); }
         
-        /* --- NEW STYLES FOR UPGRADED UI --- */
         .tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { 
@@ -68,7 +66,6 @@
             to { opacity: 1; transform: translateY(0); } 
         }
 
-        /* Ticker Animation for Announcements */
         .ticker-wrapper { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
         .ticker-content { display: inline-block; padding-left: 100%; animation: ticker 15s linear infinite; }
         @keyframes ticker { 
@@ -133,7 +130,6 @@
                 </button>
             </div>
 
-            <!-- Admin Factory Reset Area -->
             <div id="admin-settings-section" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800 hidden">
                 <h3 class="text-xs font-bold text-red-600 dark:text-red-400 uppercase mb-2 flex items-center">
                     <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Admin Danger Zone
@@ -147,17 +143,14 @@
                     <span class="font-medium dark:text-white">Change Display Name</span>
                     <i data-lucide="edit-3" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-                
                 <button onclick="window.enableNotifications()" class="w-full flex justify-between items-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl btn-interactive mb-3 border border-indigo-100 dark:border-indigo-800">
                     <span class="font-medium text-indigo-700 dark:text-indigo-400">Enable Notifications</span>
                     <i data-lucide="bell-ring" class="w-5 h-5 text-indigo-500"></i>
                 </button>
-
                 <button onclick="window.testNotification()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive mb-3">
                     <span class="font-medium dark:text-white">Test Notification System</span>
                     <i data-lucide="flask-conical" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
-
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive">
                     <span class="font-medium dark:text-white">Toggle Dark Mode</span>
                     <i data-lucide="moon" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
@@ -1273,7 +1266,7 @@
                 Clear Shift / Settle Balances
             </button>
             <p class="text-center text-[10px] text-gray-500 mt-2">Use this after collecting money. Resets expected and collected, effectively finalizing the settlement.</p>
-            
+
             <button onclick="window.adminRemoveCurrentStaff()" class="w-full mt-4 bg-red-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-red-700 transition btn-interactive flex justify-center items-center">
                 <i data-lucide="user-x" class="w-4 h-4 mr-2"></i> Terminate / Remove Staff Member
             </button>
@@ -1333,6 +1326,11 @@
         let currentUser = null; 
         let userRole = 'staff'; 
         
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
+        let globalContacts = [];
+        let chatMessages = [];
+        let chatUnreadCount = 0;
+
         // Staff State
         let appData = { 
             weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
@@ -1362,14 +1360,10 @@
         // Chart Instances
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubContacts, unsubChat;
-        let globalContacts = [];
-        let chatMessages = [];
-        let chatUnreadCount = 0;
-
         Chart.defaults.color = '#9ca3af'; 
         Chart.defaults.borderColor = '#374151';
 
+        // iOS compatible notification sound
         const playPingSound = () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1387,8 +1381,7 @@
             } catch(e) {}
         };
 
-        // --- CORE UI EXPORTS (BINDING TO WINDOW FOR ES MODULE SCOPE) ---
-
+        // --- NEW UPGRADED LOGIC FUNCTIONS ---
         window.animateValue = (id, start, end, duration, prefix = '', isCurrency = false) => {
             if (start === end) return;
             const obj = document.getElementById(id);
@@ -1415,308 +1408,17 @@
             window.requestAnimationFrame(step);
         };
 
-        window.updateFinanceUI = () => {
-            if (!document.getElementById('admin-view-finance')) return;
-            
-            let staffFull = 0, staffUsual = 0, teamCollected = 0;
-            globalRoster.forEach(u => { 
-                if (u.role !== 'admin') { 
-                    staffFull += (u.unitsFull || 0); 
-                    staffUsual += (u.unitsUsual || 0); 
-                } 
-                teamCollected += (u.collected || 0); 
-            });
-            
-            const totalFull = (masterData.unitsFull || 0) + staffFull; 
-            const totalUsual = (masterData.unitsUsual || 0) + staffUsual;
-            
-            document.getElementById('proj-full-count').innerText = totalFull; 
-            document.getElementById('proj-usual-count').innerText = totalUsual;
-            
-            const priceFull = masterData.pricePerUnit || 100; 
-            const priceUsual = (masterData.pricePerUnit || 100) * (masterData.usualRatio || 0.8);
-            const totalProjStd = (totalFull * priceFull) + (totalUsual * priceUsual); 
-            const totalWhatIf = (totalFull * priceFull) + (totalUsual * priceFull); 
-            
-            const stdEl = document.getElementById('proj-std-total');
-            const oldStdStr = stdEl ? stdEl.innerText.replace(/[$,]/g, '') : '0';
-            const whatIfEl = document.getElementById('proj-whatif-total');
-            const oldWhatIfStr = whatIfEl ? whatIfEl.innerText.replace(/[$,]/g, '') : '0';
-            
-            window.animateValue('proj-std-total', parseFloat(oldStdStr)||0, totalProjStd, 600, '$', true);
-            window.animateValue('proj-whatif-total', parseFloat(oldWhatIfStr)||0, totalWhatIf, 600, '$', true);
-            
-            const liabList = document.getElementById('finance-liabilities-list'); 
-            if (liabList) {
-                liabList.innerHTML = ''; 
-                let unpaidTotal = 0;
-                
-                if (masterData.liabilities && masterData.liabilities.length > 0) {
-                    masterData.liabilities.forEach(l => {
-                        if(!l.isPaid) unpaidTotal += l.amount;
-                        const recurringBadge = l.isRecurring ? `<span class="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide">Recurring</span>` : '';
-                        const dateDisplay = l.dueDate ? `<div class="text-[10px] text-gray-500 mt-1">Due: ${new Date(l.dueDate).toLocaleDateString()}</div>` : '';
-                        liabList.innerHTML += `
-                            <div class="flex justify-between items-center p-3 rounded-lg border ${l.isPaid ? 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60' : 'bg-white border-purple-200 dark:bg-gray-700 dark:border-purple-800'} shadow-sm">
-                                <div class="flex items-start">
-                                    <input type="checkbox" ${l.isPaid ? 'checked' : ''} onchange="window.adminToggleLiability(${l.id})" class="w-4 h-4 mr-3 mt-1 accent-purple-600 cursor-pointer">
-                                    <div>
-                                        <span class="font-bold ${l.isPaid ? 'line-through text-gray-400' : 'dark:text-white'} text-sm">${l.name} ${recurringBadge}</span>
-                                        ${dateDisplay}
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-black ${l.isPaid ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} mr-3">$${l.amount.toFixed(2)}</span>
-                                    <button onclick="window.adminRemoveLiability(${l.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>
-                            </div>`;
-                    });
-                } else { 
-                    liabList.innerHTML = '<div class="text-center py-4 text-xs text-gray-400 italic">No priorities added yet.</div>'; 
-                }
-                
-                document.getElementById('finance-unpaid-total').innerText = `-$${unpaidTotal.toFixed(2)}`;
-                const netAfterBills = (masterData.cashBalance || 0) - unpaidTotal;
-                
-                const netEl = document.getElementById('finance-net-after-bills');
-                if (netEl) {
-                    const oldNetStr = netEl.innerText.replace(/[$,]/g, '');
-                    window.animateValue('finance-net-after-bills', parseFloat(oldNetStr)||0, netAfterBills, 500, '$', true);
-                    
-                    if(netAfterBills < 0) {
-                        netEl.classList.remove('text-green-600');
-                        netEl.classList.add('text-red-500'); 
-                    } else {
-                        netEl.classList.remove('text-red-500');
-                        netEl.classList.add('text-green-600');
-                    }
-                }
-            }
-            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
-        };
-
-        window.updateMasterLabels = () => {
-            const labelFull = document.getElementById('label-full-weight'); 
-            const labelUsual = document.getElementById('label-usual-weight'); 
-            const expHint = document.getElementById('expected-money-hint');
-            
-            if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`; 
-            if(labelUsual) labelUsual.innerText = `(${(currentQty * (masterData.usualRatio||0.8)).toFixed(1)} units)`;
-            
-            const unitPrice = currentType === 'full' ? (masterData.pricePerUnit||100) : ((masterData.pricePerUnit||100) * (masterData.usualRatio||0.8));
-            if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
-
-            const btnUsual = document.getElementById('btn-quick-usual'); 
-            const btnFull = document.getElementById('btn-quick-full');
-            if(btnUsual) btnUsual.innerText = `$${(masterData.pricePerUnit||100) * (masterData.usualRatio||0.8)} (Usual)`; 
-            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit||100} (Full)`;
-
-            const pDisp = document.getElementById('admin-price-display'); 
-            const rDisp = document.getElementById('admin-ratio-display'); 
-            const admDiscDisp = document.getElementById('admin-boss-discount-display'); 
-            const staffDiscDisp = document.getElementById('admin-staff-discount-display'); 
-            const commDisp = document.getElementById('admin-commission-display'); 
-            const expDisp = document.getElementById('admin-total-expenses'); 
-            const uFull = document.getElementById('admin-stock-full'); 
-            const uUsual = document.getElementById('admin-stock-usual');
-            
-            const rawW = masterData.rawWeight || 0; 
-            const price = masterData.pricePerUnit || 0; 
-            const ratio = masterData.usualRatio || 1; 
-            const expenses = masterData.totalExpenses || 0;
-            
-            if(pDisp) pDisp.innerText = `$${price}`; 
-            if(rDisp) rDisp.innerText = `${ratio}x`; 
-            if(admDiscDisp) admDiscDisp.innerText = `${masterData.adminDiscount}% Off`; 
-            if(staffDiscDisp) staffDiscDisp.innerText = `${masterData.staffDiscount}% Off`; 
-            if(commDisp) commDisp.innerText = `${masterData.staffCommission}%`; 
-            if(expDisp) expDisp.innerText = `-$${expenses}`;
-            if(uFull) uFull.innerText = masterData.unitsFull || 0; 
-            if(uUsual) uUsual.innerText = masterData.unitsUsual || 0;
-
-            const masterEqWeight = document.getElementById('admin-master-eq-weight');
-            if (masterEqWeight) { 
-                const totalEq = rawW + ((masterData.unitsFull || 0) * 1.0) + ((masterData.unitsUsual || 0) * ratio); 
-                masterEqWeight.innerText = `${totalEq.toFixed(1)} u`; 
-            }
-
-            const previewFull = document.getElementById('preview-max-full');
-            const previewUsual = document.getElementById('preview-max-usual');
-            if (previewFull && previewUsual) {
-                const maxFull = Math.floor(rawW / 1.0);
-                const maxUsual = Math.floor(rawW / (ratio > 0 ? ratio : 1));
-                previewFull.innerText = `${maxFull} Full`;
-                previewUsual.innerText = `${maxUsual} Usual`;
-            }
-        };
-
-        window.processAdminRosterUI = () => {
-            const list = document.getElementById('admin-staff-list'); 
-            const select = document.getElementById('transfer-staff-select'); 
-            const pendingList = document.getElementById('admin-pending-users'); 
-            const staffTab = document.getElementById('adm-tab-staff');
-            
-            if(!list || !select) return;
-            list.innerHTML=''; 
-            select.innerHTML='<option value="">Select Staff...</option>'; 
-            if(pendingList) pendingList.innerHTML='';
-            
-            let totExp = 0, totCol = 0, activeCount = 0, pendCount = 0; 
-            let globalRaw = 0, globalFull = 0, globalUsual = 0;
-
-            globalRoster.forEach(u => {
-                if(u.status === 'pending') {
-                    if (u.role !== 'admin' && pendingList) {
-                        pendCount++;
-                        pendingList.innerHTML += `
-                            <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-100 dark:border-orange-800">
-                                <span class="font-bold text-orange-800 dark:text-orange-300">${u.name}</span>
-                                <div>
-                                    <button onclick="window.adminSetStatus('${u.id}', 'active')" class="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold mr-1 hover:bg-green-600 btn-interactive">Approve</button>
-                                    <button onclick="window.adminDelUser('${u.id}')" class="text-red-500 text-xs px-2 hover:underline">Deny</button>
-                                </div>
-                            </div>`;
-                    }
-                } else {
-                    activeCount++; 
-                    totExp += (u.expected || 0); 
-                    totCol += (u.collected || 0);
-                    if (u.role !== 'admin') { 
-                        globalRaw += (u.weight || 0); 
-                        globalFull += (u.unitsFull || 0); 
-                        globalUsual += (u.unitsUsual || 0); 
-                    }
-                    
-                    const diff = (u.expected || 0) - (u.collected || 0);
-                    const diffColor = diff > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50' : (diff < 0 ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-500 bg-gray-50 dark:bg-gray-800');
-                    const diffSign = diff > 0 ? `-$${diff.toFixed(2)}` : (diff < 0 ? `+$${Math.abs(diff).toFixed(2)}` : '$0');
-
-                    const grossComm = (u.collected || 0) * ((masterData.staffCommission || 0) / 100);
-                    const totalDebt = (u.personalUseOwed || 0) + (u.borrowings || 0);
-                    const appliedToDebt = Math.min(grossComm, totalDebt);
-                    const netComm = grossComm - appliedToDebt;
-                    const badge = u.role === 'admin' ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>' : '';
-
-                    list.innerHTML += `
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-blue-400 transition" onclick="window.viewDriverDetails('${u.id}')">
-                            <div class="flex justify-between items-center mb-2">
-                                <div class="font-bold dark:text-white flex items-center">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs mr-2 border border-blue-200">${u.name[0]}</div>
-                                    ${u.name} ${badge}
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-xs text-gray-500">${u.role === 'admin' ? 'Total Sold' : 'Holding'}</div>
-                                    <div class="font-black dark:text-white">${u.role === 'admin' ? (u.soldWeight||0).toFixed(1) : (u.weight||0).toFixed(1)} u</div>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-end border-t dark:border-gray-700 pt-2">
-                                <div class="text-xs text-gray-500">
-                                    Exp: <span class="font-bold text-gray-800 dark:text-gray-300">$${(u.expected||0).toFixed(2)}</span><br>
-                                    Col: <span class="font-bold text-green-600">$${(u.collected||0).toFixed(2)}</span>
-                                </div>
-                                <div class="text-xs text-center mx-2">
-                                    <span class="block text-[9px] text-gray-400 uppercase font-bold tracking-widest">Net Comm</span>
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">$${netComm.toFixed(2)}</span>
-                                </div>
-                                <div class="text-xs font-bold px-2 py-1 rounded ${diffColor}">
-                                    Diff: ${diffSign}
-                                </div>
-                            </div>
-                        </div>`;
-                    
-                    if (u.role !== 'admin') { 
-                        const opt = document.createElement('option'); 
-                        opt.value=u.id; 
-                        opt.innerText=`${u.name} (${(u.weight||0).toFixed(1)} u)`; 
-                        select.appendChild(opt); 
-                    }
-                }
-            });
-            
-            const activeCountEl = document.getElementById('admin-active-count');
-            if(activeCountEl) activeCountEl.innerText = `${activeCount} Active`; 
-            
-            const totExpEl = document.getElementById('admin-total-expected');
-            if(totExpEl) totExpEl.innerText = `$${totExp.toFixed(2)}`; 
-            
-            const totColEl = document.getElementById('admin-total-collected');
-            if(totColEl) totColEl.innerText = `$${totCol.toFixed(2)}`;
-            
-            const glRawEl = document.getElementById('global-stock-raw');
-            if(glRawEl) glRawEl.innerText = ((masterData.rawWeight || 0) + globalRaw).toFixed(1); 
-            
-            const glFullEl = document.getElementById('global-stock-full');
-            if(glFullEl) glFullEl.innerText = ((masterData.unitsFull || 0) + globalFull); 
-            
-            const glUsualEl = document.getElementById('global-stock-usual');
-            if(glUsualEl) glUsualEl.innerText = ((masterData.unitsUsual || 0) + globalUsual);
-            
-            const globalEqEl = document.getElementById('admin-master-eq-weight');
-            if (globalEqEl) { 
-                const globalEq = ((masterData.rawWeight || 0) + globalRaw) + (((masterData.unitsFull || 0) + globalFull) * 1.0) + (((masterData.unitsUsual || 0) + globalUsual) * (masterData.usualRatio||0.8)); 
-                globalEqEl.innerText = `${globalEq.toFixed(1)} u`; 
-            }
-
-            if(typeof window.updateAdminOverallChart === 'function') window.updateAdminOverallChart(globalRoster); 
-            window.updateFinanceUI(); 
-            
-            if(staffTab) {
-                if(pendCount === 0) { 
-                    if(pendingList) pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>'; 
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>`; 
-                } else { 
-                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`; 
-                }
-            }
-            if(typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
-        };
-
-        window.updateAdminOverallChart = (roster) => {
-            const ctx = document.getElementById('adminOverallChart'); 
-            if(!ctx) return;
-            const activeStaff = roster.filter(u => u.status === 'active' || u.role === 'admin'); 
-            const labels = activeStaff.map(u => u.role === 'admin' ? `${u.name} (Admin)` : u.name); 
-            const data = activeStaff.map(u => u.collected || 0);
-            
-            if(adminOverallChartInst) adminOverallChartInst.destroy();
-            adminOverallChartInst = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ label: 'Collected ($)', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true } } 
-                } 
-            });
-        };
-
         window.switchStaffTab = (tab) => {
             ['terminal','stats','tools'].forEach(x => {
-                const view = document.getElementById(`staff-view-${x}`);
-                const tabBtn = document.getElementById(`stf-tab-${x}`);
-                if(view) {
-                    view.classList.remove('active');
-                    view.classList.add('hidden');
-                }
-                if(tabBtn) {
-                    tabBtn.classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
-                    tabBtn.classList.add('text-blue-100', 'dark:text-gray-400');
-                }
+                document.getElementById(`staff-view-${x}`).classList.remove('active');
+                document.getElementById(`staff-view-${x}`).classList.add('hidden');
+                document.getElementById(`stf-tab-${x}`).classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
+                document.getElementById(`stf-tab-${x}`).classList.add('text-blue-100', 'dark:text-gray-400');
             });
-            const selectedView = document.getElementById(`staff-view-${tab}`);
-            const selectedTabBtn = document.getElementById(`stf-tab-${tab}`);
-            if(selectedView) {
-                selectedView.classList.remove('hidden');
-                selectedView.classList.add('active');
-            }
-            if(selectedTabBtn) {
-                selectedTabBtn.classList.remove('text-blue-100', 'dark:text-gray-400');
-                selectedTabBtn.classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
-            }
+            document.getElementById(`staff-view-${tab}`).classList.remove('hidden');
+            document.getElementById(`staff-view-${tab}`).classList.add('active');
+            document.getElementById(`stf-tab-${tab}`).classList.remove('text-blue-100', 'dark:text-gray-400');
+            document.getElementById(`stf-tab-${tab}`).classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
         };
 
         window.updateStaffGlobalStats = () => {
@@ -1781,12 +1483,16 @@
         
         window.enableNotifications = async () => {
             if (!messaging) return window.showToast("Push requires adding to Home Screen first!");
+            if (!('serviceWorker' in navigator)) return window.showToast("Service workers are not supported on this browser.");
+            
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     const repoPath = './firebase-messaging-sw.js'; 
                     const registration = await navigator.serviceWorker.register(repoPath);
+                    
                     await navigator.serviceWorker.ready;
+                    
                     const currentToken = await getToken(messaging, { 
                         vapidKey: 'BOD-A9uAxZY3Ps_ZCQ3lgr9QiUATBUsz-ob1qArnLbZf6mMhfEb4AuVPMh5CYwFsgdw-ifpnlpp6MuPMhlzySRU', 
                         serviceWorkerRegistration: registration 
@@ -1799,10 +1505,10 @@
                             }, { merge: true });
                         }
                         window.showToast("Push Notifications Enabled!");
-                        const sBanner = document.getElementById('push-setup-banner');
-                        if(sBanner) sBanner.classList.add('hidden'); 
-                        const aBanner = document.getElementById('admin-push-setup-banner');
-                        if(aBanner) aBanner.classList.add('hidden');
+                        const pushBanner = document.getElementById('push-setup-banner');
+                        const adminPushBanner = document.getElementById('admin-push-setup-banner');
+                        if (pushBanner) pushBanner.classList.add('hidden'); 
+                        if (adminPushBanner) adminPushBanner.classList.add('hidden');
                     }
                 } else { 
                     window.showToast("Notification permission denied."); 
@@ -1826,21 +1532,6 @@
                 window.showToast("Please Enable Notifications first!");
                 document.getElementById('settings-modal').classList.add('hidden');
                 window.enableNotifications();
-            }
-        };
-
-        window.adminRemoveCurrentStaff = async () => {
-            if (!currentDetailUid) return;
-            const staffName = document.getElementById('detail-user-name').innerText;
-            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
-            
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
-                window.showToast(`${staffName} has been removed from the team.`);
-                document.getElementById('admin-user-detail').classList.add('hidden');
-                currentDetailUid = null;
-            } catch (err) {
-                window.showToast("Error removing staff: " + err.message);
             }
         };
 
@@ -1922,6 +1613,22 @@
                 }
             }
         };
+
+        window.adminRemoveCurrentStaff = async () => {
+            if (!currentDetailUid) return;
+            const staffName = document.getElementById('detail-user-name').innerText;
+            if (!confirm(`DANGER: Are you absolutely sure you want to permanently remove ${staffName} from the team? They will immediately lose access.`)) return;
+            
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentDetailUid));
+                window.showToast(`${staffName} has been removed from the team.`);
+                document.getElementById('admin-user-detail').classList.add('hidden');
+                currentDetailUid = null;
+            } catch (err) {
+                window.showToast("Error removing staff: " + err.message);
+            }
+        };
+
 
         // ---------------------------------------------------------
         // AUTH LOGIC
