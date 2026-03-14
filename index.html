@@ -1493,10 +1493,11 @@
                     
                     await navigator.serviceWorker.ready;
                     
-                    const currentToken = await getToken(messaging, { 
-                        vapidKey: 'lwYP5NLCoBtPswOp1MThwffW5aFI-ylqJKwHKzGkpKA', 
-                        serviceWorkerRegistration: registration 
-                    });
+                    const currentToken = await getToken(messaging, {
+						vapidKey: 'BGXHvTieu13FAj7cONvGtt5vB-PIBjyzJoZmSrSXT23Rk8t4DZaPJR7AYGBJVfSrisEEJN44B7DFyTPSTEr1tKs',
+						serviceWorkerRegistration: registration
+							});
+		
                     if (currentToken) {
                         if (currentUser) {
                             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'pushToken'), { 
