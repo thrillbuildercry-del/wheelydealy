@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getMessaging } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
+// FIREBASE CONFIGURATION
 const firebaseConfig = { 
     apiKey: "AIzaSyDz4iG5KZy3JAxBhubaGEaMKTY7jcObRDE", 
     authDomain: "deals-bcfea.firebaseapp.com", 
@@ -17,4 +18,12 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); 
 export const db = getFirestore(app); 
 export const googleProvider = new GoogleAuthProvider();
-export const messaging = getMessaging(app);
+
+let messagingInstance = null;
+try { 
+    messagingInstance = getMessaging(app); 
+} catch (e) { 
+    console.warn("Push messaging not fully supported in this environment."); 
+}
+
+export const messaging = messagingInstance;
