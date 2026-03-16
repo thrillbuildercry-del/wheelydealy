@@ -1,0 +1,64 @@
+body { 
+    -webkit-tap-highlight-color: transparent; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+#toast { 
+    visibility: hidden; 
+    min-width: 250px; 
+    background-color: #333; 
+    color: #fff; 
+    text-align: center; 
+    border-radius: 8px; 
+    padding: 12px; 
+    position: fixed; 
+    z-index: 200; 
+    left: 50%; 
+    bottom: 80px; 
+    transform: translateX(-50%); 
+    opacity: 0; 
+    transition: opacity 0.3s, bottom 0.3s; 
+}
+#toast.show { 
+    visibility: visible; 
+    opacity: 1; 
+    bottom: 90px; 
+}
+.modal-overlay { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.8); 
+    z-index: 100; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    backdrop-filter: blur(5px); 
+}
+.hidden { display: none !important; }
+
+.btn-select { transition: all 0.2s; border: 2px solid transparent; }
+.btn-select.active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.btn-interactive:active { transform: scale(0.95); }
+
+.tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(5px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+.ticker-wrapper { overflow: hidden; white-space: nowrap; box-sizing: border-box; }
+.ticker-content { display: inline-block; padding-left: 100%; animation: ticker 15s linear infinite; }
+@keyframes ticker { 
+    0% { transform: translate3d(0, 0, 0); } 
+    100% { transform: translate3d(-100%, 0, 0); } 
+}
+
+.online-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.online-dot.active { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+.online-dot.offline { background-color: #9ca3af; }
