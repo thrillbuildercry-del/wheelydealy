@@ -21,10 +21,22 @@
         :root {
             color-scheme: dark;
             --safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+            --neo-bg-1: #090b1e;
+            --neo-bg-2: #141a3a;
+            --neo-card: rgba(18, 25, 59, 0.72);
+            --neo-card-2: rgba(11, 17, 43, 0.8);
+            --neo-border: rgba(111, 137, 255, 0.28);
+            --neo-accent: #6f7dff;
+            --neo-cyan: #1dd3ff;
+            --neo-purple: #8b5cf6;
         }
         body { 
             -webkit-tap-highlight-color: transparent; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background:
+                radial-gradient(circle at top left, rgba(111, 125, 255, 0.28), transparent 28%),
+                radial-gradient(circle at top right, rgba(29, 211, 255, 0.22), transparent 24%),
+                linear-gradient(180deg, var(--neo-bg-1), var(--neo-bg-2));
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -87,6 +99,40 @@
         }
         .admin-tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
         .admin-tab-content.active { display: block; }
+        .neo-panel {
+            background: linear-gradient(180deg, rgba(21, 28, 67, 0.88), rgba(10, 15, 37, 0.92));
+            border: 1px solid var(--neo-border);
+            box-shadow: 0 18px 50px rgba(3, 8, 24, 0.38), inset 0 1px 0 rgba(255,255,255,0.05);
+            backdrop-filter: blur(18px);
+        }
+        .neo-chip {
+            background: rgba(111, 125, 255, 0.14);
+            border: 1px solid rgba(111, 125, 255, 0.28);
+            color: #dbe4ff;
+        }
+        .neo-outline {
+            border: 1px solid rgba(111, 125, 255, 0.22);
+            background: rgba(13, 18, 41, 0.72);
+        }
+        .neo-accent {
+            background: linear-gradient(135deg, rgba(111, 125, 255, 0.92), rgba(29, 211, 255, 0.86));
+            color: white;
+            box-shadow: 0 10px 24px rgba(54, 92, 255, 0.32);
+        }
+        .neo-grid {
+            position: relative;
+        }
+        .neo-grid::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.26), transparent 78%);
+        }
         .pulse-short {
             animation: pulseShort 0.9s ease-in-out infinite;
         }
@@ -105,8 +151,9 @@
             z-index: 60;
             padding: 0.75rem 1rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
             backdrop-filter: blur(18px);
-            background: rgba(17, 24, 39, 0.92);
-            border-top: 1px solid rgba(75, 85, 99, 0.6);
+            background: rgba(6, 10, 27, 0.92);
+            border-top: 1px solid rgba(111, 125, 255, 0.18);
+            box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
         }
         .bottom-nav-grid {
             display: grid;
@@ -127,9 +174,9 @@
             transition: all 0.2s ease;
         }
         .bottom-nav-btn.is-active {
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(14, 165, 233, 0.16));
+            background: linear-gradient(135deg, rgba(111, 125, 255, 0.32), rgba(29, 211, 255, 0.18));
             color: white;
-            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.25);
+            box-shadow: inset 0 0 0 1px rgba(111, 125, 255, 0.28), 0 8px 20px rgba(39, 58, 139, 0.28);
         }
         .swipe-item {
             position: relative;
@@ -170,7 +217,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-6">
+<body class="neo-grid bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-6">
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="modal-overlay z-[150]">
@@ -402,7 +449,7 @@
 
     <!-- STAFF UI -->
     <div id="staff-app" class="hidden min-h-screen mobile-shell">
-        <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md">
+        <header class="neo-panel text-white p-4 sticky top-0 z-40 shadow-md rounded-b-[28px] mx-2 mt-2">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-lg font-bold">Staff Portal</h1>
@@ -704,7 +751,7 @@
 
         </main>
         <nav class="bottom-nav">
-            <div class="bottom-nav-grid cols-3 max-w-md mx-auto">
+            <div class="bottom-nav-grid cols-4 max-w-md mx-auto">
                 <button onclick="window.switchStaffTab('stats')" id="stf-tab-stats" class="bottom-nav-btn btn-interactive">
                     <i data-lucide="house" class="w-5 h-5"></i>
                     <span class="text-[11px] font-bold">Home</span>
@@ -712,6 +759,10 @@
                 <button onclick="window.switchStaffTab('terminal')" id="stf-tab-terminal" class="bottom-nav-btn btn-interactive is-active">
                     <i data-lucide="terminal-square" class="w-5 h-5"></i>
                     <span class="text-[11px] font-bold">Terminal</span>
+                </button>
+                <button onclick="window.openStaffChat()" id="stf-tab-chat" class="bottom-nav-btn btn-interactive">
+                    <i data-lucide="messages-square" class="w-5 h-5"></i>
+                    <span class="text-[11px] font-bold">Chat</span>
                 </button>
                 <button onclick="window.switchStaffTab('tools')" id="stf-tab-tools" class="bottom-nav-btn btn-interactive">
                     <i data-lucide="briefcase" class="w-5 h-5"></i>
@@ -723,7 +774,7 @@
 
     <!-- ADMIN UI -->
     <div id="admin-app" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-        <header class="bg-gray-900 text-white p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
+        <header class="neo-panel text-white p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center rounded-b-[28px] mx-2 mt-2">
             <div>
                 <h1 class="text-xl font-bold tracking-tight">BOSS DASHBOARD</h1>
                 <p class="text-xs text-gray-400">Weight & Revenue Manager</p>
@@ -1226,7 +1277,7 @@
             </div>
         </main>
         <nav class="bottom-nav">
-            <div class="bottom-nav-grid cols-4 max-w-2xl mx-auto">
+            <div class="bottom-nav-grid cols-5 max-w-2xl mx-auto">
                 <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="bottom-nav-btn btn-interactive is-active">
                     <i data-lucide="house" class="w-5 h-5"></i>
                     <span class="text-[11px] font-bold">Home</span>
@@ -1243,6 +1294,10 @@
                 <button onclick="window.switchAdminTab('finance')" id="adm-tab-finance" class="bottom-nav-btn btn-interactive">
                     <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
                     <span class="text-[11px] font-bold">Finance</span>
+                </button>
+                <button onclick="window.openAdminChat()" id="adm-tab-chat" class="bottom-nav-btn btn-interactive">
+                    <i data-lucide="messages-square" class="w-5 h-5"></i>
+                    <span class="text-[11px] font-bold">Chat</span>
                 </button>
             </div>
         </nav>
@@ -1684,6 +1739,30 @@
             }
         }
 
+        function applyFuturisticSkin() {
+            const selectors = [
+                '#staff-app .bg-white.dark\\:bg-gray-800.rounded-2xl.shadow-sm',
+                '#admin-app .bg-white.dark\\:bg-gray-800.rounded-2xl.shadow-sm',
+                '#staff-app .bg-gradient-to-r.from-gray-800.to-gray-900',
+                '#admin-app .bg-gradient-to-br.from-gray-800.to-black',
+                '#staff-app .bg-gradient-to-br.from-blue-600.to-indigo-800'
+            ];
+            selectors.forEach((selector) => {
+                document.querySelectorAll(selector).forEach((node) => {
+                    node.classList.add('neo-panel');
+                    node.classList.remove('bg-white', 'dark:bg-gray-800');
+                });
+            });
+
+            document.querySelectorAll('#staff-app button.bg-blue-600, #admin-app button.bg-blue-600').forEach((btn) => {
+                btn.classList.add('neo-accent');
+            });
+            document.querySelectorAll('#staff-app .bg-gray-50, #admin-app .bg-gray-50').forEach((node) => {
+                node.classList.add('neo-outline');
+                node.classList.remove('bg-gray-50');
+            });
+        }
+
         // --- NEW UPGRADED LOGIC FUNCTIONS ---
         window.switchStaffTab = (tab) => {
             ['terminal','stats','tools'].forEach(x => {
@@ -1691,9 +1770,21 @@
                 document.getElementById(`staff-view-${x}`).classList.add('hidden');
                 document.getElementById(`stf-tab-${x}`).classList.remove('is-active');
             });
+            const chatTab = document.getElementById('stf-tab-chat');
+            if (chatTab) chatTab.classList.remove('is-active');
             document.getElementById(`staff-view-${tab}`).classList.remove('hidden');
             document.getElementById(`staff-view-${tab}`).classList.add('active');
             document.getElementById(`stf-tab-${tab}`).classList.add('is-active');
+        };
+
+        window.openStaffChat = () => {
+            window.switchStaffTab('tools');
+            const chatTab = document.getElementById('stf-tab-chat');
+            const toolsTab = document.getElementById('stf-tab-tools');
+            if (toolsTab) toolsTab.classList.remove('is-active');
+            if (chatTab) chatTab.classList.add('is-active');
+            document.getElementById('staff-admin-message')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('staff-admin-message')?.focus();
         };
 
         window.setStaffProduct = (product) => {
@@ -2139,6 +2230,7 @@
                         <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">${msg.body}</div>
                     </button>`).join('') : '<div class="text-xs text-gray-400 italic">No messages yet.</div>';
             }
+            applyFuturisticSkin();
         };
 
         window.selectInboxTarget = (uid, name) => {
@@ -2202,6 +2294,7 @@
         function initStaffApp(user) {
             document.getElementById('staff-app').classList.remove('hidden');
             window.setStaffProduct(currentStaffProduct);
+            applyFuturisticSkin();
             flushOfflineSales().catch(console.error);
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
@@ -2303,6 +2396,7 @@
             lucide.createIcons();
             list.querySelectorAll('.swipe-card').forEach(card => attachSwipeAction(card));
             updateShortState();
+            applyFuturisticSkin();
         }
 
         function renderStaffAnalytics() {
@@ -2778,6 +2872,8 @@
                 const tab = document.getElementById(`adm-tab-${x}`);
                 if (tab) tab.classList.remove('is-active');
             }); 
+            const chatTab = document.getElementById('adm-tab-chat');
+            if (chatTab) chatTab.classList.remove('is-active');
             
             document.getElementById(`admin-view-${t}`).classList.remove('hidden'); 
             document.getElementById(`admin-view-${t}`).classList.add('active');
@@ -2787,10 +2883,20 @@
             if (t === 'finance') window.loadGlobalAnalytics();
         };
 
+        window.openAdminChat = () => {
+            window.switchAdminTab('staff');
+            const staffTab = document.getElementById('adm-tab-staff');
+            const chatTab = document.getElementById('adm-tab-chat');
+            if (staffTab) staffTab.classList.remove('is-active');
+            if (chatTab) chatTab.classList.add('is-active');
+            document.getElementById('admin-message-list')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
         function initAdminDashboard(user) {
             document.getElementById('admin-app').classList.remove('hidden');
             window.setAdminProduct(currentAdminProduct);
             window.setTransferProduct(currentTransferProduct);
+            applyFuturisticSkin();
             
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
