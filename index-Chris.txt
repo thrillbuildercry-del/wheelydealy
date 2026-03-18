@@ -1,15 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WeightOps | Revenue & Inventory</title>
-    <meta name="theme-color" content="#111827">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="./icons/icon-192.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -18,10 +12,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        :root {
-            color-scheme: dark;
-            --safe-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
-        }
         body { 
             -webkit-tap-highlight-color: transparent; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -84,89 +74,6 @@
         @keyframes ticker { 
             0% { transform: translate3d(0, 0, 0); } 
             100% { transform: translate3d(-100%, 0, 0); } 
-        }
-        .admin-tab-content { display: none; animation: fadeIn 0.2s ease-in-out; }
-        .admin-tab-content.active { display: block; }
-        .pulse-short {
-            animation: pulseShort 0.9s ease-in-out infinite;
-        }
-        @keyframes pulseShort {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.15); }
-            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-        }
-        .mobile-shell {
-            padding-bottom: var(--safe-bottom);
-        }
-        .bottom-nav {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 60;
-            padding: 0.75rem 1rem calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
-            backdrop-filter: blur(18px);
-            background: rgba(17, 24, 39, 0.92);
-            border-top: 1px solid rgba(75, 85, 99, 0.6);
-        }
-        .bottom-nav-grid {
-            display: grid;
-            gap: 0.5rem;
-        }
-        .bottom-nav-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .bottom-nav-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        .bottom-nav-btn {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.25rem;
-            min-height: 3.5rem;
-            border-radius: 1rem;
-            color: rgb(148 163 184);
-            transition: all 0.2s ease;
-        }
-        .bottom-nav-btn.is-active {
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(14, 165, 233, 0.16));
-            color: white;
-            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.25);
-        }
-        .swipe-item {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1rem;
-        }
-        .swipe-action {
-            position: absolute;
-            inset: 0 0 0 auto;
-            width: 6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.75rem;
-        }
-        .swipe-card {
-            position: relative;
-            z-index: 1;
-            touch-action: pan-y;
-            transition: transform 0.18s ease;
-            will-change: transform;
-        }
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 0.5rem;
-        }
-        .heatmap-cell {
-            border-radius: 0.9rem;
-            padding: 0.75rem 0.5rem;
-            text-align: center;
-            border: 1px solid rgba(75, 85, 99, 0.35);
-            background: rgba(31, 41, 55, 0.55);
-        }
-        @media (min-width: 768px) {
-            .heatmap-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
         }
     </style>
 </head>
@@ -401,9 +308,9 @@
     </div>
 
     <!-- STAFF UI -->
-    <div id="staff-app" class="hidden min-h-screen mobile-shell">
+    <div id="staff-app" class="hidden">
         <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 sticky top-0 z-40 shadow-md">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center mb-2">
                 <div>
                     <h1 class="text-lg font-bold">Staff Portal</h1>
                     <div class="text-xs text-blue-200" id="staff-name-display">Guest</div>
@@ -411,6 +318,13 @@
                 <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="p-2 bg-blue-700 dark:bg-gray-700 rounded-full hover:bg-blue-800 transition">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
+            </div>
+            
+            <!-- Staff Navigation Tabs -->
+            <div class="flex space-x-1 bg-blue-800/50 dark:bg-gray-900/50 p-1 rounded-xl">
+                <button onclick="window.switchStaffTab('terminal')" id="stf-tab-terminal" class="flex-1 py-2 rounded-lg font-bold text-xs bg-white text-blue-800 dark:bg-gray-700 dark:text-white shadow transition btn-interactive">Terminal</button>
+                <button onclick="window.switchStaffTab('stats')" id="stf-tab-stats" class="flex-1 py-2 rounded-lg font-bold text-xs text-blue-100 hover:bg-blue-700/50 dark:text-gray-400 dark:hover:bg-gray-800 transition btn-interactive">My Stats</button>
+                <button onclick="window.switchStaffTab('tools')" id="stf-tab-tools" class="flex-1 py-2 rounded-lg font-bold text-xs text-blue-100 hover:bg-blue-700/50 dark:text-gray-400 dark:hover:bg-gray-800 transition btn-interactive">Tools</button>
             </div>
         </header>
 
@@ -523,23 +437,16 @@
                             <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl font-bold text-gray-400">$</span>
                             <input type="number" id="money-input" placeholder="0.00" oninput="window.checkPriceColor()" class="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl py-3 pl-10 pr-4 text-2xl font-black outline-none focus:border-blue-500 dark:text-white transition">
                         </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.setQuickPrice(80)" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800" id="btn-quick-usual">$80 (Usual)</button>
-                        <button onclick="window.setQuickPrice(100)" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800" id="btn-quick-full">$100 (Full)</button>
+                        <div class="flex gap-2">
+                            <button onclick="window.setQuickPrice(80)" class="flex-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 py-2 rounded-lg font-bold text-sm hover:bg-orange-200 btn-interactive transition shadow-sm border border-orange-200 dark:border-orange-800" id="btn-quick-usual">$80 (Usual)</button>
+                            <button onclick="window.setQuickPrice(100)" class="flex-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 py-2 rounded-lg font-bold text-sm hover:bg-green-200 btn-interactive transition shadow-sm border border-green-200 dark:border-green-800" id="btn-quick-full">$100 (Full)</button>
+                        </div>
                     </div>
-                </div>
-                <div id="staff-short-note-wrap" class="hidden mb-4 bg-red-950/20 border border-red-800/50 rounded-xl p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="staff-short-note" class="text-[10px] font-bold text-red-300 uppercase tracking-widest">Short Note Required</label>
-                        <span id="staff-short-diff" class="text-xs font-black text-red-300">$0.00 short</span>
-                    </div>
-                    <textarea id="staff-short-note" placeholder="Explain the shortage before logging this sale..." class="w-full bg-gray-950/40 border border-red-800/60 rounded-xl p-3 text-sm text-white outline-none min-h-[88px]"></textarea>
-                </div>
 
-                <div class="flex gap-2 mb-3">
-                    <button onclick="window.processSale()" class="flex-[2] bg-blue-600 text-white font-black text-sm py-4 rounded-xl shadow-md hover:bg-blue-700 btn-interactive transition uppercase tracking-wide">Log Sale</button>
-                    <button onclick="window.staffPersonalUse()" class="flex-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-bold text-xs py-2 rounded-xl shadow-sm hover:bg-purple-200 btn-interactive transition flex flex-col items-center justify-center">
-                        <i data-lucide="user" class="w-4 h-4 mb-1"></i> Use
+                    <div class="flex gap-2 mb-3">
+                        <button onclick="window.processSale()" class="flex-[2] bg-blue-600 text-white font-black text-sm py-4 rounded-xl shadow-md hover:bg-blue-700 btn-interactive transition uppercase tracking-wide">Log Sale</button>
+                        <button onclick="window.staffPersonalUse()" class="flex-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-bold text-xs py-2 rounded-xl shadow-sm hover:bg-purple-200 btn-interactive transition flex flex-col items-center justify-center">
+                            <i data-lucide="user" class="w-4 h-4 mb-1"></i> Use
                         </button>
                     </div>
                 </div>
@@ -682,22 +589,6 @@
             </div>
 
         </main>
-        <nav class="bottom-nav">
-            <div class="bottom-nav-grid cols-3 max-w-md mx-auto">
-                <button onclick="window.switchStaffTab('stats')" id="stf-tab-stats" class="bottom-nav-btn btn-interactive">
-                    <i data-lucide="house" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Home</span>
-                </button>
-                <button onclick="window.switchStaffTab('terminal')" id="stf-tab-terminal" class="bottom-nav-btn btn-interactive is-active">
-                    <i data-lucide="terminal-square" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Terminal</span>
-                </button>
-                <button onclick="window.switchStaffTab('tools')" id="stf-tab-tools" class="bottom-nav-btn btn-interactive">
-                    <i data-lucide="briefcase" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Tools</span>
-                </button>
-            </div>
-        </nav>
     </div>
 
     <!-- ADMIN UI -->
@@ -721,13 +612,31 @@
             <button onclick="window.enableNotifications()" class="bg-white text-indigo-700 px-3 py-1.5 rounded-lg font-bold shadow-sm active:scale-95 transition">Enable</button>
         </div>
 
-        <main class="p-4 max-w-2xl mx-auto mobile-shell">
-            <div class="grid grid-cols-4 gap-2 mb-4 text-[10px] uppercase tracking-widest font-bold">
-                <button onclick="window.switchAdminTab('storage')" class="bg-gray-800 text-white rounded-xl py-2 btn-interactive">Vault</button>
-                <button onclick="window.switchAdminTab('staff')" class="bg-gray-800/70 text-white rounded-xl py-2 btn-interactive">Team</button>
-                <button onclick="window.switchAdminTab('transfers')" class="bg-gray-800/70 text-white rounded-xl py-2 btn-interactive">Move</button>
-                <button onclick="window.switchAdminTab('ious')" class="bg-gray-800/70 text-white rounded-xl py-2 btn-interactive">Clients</button>
+        <main class="p-4 max-w-2xl mx-auto">
+            
+            <!-- Admin Navigation (6 Tabs) -->
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6 text-[10px] sm:text-xs mt-2">
+                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="py-2 px-1 rounded-xl font-bold bg-gray-800 text-white shadow transition flex flex-col justify-center items-center">
+                    <i data-lucide="database" class="w-4 h-4 mb-1"></i> <span>Vault</span>
+                </button>
+                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center">
+                    <i data-lucide="calculator" class="w-4 h-4 mb-1"></i> <span>Sell</span>
+                </button>
+                <button onclick="window.switchAdminTab('staff')" id="adm-tab-staff" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative">
+                    <i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>
+                </button>
+                <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition relative flex flex-col justify-center items-center">
+                    <i data-lucide="arrow-right-left" class="w-4 h-4 mb-1"></i> <span>Move</span>
+                    <div id="admin-req-badge" class="hidden absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
+                </button>
+                <button onclick="window.switchAdminTab('finance')" id="adm-tab-finance" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center">
+                    <i data-lucide="pie-chart" class="w-4 h-4 mb-1"></i> <span>Finance</span>
+                </button>
+                <button onclick="window.switchAdminTab('ious')" id="adm-tab-ious" class="py-2 px-1 rounded-xl font-bold bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition flex flex-col justify-center items-center relative">
+                    <i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span>
+                </button>
             </div>
+
             <!-- TAB: MASTER STORAGE -->
             <div id="admin-view-storage" class="admin-tab-content active">
                 
@@ -944,16 +853,6 @@
                         </div>
                     </div>
                     <div class="h-56"><canvas id="adminProfitChart"></canvas></div>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 mb-6">
-                    <div class="flex items-center justify-between mb-4 border-b dark:border-gray-700 pb-2">
-                        <h3 class="font-bold text-gray-800 dark:text-white flex items-center">
-                            <i data-lucide="flame" class="w-5 h-5 mr-2 text-orange-500"></i> Sales Heatmap
-                        </h3>
-                        <span class="text-[10px] uppercase tracking-widest font-bold text-gray-500">Hourly trend</span>
-                    </div>
-                    <div id="admin-hourly-heatmap" class="heatmap-grid"></div>
                 </div>
 
                 <!-- Potential Earnings -->
@@ -1179,27 +1078,6 @@
                 </div>
             </div>
         </main>
-        <nav class="bottom-nav">
-            <div class="bottom-nav-grid cols-4 max-w-2xl mx-auto">
-                <button onclick="window.switchAdminTab('storage')" id="adm-tab-storage" class="bottom-nav-btn btn-interactive is-active">
-                    <i data-lucide="house" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Home</span>
-                </button>
-                <button onclick="window.switchAdminTab('terminal')" id="adm-tab-terminal" class="bottom-nav-btn btn-interactive">
-                    <i data-lucide="terminal-square" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Terminal</span>
-                </button>
-                <button onclick="window.switchAdminTab('transfers')" id="adm-tab-transfers" class="bottom-nav-btn btn-interactive">
-                    <i data-lucide="users-round" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Team/Move</span>
-                    <div id="admin-req-badge" class="hidden absolute top-2 right-4 w-2 h-2 bg-red-500 rounded-full"></div>
-                </button>
-                <button onclick="window.switchAdminTab('finance')" id="adm-tab-finance" class="bottom-nav-btn btn-interactive">
-                    <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
-                    <span class="text-[11px] font-bold">Finance</span>
-                </button>
-            </div>
-        </nav>
     </div>
 
     <!-- User Detail Modal (Admin) -->
@@ -1315,8 +1193,22 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
+
+        const manifestJSON = { 
+            "name": "WeightOps POS", 
+            "short_name": "WeightOps", 
+            "start_url": ".", 
+            "display": "standalone", 
+            "background_color": "#111827", 
+            "theme_color": "#2563eb", 
+            "icons": [{"src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY3jP4PgfAAWpA5k1I2QWAAAAAElFTkSuQmCC", "sizes": "192x192", "type": "image/png"}] 
+        };
+        const manifestTag = document.createElement('link'); 
+        manifestTag.rel = 'manifest'; 
+        manifestTag.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON)); 
+        document.head.appendChild(manifestTag);
 
         lucide.createIcons();
 
@@ -1355,10 +1247,6 @@
         };
         let currentQty = 1; 
         let currentType = 'full';
-        let processAdminRosterUI = () => {};
-        let appInitialized = false;
-        const INVENTORY_CACHE_KEY = `${appId}:inventory-cache`;
-        const SALE_QUEUE_KEY = `${appId}:offline-sales`;
 
         // Admin State
         let masterData = { 
@@ -1385,149 +1273,19 @@
 
         Chart.defaults.color = '#9ca3af'; 
         Chart.defaults.borderColor = '#374151';
-        hydrateInventoryCache();
-        registerServiceWorker();
-        window.addEventListener('online', () => { flushOfflineSales().catch(console.error); });
-        window.addEventListener('offline', updateQueuedBadge);
-
-        function vibrateFeedback(duration = 50) {
-            if (window.navigator?.vibrate) window.navigator.vibrate(duration);
-        }
-
-        function loadLocalJSON(key, fallback) {
-            try {
-                const raw = localStorage.getItem(key);
-                return raw ? JSON.parse(raw) : fallback;
-            } catch {
-                return fallback;
-            }
-        }
-
-        function saveInventoryCache() {
-            localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify({
-                masterData,
-                appData,
-                savedAt: Date.now()
-            }));
-        }
-
-        function hydrateInventoryCache() {
-            const cached = loadLocalJSON(INVENTORY_CACHE_KEY, null);
-            if (!cached) return;
-            masterData = { ...masterData, ...(cached.masterData || {}) };
-            appData = { ...appData, ...(cached.appData || {}) };
-        }
-
-        function queueOfflineSale(entry) {
-            const queue = loadLocalJSON(SALE_QUEUE_KEY, []);
-            queue.push(entry);
-            localStorage.setItem(SALE_QUEUE_KEY, JSON.stringify(queue));
-        }
-
-        function updateQueuedBadge() {
-            const count = loadLocalJSON(SALE_QUEUE_KEY, []).length;
-            const toast = document.getElementById('toast');
-            if (count > 0 && toast && !navigator.onLine) {
-                toast.innerText = `${count} sale${count === 1 ? '' : 's'} queued for sync`;
-            }
-        }
-
-        async function flushOfflineSales() {
-            if (!navigator.onLine || !currentUser) return;
-            const queue = loadLocalJSON(SALE_QUEUE_KEY, []);
-            if (!queue.length) return;
-            const pending = [...queue];
-            localStorage.setItem(SALE_QUEUE_KEY, JSON.stringify([]));
-            for (const sale of pending) {
-                await commitStaffSale(sale, { isReplay: true });
-            }
-            window.showToast(`Synced ${pending.length} offline sale${pending.length === 1 ? '' : 's'}.`);
-        }
-
-        function buildHourlySalesBuckets(transactions) {
-            const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0, revenue: 0 }));
-            transactions
-                .filter(t => t.type !== 'personal' && t.type !== 'expense' && t.type !== 'borrowing' && t.type !== 'dropoff')
-                .forEach(t => {
-                    const date = new Date(t.id || Date.now());
-                    const hour = Number.isNaN(date.getHours()) ? 0 : date.getHours();
-                    buckets[hour].count += t.qty || 0;
-                    buckets[hour].revenue += t.money || 0;
-                });
-            return buckets;
-        }
-
-        function renderAdminHeatmap(transactions) {
-            const mount = document.getElementById('admin-hourly-heatmap');
-            if (!mount) return;
-            const buckets = buildHourlySalesBuckets(transactions);
-            const peak = Math.max(...buckets.map(b => b.revenue), 1);
-            mount.innerHTML = buckets.map(bucket => {
-                const intensity = Math.max(0.14, bucket.revenue / peak);
-                const bg = `background: linear-gradient(180deg, rgba(249,115,22,${(intensity * 0.9).toFixed(2)}), rgba(30,41,59,0.62));`;
-                return `
-                    <div class="heatmap-cell" style="${bg}">
-                        <div class="text-[10px] font-bold text-orange-100">${String(bucket.hour).padStart(2, '0')}:00</div>
-                        <div class="text-lg font-black text-white">${bucket.count}</div>
-                        <div class="text-[10px] text-orange-100/80">$${bucket.revenue.toFixed(0)}</div>
-                    </div>`;
-            }).join('');
-        }
-
-        function attachSwipeAction(card, threshold = 84) {
-            let startX = 0;
-            let currentX = 0;
-            let active = false;
-            const setTranslate = (value) => {
-                card.style.transform = `translateX(${value}px)`;
-            };
-            card.addEventListener('pointerdown', (event) => {
-                startX = event.clientX;
-                currentX = 0;
-                active = true;
-                card.setPointerCapture?.(event.pointerId);
-            });
-            card.addEventListener('pointermove', (event) => {
-                if (!active) return;
-                currentX = Math.min(0, event.clientX - startX);
-                setTranslate(Math.max(currentX, -96));
-            });
-            const finish = async () => {
-                if (!active) return;
-                active = false;
-                const action = card.dataset.swipeAction;
-                const id = card.dataset.swipeId;
-                if (Math.abs(currentX) > threshold && action && id) {
-                    vibrateFeedback();
-                    setTranslate(-96);
-                    if (action === 'void') await window.undoLastTransaction(true);
-                    if (action === 'delete') await window.adminRemoveIOU(Number(id), true);
-                }
-                setTimeout(() => setTranslate(0), 120);
-            };
-            card.addEventListener('pointerup', finish);
-            card.addEventListener('pointercancel', finish);
-        }
-
-        async function registerServiceWorker() {
-            if (!('serviceWorker' in navigator)) return;
-            try {
-                await navigator.serviceWorker.register('./service-worker.js');
-            } catch (error) {
-                console.warn('Service worker registration failed', error);
-            }
-        }
 
         // --- NEW UPGRADED LOGIC FUNCTIONS ---
         window.switchStaffTab = (tab) => {
             ['terminal','stats','tools'].forEach(x => {
                 document.getElementById(`staff-view-${x}`).classList.remove('active');
                 document.getElementById(`staff-view-${x}`).classList.add('hidden');
-                document.getElementById(`stf-tab-${x}`).classList.remove('is-active');
+                document.getElementById(`stf-tab-${x}`).classList.remove('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
+                document.getElementById(`stf-tab-${x}`).classList.add('text-blue-100', 'dark:text-gray-400');
             });
             document.getElementById(`staff-view-${tab}`).classList.remove('hidden');
             document.getElementById(`staff-view-${tab}`).classList.add('active');
-            document.getElementById(`stf-tab-${tab}`).classList.add('is-active');
+            document.getElementById(`stf-tab-${tab}`).classList.remove('text-blue-100', 'dark:text-gray-400');
+            document.getElementById(`stf-tab-${tab}`).classList.add('bg-white', 'text-blue-800', 'dark:bg-gray-700', 'dark:text-white', 'shadow');
         };
 
         window.updateStaffGlobalStats = () => {
@@ -1823,7 +1581,6 @@
                         if(userRole === 'staff' && typeof renderStaffUI === 'function') {
                             renderStaffUI();
                         }
-                        saveInventoryCache();
                     } else { 
                         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), masterData).catch(e => console.log(e)); 
                     }
@@ -1844,7 +1601,6 @@
             } else { 
                 document.getElementById('loading-overlay').classList.add('hidden'); 
                 document.getElementById('login-modal').classList.remove('hidden'); 
-                updateQueuedBadge();
             }
         });
 
@@ -1909,7 +1665,6 @@
         // ---------------------------------------------------------
         function initStaffApp(user) {
             document.getElementById('staff-app').classList.remove('hidden');
-            flushOfflineSales().catch(console.error);
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
@@ -1930,31 +1685,32 @@
             document.getElementById('staff-stock').innerText = (appData.weight || 0).toFixed(1);
             document.getElementById('staff-stock-full').innerText = (appData.unitsFull || 0);
             document.getElementById('staff-stock-usual').innerText = (appData.unitsUsual || 0);
-            document.getElementById('staff-stat-money').innerText = '$' + (appData.collected || 0);
-            document.getElementById('staff-stat-expenses').innerText = '-$' + (appData.expenses || 0);
-
+            
+            document.getElementById('staff-stat-money').innerText = `$${appData.collected || 0}`;
+            document.getElementById('staff-stat-expenses').innerText = `-$${appData.expenses || 0}`;
+            
             const grossComm = (appData.collected || 0) * ((masterData.staffCommission || 0) / 100);
             const totalDebt = (appData.personalUseOwed || 0) + (appData.borrowings || 0);
             const appliedToDebt = Math.min(grossComm, totalDebt);
             const netComm = grossComm - appliedToDebt;
             const remainingDebt = totalDebt - appliedToDebt;
 
-            document.getElementById('staff-calc-gross-comm').innerText = '$' + grossComm.toFixed(2);
-            document.getElementById('staff-calc-total-debt').innerText = '$' + totalDebt.toFixed(2);
-            document.getElementById('staff-calc-applied').innerText = '-$' + appliedToDebt.toFixed(2);
-            document.getElementById('staff-calc-net-comm').innerText = '$' + netComm.toFixed(2);
-            document.getElementById('staff-calc-rem-debt').innerText = '$' + remainingDebt.toFixed(2);
+            document.getElementById('staff-calc-gross-comm').innerText = `$${grossComm.toFixed(2)}`;
+            document.getElementById('staff-calc-total-debt').innerText = `$${totalDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-applied').innerText = `-$${appliedToDebt.toFixed(2)}`;
+            document.getElementById('staff-calc-net-comm').innerText = `$${netComm.toFixed(2)}`;
+            document.getElementById('staff-calc-rem-debt').innerText = `$${remainingDebt.toFixed(2)}`;
 
             const cashOnHand = (appData.collected || 0) - (appData.expenses || 0) - netComm - (appData.cashDropped || 0);
-            document.getElementById('staff-stat-net').innerText = '$' + cashOnHand.toFixed(2);
+            document.getElementById('staff-stat-net').innerText = `$${cashOnHand.toFixed(2)}`;
 
             const diff = (appData.expected || 0) - (appData.collected || 0);
             const warn = document.getElementById('staff-shortage-warning');
-            if (diff > 0) {
-                warn.classList.remove('hidden');
-                document.getElementById('staff-shortage-amount').innerText = '$' + diff.toFixed(2);
-            } else {
-                warn.classList.add('hidden');
+            if(diff > 0) { 
+                warn.classList.remove('hidden'); 
+                document.getElementById('staff-shortage-amount').innerText = `$${diff.toFixed(2)}`; 
+            } else { 
+                warn.classList.add('hidden'); 
             }
 
             window.updateStaffGlobalStats();
@@ -1962,53 +1718,72 @@
             renderStaffAnalytics();
 
             const list = document.getElementById('staff-log-list');
+            list.innerHTML = '';
             const reversed = [...appData.transactions].reverse();
-            list.innerHTML = reversed.map((t) => {
-                const noteLine = t.note ? '<div class="text-[10px] text-red-300 mt-1">Note: ' + t.note + '</div>' : '';
-                let tone = 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600';
-                let labelColor = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
-                let labelText = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
-                let title = '<div class="font-bold dark:text-white">Sold ' + t.qty + ' <span class="text-[10px] ' + labelColor + ' uppercase tracking-wider ml-1">(' + labelText + ')</span></div>';
-                let meta = '<div class="text-xs text-gray-500">' + t.time + ' • Used: ' + Number(t.actualWeight || 0).toFixed(1) + ' u</div>';
-                let amount = '<div class="font-black text-green-600">+$' + t.money + '</div>';
-
-                if (t.type === 'personal') {
-                    tone = 'bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800';
-                    title = '<div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use (' + t.qty + ' units)</div>';
-                    meta = '<div class="text-xs text-gray-500">' + t.time + ' • ' + masterData.staffDiscount + '% Discount Applied</div>';
-                    amount = '<div class="font-black text-purple-600 dark:text-purple-400">+$' + t.expected + ' Owed</div>';
-                } else if (t.type === 'expense') {
-                    tone = 'bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800';
-                    title = '<div class="font-bold text-orange-800 dark:text-orange-300"><i data-lucide="fuel" class="inline w-3 h-3 mr-1"></i> Expense: ' + t.desc + '</div>';
-                    meta = '<div class="text-xs text-gray-500">' + t.time + '</div>';
-                    amount = '<div class="font-black text-orange-600 dark:text-orange-400">-$' + Math.abs(t.money) + '</div>';
+            reversed.forEach(t => {
+                if(t.type === 'personal') {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl mb-2 border border-purple-100 dark:border-purple-800">
+                            <div>
+                                <div class="font-bold text-purple-800 dark:text-purple-300"><i data-lucide="user" class="inline w-3 h-3 mr-1"></i> Personal Use (${t.qty} units)</div>
+                                <div class="text-xs text-gray-500">${t.time} • ${masterData.staffDiscount}% Discount Applied</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-purple-600 dark:text-purple-400">+$${t.expected} Owed</div>
+                            </div>
+                        </div>`;
+                } else if(t.type === 'expense') {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl mb-2 border border-orange-100 dark:border-orange-800">
+                            <div>
+                                <div class="font-bold text-orange-800 dark:text-orange-300"><i data-lucide="fuel" class="inline w-3 h-3 mr-1"></i> Expense: ${t.desc}</div>
+                                <div class="text-xs text-gray-500">${t.time}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-orange-600 dark:text-orange-400">-$${Math.abs(t.money)}</div>
+                            </div>
+                        </div>`;
                 } else if (t.type === 'borrowing') {
-                    tone = 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800';
-                    title = '<div class="font-bold text-red-800 dark:text-red-300"><i data-lucide="banknote" class="inline w-3 h-3 mr-1"></i> Cash Advance / Debt</div>';
-                    meta = '<div class="text-xs text-gray-500">' + t.time + ' • ' + t.desc + '</div>';
-                    amount = '<div class="font-black text-red-600 dark:text-red-400">+$' + t.expected + ' Owed</div>';
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl mb-2 border border-red-100 dark:border-red-800">
+                            <div>
+                                <div class="font-bold text-red-800 dark:text-red-300"><i data-lucide="banknote" class="inline w-3 h-3 mr-1"></i> Cash Advance / Debt</div>
+                                <div class="text-xs text-gray-500">${t.time} • ${t.desc}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-red-600 dark:text-red-400">+$${t.expected} Owed</div>
+                            </div>
+                        </div>`;
                 } else if (t.type === 'dropoff') {
-                    tone = 'bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800';
-                    title = '<div class="font-bold text-green-800 dark:text-green-300"><i data-lucide="hand-coins" class="inline w-3 h-3 mr-1"></i> Handed Cash to Boss</div>';
-                    meta = '<div class="text-xs text-gray-500">' + t.time + '</div>';
-                    amount = '<div class="font-black text-green-600 dark:text-green-400">-$' + t.amt + '</div>';
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl mb-2 border border-green-100 dark:border-green-800">
+                            <div>
+                                <div class="font-bold text-green-800 dark:text-green-300"><i data-lucide="hand-coins" class="inline w-3 h-3 mr-1"></i> Handed Cash to Boss</div>
+                                <div class="text-xs text-gray-500">${t.time}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-green-600 dark:text-green-400">-$${t.amt}</div>
+                            </div>
+                        </div>`;
+                } else {
+                    const color = t.type === 'full' ? 'text-green-600' : (t.type === 'usual' ? 'text-orange-500' : 'text-blue-500');
+                    const label = t.type === 'full' ? 'Full' : (t.type === 'raw' ? 'Raw' : 'Usual');
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2 border border-gray-200 dark:border-gray-600">
+                            <div>
+                                <div class="font-bold dark:text-white">Sold ${t.qty} <span class="text-[10px] ${color} uppercase tracking-wider ml-1">(${label})</span></div>
+                                <div class="text-xs text-gray-500">${t.time} • Used: ${t.actualWeight.toFixed(1)} u</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-green-600">+$${t.money}</div>
+                            </div>
+                        </div>`;
                 }
-
-                return '<div class="swipe-item mb-2">' +
-                    '<div class="swipe-action bg-red-600 text-white">Void</div>' +
-                    '<div class="swipe-card flex justify-between items-center p-3 rounded-xl ' + tone + '" data-swipe-action="void" data-swipe-id="' + t.id + '">' +
-                        '<div>' + title + meta + noteLine + '</div>' +
-                        '<div class="text-right">' + amount + '</div>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-
-            if (reversed.length === 0) {
+            });
+            if(reversed.length === 0) {
                 list.innerHTML = '<div class="text-center text-gray-400 py-4 text-xs">No activity recorded yet.</div>';
             }
             lucide.createIcons();
-            list.querySelectorAll('.swipe-card').forEach(card => attachSwipeAction(card));
-            updateShortState();
         }
 
         function renderStaffAnalytics() {
@@ -2071,7 +1846,6 @@
 
         async function saveStaffData() { 
             if(!currentUser) return; 
-            saveInventoryCache();
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { 
                 json: JSON.stringify(appData), 
                 lastUpdated: Date.now() 
@@ -2101,10 +1875,9 @@
             const input = document.getElementById('money-input');
             const val = parseFloat(input.value) || 0;
             const perUnit = val / currentQty;
-            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500', 'text-gray-800');
+            input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
             if (val === 0) { 
                 input.classList.add('dark:text-white', 'text-gray-800'); 
-                updateShortState();
                 return; 
             }
             if (currentType === 'usual') {
@@ -2116,7 +1889,6 @@
                 if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500');
                 else input.classList.add('text-green-500', 'dark:text-green-500');
             }
-            updateShortState();
         };
 
         window.setQuickPrice = (pricePerUnit) => { 
@@ -2140,116 +1912,57 @@
             window.checkPriceColor(); 
         };
 
-        function updateShortState() {
-            const input = document.getElementById('money-input');
-            const noteWrap = document.getElementById('staff-short-note-wrap');
-            const note = document.getElementById('staff-short-note');
-            const diffLabel = document.getElementById('staff-short-diff');
-            if (!input || !noteWrap || !note || !diffLabel) return { expectedMoney: 0, shortAmount: 0, isShort: false };
-            const money = parseFloat(input.value) || 0;
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            const expectedMoney = currentQty * unitPrice;
-            const shortAmount = Number((expectedMoney - money).toFixed(2));
-            const isShort = money > 0 && shortAmount > 0;
-            noteWrap.classList.toggle('hidden', !isShort);
-            input.classList.toggle('pulse-short', isShort);
-            input.classList.toggle('border-red-500', isShort);
-            diffLabel.innerText = `$${Math.abs(shortAmount).toFixed(2)} short`;
-            if (!isShort) note.value = '';
-            return { expectedMoney, shortAmount, isShort };
-        }
-
-        function buildStaffSalePayload() {
+        window.processSale = async () => {
             const source = document.getElementById('staff-sale-source').value;
             const moneyInput = document.getElementById('money-input');
             const money = parseFloat(moneyInput.value);
-            if (isNaN(money) || money < 0) {
-                window.showToast("Enter valid money received");
-                return null;
-            }
-            const state = updateShortState();
-            const note = document.getElementById('staff-short-note').value.trim();
-            if (state.isShort && !note) {
-                window.showToast("Short sales require a note.");
-                return null;
-            }
-            return {
-                source,
-                money,
-                qty: currentQty,
-                type: currentType,
-                note,
-                expectedMoney: state.expectedMoney,
-                createdAt: Date.now()
-            };
-        }
+            if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
 
-        async function commitStaffSale(payload, options = {}) {
-            const { isReplay = false } = options;
             let actualWeightDeducted = 0;
-            if (payload.source === 'raw') {
-                actualWeightDeducted = payload.type === 'full' ? payload.qty * 1.0 : payload.qty * masterData.usualRatio;
-                if (appData.weight < actualWeightDeducted) throw new Error(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
+            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+
+            if (source === 'raw') {
+                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
+                if(appData.weight < actualWeightDeducted) return window.showToast(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
                 appData.weight -= actualWeightDeducted;
-            } else if (payload.source === 'processed' && payload.type === 'full') {
-                if (appData.unitsFull < payload.qty) throw new Error("Not enough Full Pre-Packs!");
-                appData.unitsFull -= payload.qty;
-                actualWeightDeducted = payload.qty * 1.0;
-            } else if (payload.source === 'processed' && payload.type === 'usual') {
-                if (appData.unitsUsual < payload.qty) throw new Error("Not enough Usual Pre-Packs!");
-                appData.unitsUsual -= payload.qty;
-                actualWeightDeducted = payload.qty * masterData.usualRatio;
+            } else if (source === 'processed' && currentType === 'full') {
+                if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
+                appData.unitsFull -= currentQty; 
+                actualWeightDeducted = currentQty * 1.0;
+            } else if (source === 'processed' && currentType === 'usual') {
+                if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
+                appData.unitsUsual -= currentQty; 
+                actualWeightDeducted = currentQty * masterData.usualRatio;
             }
 
-            if (payload.source === 'raw') appData.soldWeight += actualWeightDeducted;
-            else if (payload.source === 'processed' && payload.type === 'full') appData.soldUnitsFull += payload.qty;
-            else if (payload.source === 'processed' && payload.type === 'usual') appData.soldUnitsUsual += payload.qty;
+            const expectedMoney = currentQty * unitPrice;
 
-            appData.collected += payload.money;
-            appData.expected += payload.expectedMoney;
-            appData.transactions.push({
-                id: payload.createdAt || Date.now(),
-                time: new Date(payload.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                source: payload.source,
-                qty: payload.qty,
-                type: payload.type,
-                actualWeight: actualWeightDeducted,
-                money: payload.money,
-                expected: payload.expectedMoney,
-                note: payload.note || '',
-                offlineLogged: !navigator.onLine && !isReplay
+            if (source === 'raw') appData.soldWeight += actualWeightDeducted;
+            else if (source === 'processed' && currentType === 'full') appData.soldUnitsFull += currentQty;
+            else if (source === 'processed' && currentType === 'usual') appData.soldUnitsUsual += currentQty;
+
+            appData.collected += money; 
+            appData.expected += expectedMoney;
+            
+            appData.transactions.push({ 
+                id: Date.now(), 
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                source: source, 
+                qty: currentQty, 
+                type: currentType, 
+                actualWeight: actualWeightDeducted, 
+                money: money, 
+                expected: expectedMoney 
             });
 
-            renderStaffUI();
-            saveInventoryCache();
-
-            if (!navigator.onLine && !isReplay) {
-                queueOfflineSale(payload);
-                document.getElementById('money-input').value = '';
-                updateShortState();
-                updateQueuedBadge();
-                return;
-            }
-
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {
-                cashBalance: increment(payload.money),
-                updatedAt: serverTimestamp()
+            // CRITICAL: Automatically add collected money to Master Vault Cash Balance
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { 
+                cashBalance: increment(money) 
             }, {merge:true});
-            await saveStaffData();
-        }
 
-        window.processSale = async () => {
-            const payload = buildStaffSalePayload();
-            if (!payload) return;
-            vibrateFeedback();
-            try {
-                await commitStaffSale(payload);
-                document.getElementById('money-input').value = '';
-                updateShortState();
-                window.showToast(navigator.onLine ? "Sale Complete! Master Cash Updated." : "Sale saved offline. Syncing when signal returns.");
-            } catch (error) {
-                window.showToast(error.message);
-            }
+            moneyInput.value = '';
+            await saveStaffData(); 
+            window.showToast("Sale Complete! Master Cash Updated.");
         };
 
         window.staffPersonalUse = async () => {
@@ -2339,9 +2052,9 @@
             window.sendNotificationAlert('admin', `${window.currentUserName} dropped off $${amt} cash.`);
         };
 
-        window.undoLastTransaction = async (skipConfirm = false) => {
+        window.undoLastTransaction = async () => {
             if(!appData.transactions || appData.transactions.length === 0) return window.showToast("No transactions to undo.");
-            if(!skipConfirm && !confirm("Are you SURE you want to completely VOID your last entry? This will reverse the math perfectly.")) return;
+            if(!confirm("Are you SURE you want to completely VOID your last entry? This will reverse the math perfectly.")) return;
             
             const t = appData.transactions.pop();
             if(t.type === 'expense') { 
@@ -2462,15 +2175,13 @@
         window.switchAdminTab = (t) => { 
             ['storage','terminal','staff','transfers','finance','ious'].forEach(x => { 
                 document.getElementById(`admin-view-${x}`).classList.add('hidden'); 
-                document.getElementById(`admin-view-${x}`).classList.remove('active');
-                const tab = document.getElementById(`adm-tab-${x}`);
-                if (tab) tab.classList.remove('is-active');
+                document.getElementById(`adm-tab-${x}`).classList.remove('bg-gray-800','text-white','shadow'); 
+                document.getElementById(`adm-tab-${x}`).classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300'); 
             }); 
             
             document.getElementById(`admin-view-${t}`).classList.remove('hidden'); 
-            document.getElementById(`admin-view-${t}`).classList.add('active');
-            const activeTab = document.getElementById(`adm-tab-${t}`);
-            if (activeTab) activeTab.classList.add('is-active');
+            document.getElementById(`adm-tab-${t}`).classList.add('bg-gray-800','text-white','shadow'); 
+            document.getElementById(`adm-tab-${t}`).classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300');
             
             if (t === 'finance') window.loadGlobalAnalytics();
         };
@@ -2602,9 +2313,9 @@
                 
                 if(pendCount === 0) { 
                     pendingList.innerHTML = '<div class="text-gray-400 italic text-xs">No pending users.</div>'; 
-                    if (staffTab) staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>`; 
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span>`; 
                 } else { 
-                    if (staffTab) staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`; 
+                    staffTab.innerHTML = `<i data-lucide="users" class="w-4 h-4 mb-1"></i> <span>Team</span> <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>`; 
                 }
                 lucide.createIcons();
             };
@@ -2670,6 +2381,8 @@
         }
         
         // Expose function for the listener
+        let processAdminRosterUI = () => {};
+
         window.loadGlobalAnalytics = async () => {
             let allTx = []; 
             if(adminData && adminData.transactions) allTx.push(...adminData.transactions);
@@ -2690,7 +2403,6 @@
             document.getElementById('admin-pieces-today').innerText = stats[0].pieces; 
             document.getElementById('admin-pieces-week').innerText = stats[1].pieces; 
             document.getElementById('admin-pieces-month').innerText = stats[2].pieces;
-            renderAdminHeatmap(allTx);
             
             const ctx = document.getElementById('adminProfitChart'); 
             if(!ctx) return;
@@ -2884,10 +2596,10 @@
             document.getElementById('iou-total-owed').innerText = `$${totalOwed.toFixed(2)}`;
             const iouTab = document.getElementById('adm-tab-ious');
             
-            if (iouTab && (overdueCount > 0 || dueSoonCount > 0)) { 
+            if (overdueCount > 0 || dueSoonCount > 0) { 
                 const dotColor = overdueCount > 0 ? 'bg-red-500' : 'bg-orange-500'; 
                 iouTab.innerHTML = `<i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span> <span class="absolute top-1 right-2 w-2 h-2 ${dotColor} rounded-full animate-pulse shadow-sm"></span>`; 
-            } else if (iouTab) { 
+            } else { 
                 iouTab.innerHTML = `<i data-lucide="book-open" class="w-4 h-4 mb-1"></i> <span>Clients</span>`; 
             }
             lucide.createIcons();
@@ -3057,7 +2769,6 @@
         };
         
         window.adminProcessUnits = async () => {
-            vibrateFeedback();
             const type = document.getElementById('process-type').value; 
             const qty = parseInt(document.getElementById('process-qty').value);
             if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
@@ -3129,7 +2840,6 @@
         };
 
         window.adminProcessSale = async () => {
-            vibrateFeedback();
             const source = document.getElementById('adm-sale-source').value; 
             const moneyInput = document.getElementById('adm-money-input'); 
             const money = parseFloat(moneyInput.value);
@@ -3514,7 +3224,3 @@
     </script>
 </body>
 </html>
-
-
-
-
