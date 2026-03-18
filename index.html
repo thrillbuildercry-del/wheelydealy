@@ -437,9 +437,13 @@
             <div id="staff-view-terminal" class="tab-content active">
                 <!-- Stock Card -->
                 <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden mb-4">
+                    <div class="flex gap-2 mb-4 relative z-10">
+                        <button onclick="window.setStaffProduct('soft')" id="staff-product-soft" class="flex-1 py-2 rounded-xl bg-blue-500/20 border border-blue-400/40 text-xs font-black uppercase tracking-[0.18em]">Soft</button>
+                        <button onclick="window.setStaffProduct('hard')" id="staff-product-hard" class="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-[0.18em] text-gray-300">Hard</button>
+                    </div>
                     <div class="flex justify-between items-start relative z-10 mb-4 border-b border-gray-700 pb-3">
                         <div>
-                            <h2 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-1">Raw Weight</h2>
+                            <h2 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-1"><span id="staff-product-label">Soft</span> Raw Weight</h2>
                             <div class="flex items-baseline">
                                 <span class="text-3xl font-black mr-1" id="staff-stock">0.0</span>
                                 <span class="text-gray-400 text-xs font-bold">u</span>
@@ -479,7 +483,12 @@
                     
                     <!-- Source Selection -->
                     <div class="mb-4">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Inventory Source</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Product</label>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="window.setStaffProduct('soft')" id="staff-sale-soft" class="py-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-xs font-black uppercase tracking-[0.18em] text-blue-700 dark:text-blue-200">Soft</button>
+                            <button onclick="window.setStaffProduct('hard')" id="staff-sale-hard" class="py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-xs font-black uppercase tracking-[0.18em] dark:text-white">Hard</button>
+                        </div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Inventory Source</label>
                         <select id="staff-sale-source" onchange="window.updateMasterLabels()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
                             <option value="processed">Processed Pre-Packs</option>
                             <option value="raw">Raw Weight</option>
@@ -488,7 +497,7 @@
                     
                     <!-- Qty Selection -->
                     <div class="mb-4">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Quantity</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Quantity</label>
                         <div class="flex flex-wrap gap-2">
                             <button onclick="window.selectQty(0.5)" id="btn-qty-0.5" class="qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">.5</button>
                             <button onclick="window.selectQty(1)" id="btn-qty-1" class="qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">1</button>
@@ -500,7 +509,7 @@
                     
                     <!-- Type Selection -->
                     <div class="mb-5" id="staff-type-selection">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Weight Standard</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">4. Weight Standard</label>
                         <div class="flex space-x-2">
                             <button onclick="window.selectType('full')" id="btn-type-full" class="type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive">
                                 <span class="dark:text-white">Full Weight</span>
@@ -516,7 +525,7 @@
                     <!-- Money Collection -->
                     <div class="mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">4. Money Received</label>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">5. Money Received</label>
                             <span class="text-xs font-bold text-gray-500" id="expected-money-hint">Expected: $100</span>
                         </div>
                         <div class="relative mb-2">
@@ -679,6 +688,18 @@
                     <textarea id="staff-notes-input" placeholder="Enter notes here..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 text-sm dark:text-white outline-none min-h-[120px] mb-2"></textarea>
                     <button onclick="window.saveStaffNotes()" class="w-full bg-gray-800 dark:bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-900 transition btn-interactive text-sm">Save Notes to Database</button>
                 </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
+                        <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-blue-500"></i> Admin Messages
+                    </h3>
+                    <p class="text-[10px] text-gray-500 mb-3">Send a direct message or leave a note for admin review.</p>
+                    <textarea id="staff-admin-message" placeholder="Type your message or note..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 text-sm dark:text-white outline-none min-h-[100px] mb-3"></textarea>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="window.sendAdminMessage('message')" class="bg-blue-600 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Send Message</button>
+                        <button onclick="window.sendAdminMessage('note')" class="bg-amber-500 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Leave Note</button>
+                    </div>
+                    <div id="staff-message-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm"></div>
+                </div>
             </div>
 
         </main>
@@ -732,9 +753,13 @@
             <div id="admin-view-storage" class="admin-tab-content active">
                 
                 <div class="bg-gradient-to-br from-gray-800 to-black rounded-3xl p-6 shadow-xl mb-6 text-white relative overflow-hidden">
+                    <div class="grid grid-cols-2 gap-2 mb-4 relative z-10">
+                        <button onclick="window.setAdminProduct('soft')" id="admin-product-soft" class="py-2 rounded-xl bg-blue-500/20 border border-blue-400/40 text-xs font-black uppercase tracking-[0.18em]">Soft</button>
+                        <button onclick="window.setAdminProduct('hard')" id="admin-product-hard" class="py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-[0.18em] text-gray-300">Hard</button>
+                    </div>
                     <div class="relative z-10 flex justify-between items-end mb-4">
                         <div>
-                            <h2 class="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">Master Vault Weight</h2>
+                            <h2 class="text-gray-400 text-xs uppercase tracking-widest font-bold mb-1"><span id="admin-product-label">Soft</span> Master Vault Weight</h2>
                             <div class="flex items-baseline cursor-pointer group" onclick="window.adminDirectEdit('rawWeight', 'Master Raw Weight')" title="Click to Edit Directly">
                                 <span class="text-5xl font-black mr-2 group-hover:text-blue-400 transition" id="admin-master-weight">0.0</span>
                                 <span class="text-gray-400 font-bold mr-2">units</span>
@@ -759,12 +784,16 @@
                             </h3>
                         </div>
                         <div class="flex space-x-2">
+                            <select id="process-product" onchange="window.setAdminProduct(this.value)" class="w-1/3 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
+                                <option value="soft">Soft</option>
+                                <option value="hard">Hard</option>
+                            </select>
                             <select id="process-type" class="w-1/3 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
                                 <option value="full">Full (1.0)</option>
                                 <option value="usual">Usual</option>
                             </select>
-                            <input type="number" id="process-qty" placeholder="# Units" class="w-1/3 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
-                            <button onclick="window.adminProcessUnits()" class="w-1/3 bg-blue-600 rounded-lg font-bold text-sm hover:bg-blue-500 btn-interactive">Make</button>
+                            <input type="number" id="process-qty" placeholder="# Units" class="w-1/4 p-2 bg-black/50 border border-gray-600 rounded-lg text-sm text-white font-bold outline-none">
+                            <button onclick="window.adminProcessUnits()" class="w-1/4 bg-blue-600 rounded-lg font-bold text-sm hover:bg-blue-500 btn-interactive">Make</button>
                         </div>
                     </div>
                 </div>
@@ -849,6 +878,7 @@
                             </div>
                         </div>
                     </div>
+                    <p class="text-[10px] text-gray-500 mt-4">Product prices above apply to the selected product line. User-specific overrides are set from Staff Details.</p>
                 </div>
 
                 <!-- Purchase Stock Card -->
@@ -1032,7 +1062,12 @@
                     </h2>
                     
                     <div class="mb-4">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Master Inventory Source</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">1. Product</label>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="window.setAdminProduct('soft')" id="adm-sale-soft" class="py-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-xs font-black uppercase tracking-[0.18em] text-blue-700 dark:text-blue-200">Soft</button>
+                            <button onclick="window.setAdminProduct('hard')" id="adm-sale-hard" class="py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-xs font-black uppercase tracking-[0.18em] dark:text-white">Hard</button>
+                        </div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Master Inventory Source</label>
                         <select id="adm-sale-source" onchange="window.admUpdateMasterLabels()" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl font-bold dark:text-white text-sm outline-none">
                             <option value="processed">Processed Pre-Packs</option>
                             <option value="raw">Raw Master Weight</option>
@@ -1040,7 +1075,7 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">2. Quantity</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Quantity</label>
                         <div class="flex flex-wrap gap-2">
                             <button onclick="window.admSelectQty(0.5)" id="adm-btn-qty-0.5" class="adm-qty-btn btn-select flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">.5</button>
                             <button onclick="window.admSelectQty(1)" id="adm-btn-qty-1" class="adm-qty-btn btn-select active flex-1 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold dark:text-white btn-interactive">1</button>
@@ -1051,7 +1086,7 @@
                     </div>
                     
                     <div class="mb-5" id="adm-type-selection">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">3. Weight Standard</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">4. Weight Standard</label>
                         <div class="flex space-x-2">
                             <button onclick="window.admSelectType('full')" id="adm-btn-type-full" class="adm-type-btn btn-select active flex-1 py-4 rounded-xl bg-gray-50 dark:bg-gray-700 font-bold flex flex-col items-center btn-interactive">
                                 <span class="dark:text-white">Full Weight</span>
@@ -1066,7 +1101,7 @@
                     
                     <div class="mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">4. Money Received</label>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">5. Money Received</label>
                             <span class="text-xs font-bold text-gray-500" id="adm-expected-money-hint">Expected: $100</span>
                         </div>
                         <div class="relative mb-2">
@@ -1094,6 +1129,13 @@
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-gray-800 dark:text-white text-sm uppercase tracking-wide">Team Summary</h3>
                         <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300" id="admin-active-count">0 Active</span>
+                    </div>
+                    <div class="mb-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Message Inbox</h4>
+                            <button onclick="window.replyToMessage()" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold btn-interactive">Reply</button>
+                        </div>
+                        <div id="admin-message-list" class="space-y-2 max-h-56 overflow-y-auto hide-scrollbar text-sm"></div>
                     </div>
                     
                     <!-- Broadcast Tool -->
@@ -1155,6 +1197,10 @@
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Item to Move</label>
+                            <div class="grid grid-cols-2 gap-2 mt-1 mb-2">
+                                <button onclick="window.setTransferProduct('soft')" id="transfer-product-soft" class="py-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-[10px] font-black uppercase tracking-[0.18em] text-blue-700 dark:text-blue-200">Soft</button>
+                                <button onclick="window.setTransferProduct('hard')" id="transfer-product-hard" class="py-2 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-[10px] font-black uppercase tracking-[0.18em] dark:text-white">Hard</button>
+                            </div>
                             <select id="transfer-item-type" onchange="window.updateTransferPreview()" class="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl outline-none text-sm font-bold dark:text-white">
                                 <option value="raw">Raw Weight</option>
                                 <option value="full">Full Units (1.0)</option>
@@ -1301,6 +1347,9 @@
             <button onclick="window.adminAddBorrowing()" class="w-full mt-4 bg-gray-800 text-white font-bold py-3 rounded-xl border border-gray-700 shadow flex justify-center items-center hover:bg-gray-900 transition btn-interactive">
                 <i data-lucide="banknote" class="w-4 h-4 mr-2"></i> Log Cash Advance / Debt
             </button>
+            <button onclick="window.adminSetCustomPricing()" class="w-full mt-4 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 font-bold py-3 rounded-xl border border-blue-200 dark:border-blue-800/50 btn-interactive">
+                Set Custom Soft/Hard Prices
+            </button>
             
             <button onclick="window.adminClearStaffData()" class="w-full mt-4 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold py-3 rounded-xl border border-red-200 dark:border-red-800/50 btn-interactive">
                 Clear Shift / Settle Balances
@@ -1315,7 +1364,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, updateDoc, increment, addDoc, deleteDoc, getDocs, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
         lucide.createIcons();
@@ -1346,7 +1395,12 @@
         // GLOBAL STATE
         let currentUser = null; 
         let userRole = 'staff'; 
-        
+        let currentStaffProduct = 'soft';
+        let currentAdminProduct = 'soft';
+        let currentTransferProduct = 'soft';
+        let currentInboxTarget = null;
+        let messageFeed = [];
+
         // Staff State
         let appData = { 
             weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
@@ -1381,7 +1435,7 @@
         let staffChartInst=null, adminOverallChartInst=null, adminDetailChartInst=null, adminTerminalChartInst=null, staffAnalyticsChartInst=null, adminProfitChartInst=null;
 
         // Listeners
-        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts;
+        let unsubUserData, unsubRoster, unsubMaster, unsubReqs, unsubAuthCheck, unsubAlerts, unsubMessages;
 
         Chart.defaults.color = '#9ca3af'; 
         Chart.defaults.borderColor = '#374151';
@@ -1392,6 +1446,118 @@
 
         function vibrateFeedback(duration = 50) {
             if (window.navigator?.vibrate) window.navigator.vibrate(duration);
+        }
+
+        function defaultProductState() {
+            return {
+                rawWeight: 0,
+                unitsFull: 0,
+                unitsUsual: 0,
+                soldWeight: 0,
+                soldUnitsFull: 0,
+                soldUnitsUsual: 0,
+                personalUseWeight: 0,
+                personalUseOwed: 0,
+                collected: 0,
+                expected: 0
+            };
+        }
+
+        function defaultMasterProductConfig() {
+            return {
+                rawWeight: 0,
+                unitsFull: 0,
+                unitsUsual: 0,
+                pricePerUnit: 100,
+                usualRatio: 0.8
+            };
+        }
+
+        function ensureProducts(products, factory) {
+            return {
+                soft: { ...factory(), ...((products || {}).soft || {}) },
+                hard: { ...factory(), ...((products || {}).hard || {}) }
+            };
+        }
+
+        function normalizeAppState(data) {
+            const products = ensureProducts(data.products, defaultProductState);
+            if (!data.products) {
+                products.soft = {
+                    ...products.soft,
+                    rawWeight: data.weight || 0,
+                    unitsFull: data.unitsFull || 0,
+                    unitsUsual: data.unitsUsual || 0,
+                    soldWeight: data.soldWeight || 0,
+                    soldUnitsFull: data.soldUnitsFull || 0,
+                    soldUnitsUsual: data.soldUnitsUsual || 0,
+                    personalUseWeight: data.personalUseWeight || 0,
+                    personalUseOwed: data.personalUseOwed || 0,
+                    collected: data.collected || 0,
+                    expected: data.expected || 0
+                };
+            }
+            const collected = products.soft.collected + products.hard.collected;
+            const expected = products.soft.expected + products.hard.expected;
+            return {
+                ...data,
+                products,
+                weight: products[currentStaffProduct].rawWeight,
+                unitsFull: products[currentStaffProduct].unitsFull,
+                unitsUsual: products[currentStaffProduct].unitsUsual,
+                soldWeight: products.soft.soldWeight + products.hard.soldWeight,
+                soldUnitsFull: products.soft.soldUnitsFull + products.hard.soldUnitsFull,
+                soldUnitsUsual: products.soft.soldUnitsUsual + products.hard.soldUnitsUsual,
+                personalUseWeight: products.soft.personalUseWeight + products.hard.personalUseWeight,
+                personalUseOwed: products.soft.personalUseOwed + products.hard.personalUseOwed,
+                collected,
+                expected
+            };
+        }
+
+        function normalizeMasterState(data) {
+            const products = ensureProducts(data.products, defaultMasterProductConfig);
+            if (!data.products) {
+                products.soft = {
+                    ...products.soft,
+                    rawWeight: data.rawWeight || 0,
+                    unitsFull: data.unitsFull || 0,
+                    unitsUsual: data.unitsUsual || 0,
+                    pricePerUnit: data.pricePerUnit || 100,
+                    usualRatio: data.usualRatio || 0.8
+                };
+            }
+            return {
+                ...data,
+                products,
+                rawWeight: products[currentAdminProduct].rawWeight,
+                unitsFull: products[currentAdminProduct].unitsFull,
+                unitsUsual: products[currentAdminProduct].unitsUsual,
+                pricePerUnit: products[currentAdminProduct].pricePerUnit,
+                usualRatio: products[currentAdminProduct].usualRatio
+            };
+        }
+
+        function getRosterEntry(uid = currentUser?.uid) {
+            return globalRoster.find((user) => user.id === uid) || {};
+        }
+
+        function getProductPrice(product, type, uid = currentUser?.uid) {
+            const rosterEntry = getRosterEntry(uid);
+            const customPricing = (((rosterEntry || {}).customPricing || {})[product] || {});
+            const productData = (((masterData || {}).products || {})[product]) || defaultMasterProductConfig();
+            if (type === 'full') return customPricing.full ?? productData.pricePerUnit ?? 0;
+            return customPricing.usual ?? ((productData.pricePerUnit || 0) * (productData.usualRatio || 0.8));
+        }
+
+        function getActiveStaffProductState() {
+            appData.products = ensureProducts(appData.products, defaultProductState);
+            return appData.products[currentStaffProduct];
+        }
+
+        function getActiveAdminProductState() {
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            return masterData.products[currentAdminProduct];
         }
 
         function loadLocalJSON(key, fallback) {
@@ -1530,6 +1696,40 @@
             document.getElementById(`stf-tab-${tab}`).classList.add('is-active');
         };
 
+        window.setStaffProduct = (product) => {
+            currentStaffProduct = product;
+            document.getElementById('staff-product-label').innerText = product === 'soft' ? 'Soft' : 'Hard';
+            document.getElementById('staff-product-soft').classList.toggle('bg-blue-500/20', product === 'soft');
+            document.getElementById('staff-product-soft').classList.toggle('border-blue-400/40', product === 'soft');
+            document.getElementById('staff-product-hard').classList.toggle('bg-blue-500/20', product === 'hard');
+            document.getElementById('staff-product-hard').classList.toggle('border-blue-400/40', product === 'hard');
+            document.getElementById('staff-sale-soft').classList.toggle('ring-2', product === 'soft');
+            document.getElementById('staff-sale-hard').classList.toggle('ring-2', product === 'hard');
+            updateMasterLabels();
+            renderStaffUI();
+        };
+
+        window.setAdminProduct = (product) => {
+            currentAdminProduct = product;
+            const label = product === 'soft' ? 'Soft' : 'Hard';
+            const productInput = document.getElementById('process-product');
+            if (productInput) productInput.value = product;
+            document.getElementById('admin-product-label').innerText = label;
+            document.getElementById('admin-product-soft').classList.toggle('bg-blue-500/20', product === 'soft');
+            document.getElementById('admin-product-hard').classList.toggle('bg-blue-500/20', product === 'hard');
+            document.getElementById('adm-sale-soft').classList.toggle('ring-2', product === 'soft');
+            document.getElementById('adm-sale-hard').classList.toggle('ring-2', product === 'hard');
+            updateMasterLabels();
+            if (typeof window.admUpdateMasterLabels === 'function') window.admUpdateMasterLabels();
+        };
+
+        window.setTransferProduct = (product) => {
+            currentTransferProduct = product;
+            document.getElementById('transfer-product-soft').classList.toggle('ring-2', product === 'soft');
+            document.getElementById('transfer-product-hard').classList.toggle('ring-2', product === 'hard');
+            window.updateTransferPreview();
+        };
+
         window.updateStaffGlobalStats = () => {
             let totalCol = 0;
             globalRoster.forEach(u => { 
@@ -1598,7 +1798,7 @@
                     const repoPath = '/firebase-messaging-sw.js'; 
                     const registration = await navigator.serviceWorker.register(repoPath);
                     const currentToken = await getToken(messaging, { 
-                        vapidKey: 'PASTE_YOUR_VAPID_KEY_FROM_PHASE_1_HERE', 
+                        vapidKey: 'BGXHvTieu13FAj7cONvGtt5vB-PIBjyzJoZmSrSXT23Rk8t4DZaPJR7AYGBJVfSrisEEJN44B7DFyTPSTEr1tKs', 
                         serviceWorkerRegistration: registration 
                     });
                     if (currentToken) {
@@ -1692,12 +1892,17 @@
         };
 
         window.adminDirectEdit = async (field, label) => {
-            const current = masterData[field] || 0;
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const activeProduct = masterData.products[currentAdminProduct];
+            const current = ['rawWeight', 'unitsFull', 'unitsUsual', 'pricePerUnit', 'usualRatio'].includes(field) ? (activeProduct[field] || 0) : (masterData[field] || 0);
             const val = prompt(`Edit ${label}:\nCurrent value is ${current}. Enter new EXACT value:`, current);
             if (val !== null && val.trim() !== "") {
                 const num = parseFloat(val);
                 if (!isNaN(num) && num >= 0) {
-                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[field]: num}, {merge:true});
+                    const payload = ['rawWeight', 'unitsFull', 'unitsUsual', 'pricePerUnit', 'usualRatio'].includes(field)
+                        ? { products: { [currentAdminProduct]: { ...activeProduct, [field]: num } } }
+                        : { [field]: num };
+                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), payload, {merge:true});
                     window.showToast(`${label} updated to ${num}`);
                 } else {
                     window.showToast("Invalid number entered.");
@@ -1728,6 +1933,7 @@
             if(unsubMaster) unsubMaster(); 
             if(unsubAuthCheck) unsubAuthCheck(); 
             if(unsubAlerts) unsubAlerts();
+            if(unsubMessages) unsubMessages();
             
             document.getElementById('staff-app').classList.add('hidden'); 
             document.getElementById('admin-app').classList.add('hidden'); 
@@ -1754,6 +1960,7 @@
                     const data = snap.data() || {};
                     userRole = data.role || 'staff';
                     const status = data.status || 'pending';
+                    setupMessageListener(user, userRole);
                     
                     window.currentUserName = data.name || user.displayName || 'User';
                     const nameDisplay = document.getElementById('staff-name-display');
@@ -1794,13 +2001,13 @@
                 unsubMaster = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'inventory', 'master'), (s) => {
                     if(s.exists()) {
                         const dat = s.data();
-                        masterData = { 
+                        masterData = normalizeMasterState({ 
                             rawWeight: 0, unitsFull: 0, unitsUsual: 0, pricePerUnit: 100, usualRatio: 0.8, 
                             adminDiscount: dat.adminDiscount ?? dat.personalUseDiscount ?? 20, 
                             staffDiscount: dat.staffDiscount ?? dat.personalUseDiscount ?? 20, 
                             staffCommission: 0, totalExpenses: 0, cashBalance: 0, liabilities: [], 
                             financedClients: [], announcement: '', ...dat 
-                        };
+                        });
                         updateMasterLabels();
                         
                         // Handle Staff Announcement Banner
@@ -1841,6 +2048,7 @@
                         }
                     });
                 });
+
             } else { 
                 document.getElementById('loading-overlay').classList.add('hidden'); 
                 document.getElementById('login-modal').classList.remove('hidden'); 
@@ -1856,21 +2064,104 @@
             }); 
         };
 
+        function setupMessageListener(user, role) {
+            if (unsubMessages) unsubMessages();
+            const baseMessagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+            const messageRef = role === 'admin'
+                ? baseMessagesRef
+                : query(baseMessagesRef, where('participants', 'array-contains', user.uid));
+            unsubMessages = onSnapshot(messageRef, (snap) => {
+                messageFeed = [];
+                snap.forEach((docSnap) => messageFeed.push({ id: docSnap.id, ...docSnap.data() }));
+                messageFeed.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                if (typeof window.renderMessageUI === 'function') window.renderMessageUI();
+            });
+        }
+
+        window.sendAdminMessage = async (category = 'message') => {
+            if (!currentUser) return;
+            const input = document.getElementById('staff-admin-message');
+            const body = input.value.trim();
+            if (!body) return window.showToast("Enter a message first.");
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                fromUid: currentUser.uid,
+                fromName: window.currentUserName || 'Staff',
+                toUid: 'admin',
+                participants: [currentUser.uid, 'admin'],
+                body,
+                category,
+                timestamp: Date.now()
+            });
+            input.value = '';
+            window.showToast(category === 'note' ? "Note sent to admin." : "Message sent.");
+        };
+
+        window.replyToMessage = async () => {
+            if (!currentInboxTarget) return window.showToast("Select a message first.");
+            const reply = prompt(`Reply to ${currentInboxTarget.name}:`);
+            if (!reply || !reply.trim()) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                fromUid: currentUser.uid,
+                fromName: window.currentUserName || 'Admin',
+                toUid: currentInboxTarget.uid,
+                participants: [currentUser.uid, currentInboxTarget.uid],
+                body: reply.trim(),
+                category: 'reply',
+                timestamp: Date.now()
+            });
+            window.showToast("Reply sent.");
+        };
+
+        window.renderMessageUI = () => {
+            const staffList = document.getElementById('staff-message-list');
+            if (staffList) {
+                const staffMessages = messageFeed.filter((msg) => msg.toUid === 'admin' || msg.fromUid === 'admin').slice(0, 12);
+                staffList.innerHTML = staffMessages.length ? staffMessages.map((msg) => `
+                    <div class="p-3 rounded-xl border ${msg.fromUid === 'admin' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-500' : 'text-gray-500'}">${msg.category}</span>
+                            <span class="text-[10px] text-gray-500">${new Date(msg.timestamp || Date.now()).toLocaleString()}</span>
+                        </div>
+                        <div class="text-sm font-bold ${msg.fromUid === 'admin' ? 'text-blue-300' : 'dark:text-white'}">${msg.fromName}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">${msg.body}</div>
+                    </div>`).join('') : '<div class="text-xs text-gray-400 italic">No admin messages yet.</div>';
+            }
+
+            const adminList = document.getElementById('admin-message-list');
+            if (adminList) {
+                adminList.innerHTML = messageFeed.length ? messageFeed.slice(0, 25).map((msg) => `
+                    <button onclick="window.selectInboxTarget('${msg.fromUid === currentUser?.uid ? msg.toUid : msg.fromUid}', '${(msg.fromUid === currentUser?.uid ? (getRosterEntry(msg.toUid)?.name || msg.toUid) : msg.fromName || 'User').replace(/'/g, "\\'")}')" class="w-full text-left p-3 rounded-xl border ${msg.category === 'note' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-500' : 'text-blue-500'}">${msg.category}</span>
+                            <span class="text-[10px] text-gray-500">${new Date(msg.timestamp || Date.now()).toLocaleString()}</span>
+                        </div>
+                        <div class="text-sm font-bold dark:text-white">${msg.fromName} <span class="text-[10px] text-gray-500">to ${msg.toUid === 'admin' ? 'Admin' : (getRosterEntry(msg.toUid)?.name || msg.toUid)}</span></div>
+                        <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">${msg.body}</div>
+                    </button>`).join('') : '<div class="text-xs text-gray-400 italic">No messages yet.</div>';
+            }
+        };
+
+        window.selectInboxTarget = (uid, name) => {
+            currentInboxTarget = { uid, name };
+            window.showToast(`Reply target set: ${name}`);
+        };
+
         function updateMasterLabels() {
+            const activeProduct = (((masterData || {}).products || {})[currentStaffProduct]) || defaultMasterProductConfig();
             const labelFull = document.getElementById('label-full-weight'); 
             const labelUsual = document.getElementById('label-usual-weight'); 
             const expHint = document.getElementById('expected-money-hint');
             
             if(labelFull) labelFull.innerText = `(${(currentQty * 1.0).toFixed(1)} units)`; 
-            if(labelUsual) labelUsual.innerText = `(${(currentQty * masterData.usualRatio).toFixed(1)} units)`;
+            if(labelUsual) labelUsual.innerText = `(${(currentQty * activeProduct.usualRatio).toFixed(1)} units)`;
             
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = getProductPrice(currentStaffProduct, currentType);
             if(expHint) expHint.innerText = `Expected: $${currentQty * unitPrice}`;
 
             const btnUsual = document.getElementById('btn-quick-usual'); 
             const btnFull = document.getElementById('btn-quick-full');
-            if(btnUsual) btnUsual.innerText = `$${masterData.pricePerUnit * masterData.usualRatio} (Usual)`; 
-            if(btnFull) btnFull.innerText = `$${masterData.pricePerUnit} (Full)`;
+            if(btnUsual) btnUsual.innerText = `$${getProductPrice(currentStaffProduct, 'usual')} (Usual)`; 
+            if(btnFull) btnFull.innerText = `$${getProductPrice(currentStaffProduct, 'full')} (Full)`;
 
             const wRaw = document.getElementById('admin-master-weight'); 
             const pDisp = document.getElementById('admin-price-display'); 
@@ -1882,9 +2173,10 @@
             const uFull = document.getElementById('admin-stock-full'); 
             const uUsual = document.getElementById('admin-stock-usual');
             
-            const rawW = masterData.rawWeight || 0; 
-            const price = masterData.pricePerUnit || 0; 
-            const ratio = masterData.usualRatio || 1; 
+            const adminProduct = (((masterData || {}).products || {})[currentAdminProduct]) || defaultMasterProductConfig();
+            const rawW = adminProduct.rawWeight || 0; 
+            const price = adminProduct.pricePerUnit || 0; 
+            const ratio = adminProduct.usualRatio || 1; 
             const expenses = masterData.totalExpenses || 0;
             
             if(wRaw) wRaw.innerText = rawW.toFixed(1); 
@@ -1894,12 +2186,12 @@
             if(staffDiscDisp) staffDiscDisp.innerText = `${masterData.staffDiscount}% Off`; 
             if(commDisp) commDisp.innerText = `${masterData.staffCommission}%`; 
             if(expDisp) expDisp.innerText = `-$${expenses}`;
-            if(uFull) uFull.innerText = masterData.unitsFull || 0; 
-            if(uUsual) uUsual.innerText = masterData.unitsUsual || 0;
+            if(uFull) uFull.innerText = adminProduct.unitsFull || 0; 
+            if(uUsual) uUsual.innerText = adminProduct.unitsUsual || 0;
 
             const masterEqWeight = document.getElementById('admin-master-eq-weight');
             if (masterEqWeight) { 
-                const totalEq = rawW + ((masterData.unitsFull || 0) * 1.0) + ((masterData.unitsUsual || 0) * ratio); 
+                const totalEq = rawW + ((adminProduct.unitsFull || 0) * 1.0) + ((adminProduct.unitsUsual || 0) * ratio); 
                 masterEqWeight.innerText = `${totalEq.toFixed(1)} u`; 
             }
         }
@@ -1909,15 +2201,16 @@
         // ---------------------------------------------------------
         function initStaffApp(user) {
             document.getElementById('staff-app').classList.remove('hidden');
+            window.setStaffProduct(currentStaffProduct);
             flushOfflineSales().catch(console.error);
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
                     const d = JSON.parse(snap.data().json);
-                    appData = { 
+                    appData = normalizeAppState({ 
                         weight: 0, unitsFull: 0, unitsUsual: 0, soldWeight: 0, soldUnitsFull: 0, soldUnitsUsual: 0, 
                         personalUseWeight: 0, personalUseOwed: 0, collected: 0, expected: 0, expenses: 0, 
                         borrowings: 0, cashDropped: 0, transactions: [], notes: '', ...d 
-                    };
+                    });
                     document.getElementById('staff-notes-input').value = appData.notes || '';
                     renderStaffUI(); 
                 } else { 
@@ -1927,9 +2220,10 @@
         }
 
         function renderStaffUI() {
-            document.getElementById('staff-stock').innerText = (appData.weight || 0).toFixed(1);
-            document.getElementById('staff-stock-full').innerText = (appData.unitsFull || 0);
-            document.getElementById('staff-stock-usual').innerText = (appData.unitsUsual || 0);
+            const activeProduct = getActiveStaffProductState();
+            document.getElementById('staff-stock').innerText = (activeProduct.rawWeight || 0).toFixed(1);
+            document.getElementById('staff-stock-full').innerText = (activeProduct.unitsFull || 0);
+            document.getElementById('staff-stock-usual').innerText = (activeProduct.unitsUsual || 0);
             document.getElementById('staff-stat-money').innerText = '$' + (appData.collected || 0);
             document.getElementById('staff-stat-expenses').innerText = '-$' + (appData.expenses || 0);
 
@@ -2072,24 +2366,27 @@
         async function saveStaffData() { 
             if(!currentUser) return; 
             saveInventoryCache();
+            const soft = appData.products?.soft || defaultProductState();
+            const hard = appData.products?.hard || defaultProductState();
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'app_state'), { 
                 json: JSON.stringify(appData), 
                 lastUpdated: Date.now() 
             }); 
             try { 
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roster', currentUser.uid), { 
-                    weight: appData.weight, 
-                    unitsFull: appData.unitsFull || 0, 
-                    unitsUsual: appData.unitsUsual || 0, 
-                    soldWeight: appData.soldWeight, 
-                    soldUnitsFull: appData.soldUnitsFull || 0, 
-                    soldUnitsUsual: appData.soldUnitsUsual || 0, 
-                    personalUseWeight: appData.personalUseWeight || 0, 
-                    personalUseOwed: appData.personalUseOwed || 0, 
+                    products: appData.products,
+                    weight: (soft.rawWeight || 0) + (hard.rawWeight || 0), 
+                    unitsFull: (soft.unitsFull || 0) + (hard.unitsFull || 0), 
+                    unitsUsual: (soft.unitsUsual || 0) + (hard.unitsUsual || 0), 
+                    soldWeight: (soft.soldWeight || 0) + (hard.soldWeight || 0), 
+                    soldUnitsFull: (soft.soldUnitsFull || 0) + (hard.soldUnitsFull || 0), 
+                    soldUnitsUsual: (soft.soldUnitsUsual || 0) + (hard.soldUnitsUsual || 0), 
+                    personalUseWeight: (soft.personalUseWeight || 0) + (hard.personalUseWeight || 0), 
+                    personalUseOwed: (soft.personalUseOwed || 0) + (hard.personalUseOwed || 0), 
                     borrowings: appData.borrowings || 0, 
                     cashDropped: appData.cashDropped || 0, 
-                    collected: appData.collected, 
-                    expected: appData.expected, 
+                    collected: (soft.collected || 0) + (hard.collected || 0), 
+                    expected: (soft.expected || 0) + (hard.expected || 0), 
                     expenses: appData.expenses || 0, 
                     recentLogs: appData.transactions.slice(-10).reverse(), 
                     lastSync: Date.now() 
@@ -2101,6 +2398,8 @@
             const input = document.getElementById('money-input');
             const val = parseFloat(input.value) || 0;
             const perUnit = val / currentQty;
+            const usualPrice = getProductPrice(currentStaffProduct, 'usual');
+            const fullPrice = getProductPrice(currentStaffProduct, 'full');
             input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500', 'text-gray-800');
             if (val === 0) { 
                 input.classList.add('dark:text-white', 'text-gray-800'); 
@@ -2108,12 +2407,11 @@
                 return; 
             }
             if (currentType === 'usual') {
-                const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
                 if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500');
-                else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500');
+                else if (perUnit < fullPrice) input.classList.add('text-orange-500', 'dark:text-orange-500');
                 else input.classList.add('text-green-500', 'dark:text-green-500');
             } else {
-                if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500');
+                if (perUnit < fullPrice) input.classList.add('text-red-500', 'dark:text-red-500');
                 else input.classList.add('text-green-500', 'dark:text-green-500');
             }
             updateShortState();
@@ -2147,7 +2445,7 @@
             const diffLabel = document.getElementById('staff-short-diff');
             if (!input || !noteWrap || !note || !diffLabel) return { expectedMoney: 0, shortAmount: 0, isShort: false };
             const money = parseFloat(input.value) || 0;
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = getProductPrice(currentStaffProduct, currentType);
             const expectedMoney = currentQty * unitPrice;
             const shortAmount = Number((expectedMoney - money).toFixed(2));
             const isShort = money > 0 && shortAmount > 0;
@@ -2174,6 +2472,7 @@
                 return null;
             }
             return {
+                product: currentStaffProduct,
                 source,
                 money,
                 qty: currentQty,
@@ -2186,30 +2485,35 @@
 
         async function commitStaffSale(payload, options = {}) {
             const { isReplay = false } = options;
+            appData.products = ensureProducts(appData.products, defaultProductState);
+            const productState = appData.products[payload.product || currentStaffProduct];
+            const productConfig = (((masterData || {}).products || {})[payload.product || currentStaffProduct]) || defaultMasterProductConfig();
             let actualWeightDeducted = 0;
             if (payload.source === 'raw') {
-                actualWeightDeducted = payload.type === 'full' ? payload.qty * 1.0 : payload.qty * masterData.usualRatio;
-                if (appData.weight < actualWeightDeducted) throw new Error(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
-                appData.weight -= actualWeightDeducted;
+                actualWeightDeducted = payload.type === 'full' ? payload.qty * 1.0 : payload.qty * productConfig.usualRatio;
+                if (productState.rawWeight < actualWeightDeducted) throw new Error(`Not enough raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
+                productState.rawWeight -= actualWeightDeducted;
             } else if (payload.source === 'processed' && payload.type === 'full') {
-                if (appData.unitsFull < payload.qty) throw new Error("Not enough Full Pre-Packs!");
-                appData.unitsFull -= payload.qty;
+                if (productState.unitsFull < payload.qty) throw new Error("Not enough Full Pre-Packs!");
+                productState.unitsFull -= payload.qty;
                 actualWeightDeducted = payload.qty * 1.0;
             } else if (payload.source === 'processed' && payload.type === 'usual') {
-                if (appData.unitsUsual < payload.qty) throw new Error("Not enough Usual Pre-Packs!");
-                appData.unitsUsual -= payload.qty;
-                actualWeightDeducted = payload.qty * masterData.usualRatio;
+                if (productState.unitsUsual < payload.qty) throw new Error("Not enough Usual Pre-Packs!");
+                productState.unitsUsual -= payload.qty;
+                actualWeightDeducted = payload.qty * productConfig.usualRatio;
             }
 
-            if (payload.source === 'raw') appData.soldWeight += actualWeightDeducted;
-            else if (payload.source === 'processed' && payload.type === 'full') appData.soldUnitsFull += payload.qty;
-            else if (payload.source === 'processed' && payload.type === 'usual') appData.soldUnitsUsual += payload.qty;
+            if (payload.source === 'raw') productState.soldWeight += actualWeightDeducted;
+            else if (payload.source === 'processed' && payload.type === 'full') productState.soldUnitsFull += payload.qty;
+            else if (payload.source === 'processed' && payload.type === 'usual') productState.soldUnitsUsual += payload.qty;
 
-            appData.collected += payload.money;
-            appData.expected += payload.expectedMoney;
+            productState.collected += payload.money;
+            productState.expected += payload.expectedMoney;
+            appData = normalizeAppState(appData);
             appData.transactions.push({
                 id: payload.createdAt || Date.now(),
                 time: new Date(payload.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                product: payload.product || currentStaffProduct,
                 source: payload.source,
                 qty: payload.qty,
                 type: payload.type,
@@ -2254,37 +2558,41 @@
 
         window.staffPersonalUse = async () => {
             const source = document.getElementById('staff-sale-source').value;
-            const unitPrice = currentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const productState = getActiveStaffProductState();
+            const productConfig = (((masterData || {}).products || {})[currentStaffProduct]) || defaultMasterProductConfig();
+            const unitPrice = getProductPrice(currentStaffProduct, currentType);
             
-            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.staffDiscount}% discount.`)) return;
+            if(!confirm(`Log Personal Use for ${currentQty} ${currentType.toUpperCase()} units of ${currentStaffProduct.toUpperCase()} from ${source.toUpperCase()} inventory?\n\nYou will be charged the standard price at a ${masterData.staffDiscount}% discount.`)) return;
 
             let actualWeightDeducted = 0; 
             let standardCost = currentQty * unitPrice;
 
             if (source === 'raw') {
-                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * masterData.usualRatio;
-                if(appData.weight < actualWeightDeducted) return window.showToast("Not enough raw weight!");
-                appData.weight -= actualWeightDeducted;
+                actualWeightDeducted = currentType === 'full' ? currentQty * 1.0 : currentQty * productConfig.usualRatio;
+                if(productState.rawWeight < actualWeightDeducted) return window.showToast("Not enough raw weight!");
+                productState.rawWeight -= actualWeightDeducted;
             } else if (source === 'processed' && currentType === 'full') {
-                if(appData.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
-                appData.unitsFull -= currentQty; 
+                if(productState.unitsFull < currentQty) return window.showToast("Not enough Full Pre-Packs!");
+                productState.unitsFull -= currentQty; 
                 actualWeightDeducted = currentQty * 1.0;
             } else if (source === 'processed' && currentType === 'usual') {
-                if(appData.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
-                appData.unitsUsual -= currentQty; 
-                actualWeightDeducted = currentQty * masterData.usualRatio;
+                if(productState.unitsUsual < currentQty) return window.showToast("Not enough Usual Pre-Packs!");
+                productState.unitsUsual -= currentQty; 
+                actualWeightDeducted = currentQty * productConfig.usualRatio;
             }
 
             const discountMultiplier = 1 - (masterData.staffDiscount / 100);
             const discountedDebt = standardCost * discountMultiplier;
             
-            appData.personalUseWeight = (appData.personalUseWeight || 0) + actualWeightDeducted;
-            appData.expected += discountedDebt; 
-            appData.personalUseOwed = (appData.personalUseOwed || 0) + discountedDebt;
+            productState.personalUseWeight = (productState.personalUseWeight || 0) + actualWeightDeducted;
+            productState.expected += discountedDebt; 
+            productState.personalUseOwed = (productState.personalUseOwed || 0) + discountedDebt;
+            appData = normalizeAppState(appData);
             
             appData.transactions.push({ 
                 id: Date.now(), 
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                product: currentStaffProduct,
                 source: source, 
                 qty: currentQty, 
                 type: 'personal', 
@@ -2344,6 +2652,9 @@
             if(!skipConfirm && !confirm("Are you SURE you want to completely VOID your last entry? This will reverse the math perfectly.")) return;
             
             const t = appData.transactions.pop();
+            appData.products = ensureProducts(appData.products, defaultProductState);
+            const productKey = t.product || 'soft';
+            const productState = appData.products[productKey];
             if(t.type === 'expense') { 
                 appData.expenses -= Math.abs(t.money); 
             } else if (t.type === 'dropoff') { 
@@ -2352,26 +2663,26 @@
                 appData.borrowings -= t.expected; 
                 appData.expected -= t.expected; 
             } else if (t.type === 'personal') {
-                appData.personalUseWeight -= t.actualWeight; 
-                appData.expected -= t.expected; 
-                appData.personalUseOwed -= t.expected;
+                productState.personalUseWeight -= t.actualWeight; 
+                productState.expected -= t.expected; 
+                productState.personalUseOwed -= t.expected;
                 
-                if (t.source === 'raw') appData.weight += t.actualWeight;
-                else if (t.source === 'processed' && t.actualWeight === t.qty * 1.0) appData.unitsFull += t.qty;
-                else if (t.source === 'processed' && t.actualWeight !== t.qty * 1.0) appData.unitsUsual += t.qty;
+                if (t.source === 'raw') productState.rawWeight += t.actualWeight;
+                else if (t.source === 'processed' && t.actualWeight === t.qty * 1.0) productState.unitsFull += t.qty;
+                else if (t.source === 'processed' && t.actualWeight !== t.qty * 1.0) productState.unitsUsual += t.qty;
             } else {
-                appData.collected -= t.money; 
-                appData.expected -= t.expected;
+                productState.collected -= t.money; 
+                productState.expected -= t.expected;
                 
                 if (t.source === 'raw') { 
-                    appData.weight += t.actualWeight; 
-                    appData.soldWeight -= t.actualWeight; 
+                    productState.rawWeight += t.actualWeight; 
+                    productState.soldWeight -= t.actualWeight; 
                 } else if (t.source === 'processed' && t.type === 'full') { 
-                    appData.unitsFull += t.qty; 
-                    appData.soldUnitsFull -= t.qty; 
+                    productState.unitsFull += t.qty; 
+                    productState.soldUnitsFull -= t.qty; 
                 } else if (t.source === 'processed' && t.type === 'usual') { 
-                    appData.unitsUsual += t.qty; 
-                    appData.soldUnitsUsual -= t.qty; 
+                    productState.unitsUsual += t.qty; 
+                    productState.soldUnitsUsual -= t.qty; 
                 }
                 
                 // Reverse Master Vault Cash Increment
@@ -2379,6 +2690,7 @@
                     cashBalance: increment(-t.money) 
                 }, {merge:true});
             }
+            appData = normalizeAppState(appData);
             await saveStaffData(); 
             window.showToast("Last transaction successfully voided.");
         };
@@ -2477,6 +2789,8 @@
 
         function initAdminDashboard(user) {
             document.getElementById('admin-app').classList.remove('hidden');
+            window.setAdminProduct(currentAdminProduct);
+            window.setTransferProduct(currentTransferProduct);
             
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
                 if(snap.exists()) { 
@@ -2583,13 +2897,18 @@
                 document.getElementById('admin-total-expected').innerText = `$${totExp.toFixed(2)}`; 
                 document.getElementById('admin-total-collected').innerText = `$${totCol.toFixed(2)}`;
                 
-                document.getElementById('global-stock-raw').innerText = ((masterData.rawWeight || 0) + globalRaw).toFixed(1); 
-                document.getElementById('global-stock-full').innerText = ((masterData.unitsFull || 0) + globalFull); 
-                document.getElementById('global-stock-usual').innerText = ((masterData.unitsUsual || 0) + globalUsual);
+                const softMaster = (((masterData || {}).products || {}).soft) || defaultMasterProductConfig();
+                const hardMaster = (((masterData || {}).products || {}).hard) || defaultMasterProductConfig();
+                const masterRawTotal = (softMaster.rawWeight || 0) + (hardMaster.rawWeight || 0);
+                const masterFullTotal = (softMaster.unitsFull || 0) + (hardMaster.unitsFull || 0);
+                const masterUsualTotal = (softMaster.unitsUsual || 0) + (hardMaster.unitsUsual || 0);
+                document.getElementById('global-stock-raw').innerText = (masterRawTotal + globalRaw).toFixed(1); 
+                document.getElementById('global-stock-full').innerText = (masterFullTotal + globalFull); 
+                document.getElementById('global-stock-usual').innerText = (masterUsualTotal + globalUsual);
                 
                 const globalEqEl = document.getElementById('global-eq-weight');
                 if (globalEqEl) { 
-                    const globalEq = ((masterData.rawWeight || 0) + globalRaw) + (((masterData.unitsFull || 0) + globalFull) * 1.0) + (((masterData.unitsUsual || 0) + globalUsual) * masterData.usualRatio); 
+                    const globalEq = (masterRawTotal + globalRaw) + ((masterFullTotal + globalFull) * 1.0) + (((softMaster.unitsUsual || 0) * (softMaster.usualRatio || 0.8)) + ((hardMaster.unitsUsual || 0) * (hardMaster.usualRatio || 0.8)) + globalUsual); 
                     globalEqEl.innerText = `${globalEq.toFixed(1)} u`; 
                 }
 
@@ -3010,13 +3329,15 @@
         };
 
         window.saveInventoryAdjustment = async () => {
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const activeProduct = masterData.products[currentAdminProduct];
             const type = document.getElementById('adj-item-type').value; 
             const action = document.getElementById('adj-action').value; 
             const amt = parseFloat(document.getElementById('adj-amt').value);
             
             if(isNaN(amt) || amt < 0) return window.showToast("Please enter a valid amount.");
             
-            let newVal = masterData[type] || 0;
+            let newVal = activeProduct[type] || 0;
             if (action === 'add') {
                 newVal += amt; 
             } else if (action === 'remove') { 
@@ -3026,23 +3347,25 @@
                 newVal = amt;
             }
             
-            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), {[type]: newVal}, {merge:true});
+            await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), { products: { [currentAdminProduct]: { ...activeProduct, [type]: newVal } } }, {merge:true});
             document.getElementById('admin-adjust-modal').classList.add('hidden'); 
             document.getElementById('adj-amt').value = ''; 
             window.showToast("Inventory Adjusted Successfully");
         };
 
         window.adminPurchaseStock = async (weight, cost) => {
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const activeProduct = masterData.products[currentAdminProduct];
             if (weight === 'custom') {
                 weight = parseFloat(prompt("Enter custom weight amount (units):")); 
                 if (isNaN(weight) || weight <= 0) return;
                 cost = parseFloat(prompt("Enter total cost of purchase ($):")); 
                 if (isNaN(cost) || cost < 0) return;
             }
-            if(!confirm(`Confirm Purchase: Add ${weight} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
+            if(!confirm(`Confirm Purchase: Add ${weight} ${currentAdminProduct} units for $${cost}?\n\nThis will deduct $${cost} from your Master Cash Balance.`)) return;
             
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{ 
-                rawWeight: increment(weight), 
+                products: { [currentAdminProduct]: { ...activeProduct, rawWeight: (activeProduct.rawWeight || 0) + weight } },
                 totalExpenses: increment(cost), 
                 cashBalance: increment(-cost) 
             }, {merge:true});
@@ -3050,40 +3373,61 @@
         };
 
         window.adminSetVariable = async (field, label) => { 
-            const v = prompt(`Set ${label}:`, masterData[field]); 
+            const activeProduct = (((masterData || {}).products || {})[currentAdminProduct]) || defaultMasterProductConfig();
+            const current = ['pricePerUnit', 'usualRatio'].includes(field) ? activeProduct[field] : masterData[field];
+            const v = prompt(`Set ${label}:`, current); 
             if(v && !isNaN(v)) {
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true}); 
+                if (['pricePerUnit', 'usualRatio'].includes(field)) {
+                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{ products: { [currentAdminProduct]: { ...activeProduct, [field]: parseFloat(v) } } },{merge:true}); 
+                } else {
+                    await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[field]: parseFloat(v)},{merge:true}); 
+                }
             }
         };
         
         window.adminProcessUnits = async () => {
             vibrateFeedback();
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
             const type = document.getElementById('process-type').value; 
             const qty = parseInt(document.getElementById('process-qty').value);
             if(isNaN(qty) || qty <= 0) return window.showToast("Enter valid quantity");
             
-            const totalW = qty * (type === 'full' ? 1.0 : masterData.usualRatio);
-            if(masterData.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
+            const activeProduct = masterData.products[currentAdminProduct];
+            const totalW = qty * (type === 'full' ? 1.0 : activeProduct.usualRatio);
+            if(activeProduct.rawWeight < totalW) return window.showToast("Not enough raw weight in vault!");
             
-            const updateData = { rawWeight: increment(-totalW) }; 
-            if (type === 'full') updateData.unitsFull = increment(qty); 
-            else updateData.unitsUsual = increment(qty);
+            const updateData = {
+                products: {
+                    [currentAdminProduct]: {
+                        rawWeight: activeProduct.rawWeight - totalW,
+                        unitsFull: activeProduct.unitsFull + (type === 'full' ? qty : 0),
+                        unitsUsual: activeProduct.unitsUsual + (type === 'usual' ? qty : 0),
+                        pricePerUnit: activeProduct.pricePerUnit,
+                        usualRatio: activeProduct.usualRatio
+                    }
+                }
+            };
             
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateData, {merge:true});
             document.getElementById('process-qty').value = ''; 
-            window.showToast(`Processed ${qty} ${type} units.`);
+            window.showToast(`Processed ${qty} ${type} ${currentAdminProduct} units.`);
         };
 
         window.admUpdateMasterLabels = () => {
+            const activeProduct = (((masterData || {}).products || {})[currentAdminProduct]) || defaultMasterProductConfig();
             const labelFull = document.getElementById('adm-label-full-weight'); 
             const labelUsual = document.getElementById('adm-label-usual-weight'); 
             const expHint = document.getElementById('adm-expected-money-hint');
+            const quickUsual = document.getElementById('adm-btn-quick-usual');
+            const quickFull = document.getElementById('adm-btn-quick-full');
             
             if(labelFull) labelFull.innerText = `(${(admCurrentQty * 1.0).toFixed(1)} units)`; 
-            if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * masterData.usualRatio).toFixed(1)} units)`;
+            if(labelUsual) labelUsual.innerText = `(${(admCurrentQty * activeProduct.usualRatio).toFixed(1)} units)`;
             
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio); 
+            const unitPrice = admCurrentType === 'full' ? activeProduct.pricePerUnit : (activeProduct.pricePerUnit * activeProduct.usualRatio); 
             if(expHint) expHint.innerText = `Expected: $${admCurrentQty * unitPrice}`;
+            if(quickUsual) quickUsual.innerText = `$${activeProduct.pricePerUnit * activeProduct.usualRatio} (Usual)`;
+            if(quickFull) quickFull.innerText = `$${activeProduct.pricePerUnit} (Full)`;
         };
 
         window.admSelectQty = (q) => { 
@@ -3106,6 +3450,7 @@
             const input = document.getElementById('adm-money-input'); 
             const val = parseFloat(input.value) || 0; 
             const perUnit = val / admCurrentQty;
+            const activeProduct = (((masterData || {}).products || {})[currentAdminProduct]) || defaultMasterProductConfig();
             input.classList.remove('text-gray-400', 'text-red-500', 'text-orange-500', 'text-green-500', 'dark:text-white', 'dark:text-red-500', 'dark:text-orange-500', 'dark:text-green-500');
             
             if (val === 0) { 
@@ -3113,12 +3458,12 @@
                 return; 
             }
             if (admCurrentType === 'usual') {
-                const usualPrice = masterData.pricePerUnit * masterData.usualRatio;
+                const usualPrice = activeProduct.pricePerUnit * activeProduct.usualRatio;
                 if (perUnit < usualPrice) input.classList.add('text-red-500', 'dark:text-red-500'); 
-                else if (perUnit < masterData.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500'); 
+                else if (perUnit < activeProduct.pricePerUnit) input.classList.add('text-orange-500', 'dark:text-orange-500'); 
                 else input.classList.add('text-green-500', 'dark:text-green-500');
             } else { 
-                if (perUnit < masterData.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500'); 
+                if (perUnit < activeProduct.pricePerUnit) input.classList.add('text-red-500', 'dark:text-red-500'); 
                 else input.classList.add('text-green-500', 'dark:text-green-500'); 
             }
         };
@@ -3135,23 +3480,30 @@
             const money = parseFloat(moneyInput.value);
             if(isNaN(money) || money < 0) return window.showToast("Enter valid money received");
             
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const activeProduct = masterData.products[currentAdminProduct];
             let actualWeightDeducted = 0; 
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
+            const unitPrice = admCurrentType === 'full' ? activeProduct.pricePerUnit : (activeProduct.pricePerUnit * activeProduct.usualRatio);
             const updateMaster = {};
             
             if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if(masterData.rawWeight < actualWeightDeducted) return window.showToast(`Not enough Master Raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
-                updateMaster.rawWeight = increment(-actualWeightDeducted);
+                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * activeProduct.usualRatio;
+                if(activeProduct.rawWeight < actualWeightDeducted) return window.showToast(`Not enough Master Raw weight! Need ${actualWeightDeducted.toFixed(1)}`);
             } else if (source === 'processed' && admCurrentType === 'full') {
-                if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master Vault!");
-                updateMaster.unitsFull = increment(-admCurrentQty); 
+                if(activeProduct.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master Vault!");
                 actualWeightDeducted = admCurrentQty * 1.0;
             } else if (source === 'processed' && admCurrentType === 'usual') {
-                if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master Vault!");
-                updateMaster.unitsUsual = increment(-admCurrentQty); 
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
+                if(activeProduct.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master Vault!");
+                actualWeightDeducted = admCurrentQty * activeProduct.usualRatio;
             }
+            const nextProduct = {
+                rawWeight: activeProduct.rawWeight - (source === 'raw' ? actualWeightDeducted : 0),
+                unitsFull: activeProduct.unitsFull - (source === 'processed' && admCurrentType === 'full' ? admCurrentQty : 0),
+                unitsUsual: activeProduct.unitsUsual - (source === 'processed' && admCurrentType === 'usual' ? admCurrentQty : 0),
+                pricePerUnit: activeProduct.pricePerUnit,
+                usualRatio: activeProduct.usualRatio
+            };
+            updateMaster.products = { [currentAdminProduct]: nextProduct };
             updateMaster.cashBalance = increment(money);
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
 
@@ -3165,6 +3517,7 @@
             adminData.transactions.push({ 
                 id: Date.now(), 
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                product: currentAdminProduct,
                 source: source, 
                 qty: admCurrentQty, 
                 type: admCurrentType, 
@@ -3180,26 +3533,34 @@
 
         window.adminPersonalUseUnified = async () => {
             const source = document.getElementById('adm-sale-source').value; 
-            const unitPrice = admCurrentType === 'full' ? masterData.pricePerUnit : (masterData.pricePerUnit * masterData.usualRatio);
-            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const activeProduct = masterData.products[currentAdminProduct];
+            const unitPrice = admCurrentType === 'full' ? activeProduct.pricePerUnit : (activeProduct.pricePerUnit * activeProduct.usualRatio);
+            if(!confirm(`Log Personal Use for ${admCurrentQty} ${admCurrentType.toUpperCase()} ${currentAdminProduct.toUpperCase()} units from Master ${source.toUpperCase()} inventory?\n\nYou will be charged standard price at ${masterData.adminDiscount}% discount.`)) return;
             
             let actualWeightDeducted = 0; 
             let standardCost = admCurrentQty * unitPrice; 
             const updateMaster = {};
             
             if (source === 'raw') {
-                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * masterData.usualRatio;
-                if(masterData.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
-                updateMaster.rawWeight = increment(-actualWeightDeducted);
+                actualWeightDeducted = admCurrentType === 'full' ? admCurrentQty * 1.0 : admCurrentQty * activeProduct.usualRatio;
+                if(activeProduct.rawWeight < actualWeightDeducted) return window.showToast("Not enough Master Raw weight!");
             } else if (source === 'processed' && admCurrentType === 'full') {
-                if(masterData.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
-                updateMaster.unitsFull = increment(-admCurrentQty); 
+                if(activeProduct.unitsFull < admCurrentQty) return window.showToast("Not enough Full Pre-Packs in Master!");
                 actualWeightDeducted = admCurrentQty * 1.0;
             } else if (source === 'processed' && admCurrentType === 'usual') {
-                if(masterData.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
-                updateMaster.unitsUsual = increment(-admCurrentQty); 
-                actualWeightDeducted = admCurrentQty * masterData.usualRatio;
+                if(activeProduct.unitsUsual < admCurrentQty) return window.showToast("Not enough Usual Pre-Packs in Master!");
+                actualWeightDeducted = admCurrentQty * activeProduct.usualRatio;
             }
+            updateMaster.products = {
+                [currentAdminProduct]: {
+                    rawWeight: activeProduct.rawWeight - (source === 'raw' ? actualWeightDeducted : 0),
+                    unitsFull: activeProduct.unitsFull - (source === 'processed' && admCurrentType === 'full' ? admCurrentQty : 0),
+                    unitsUsual: activeProduct.unitsUsual - (source === 'processed' && admCurrentType === 'usual' ? admCurrentQty : 0),
+                    pricePerUnit: activeProduct.pricePerUnit,
+                    usualRatio: activeProduct.usualRatio
+                }
+            };
             await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'), updateMaster, {merge:true});
             
             const discountMultiplier = 1 - (masterData.adminDiscount / 100); 
@@ -3211,6 +3572,7 @@
             adminData.transactions.push({ 
                 id: Date.now(), 
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+                product: currentAdminProduct,
                 source: source, 
                 qty: admCurrentQty, 
                 type: 'personal', 
@@ -3251,13 +3613,14 @@
             const u = globalRoster.find(x => x.id === uid);
             
             if(u) { 
+                const productState = (((u || {}).products || {})[currentTransferProduct]) || defaultProductState();
                 const type = document.getElementById('transfer-item-type').value; 
                 let h = 0; 
                 let label = ""; 
-                if(type === 'raw') { h = u.weight||0; label = 'u'; } 
-                else if(type === 'full') { h = u.unitsFull||0; label = 'units'; } 
-                else if(type === 'usual') { h = u.unitsUsual||0; label = 'units'; } 
-                el.innerText = `Current Staff Holding: ${h.toFixed(1)} ${label}`; 
+                if(type === 'raw') { h = productState.rawWeight||0; label = 'u'; } 
+                else if(type === 'full') { h = productState.unitsFull||0; label = 'units'; } 
+                else if(type === 'usual') { h = productState.unitsUsual||0; label = 'units'; } 
+                el.innerText = `Current ${currentTransferProduct.toUpperCase()} holding: ${h.toFixed(1)} ${label}`; 
             } else { 
                 el.innerText = ''; 
             }
@@ -3272,29 +3635,32 @@
             
             const r = doc(db,'artifacts',appId,'users',uid,'data','app_state'); 
             const sn = await getDoc(r); 
-            let dat = sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, cashDropped: 0, transactions:[]}; 
+            let dat = normalizeAppState(sn.exists() ? JSON.parse(sn.data().json) : {weight:0, unitsFull:0, unitsUsual:0, soldWeight:0, personalUseWeight:0, personalUseOwed:0, collected:0, expected:0, expenses:0, borrowings: 0, cashDropped: 0, transactions:[]}); 
+            masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
+            const adminProduct = masterData.products[currentTransferProduct];
+            const staffProduct = dat.products[currentTransferProduct];
             
             let adminKey = type === 'raw' ? 'rawWeight' : (type === 'full' ? 'unitsFull' : 'unitsUsual'); 
-            let staffKey = type === 'raw' ? 'weight' : (type === 'full' ? 'unitsFull' : 'unitsUsual');
+            let staffKey = adminKey;
             
             if (action === 'send') {
-                if((masterData[adminKey] || 0) < amt) { 
-                    if(!confirm(`Warning: Master vault only has ${(masterData[adminKey]||0).toFixed(1)} of this item. Proceed anyway?`)) return; 
+                if((adminProduct[adminKey] || 0) < amt) { 
+                    if(!confirm(`Warning: Master vault only has ${(adminProduct[adminKey]||0).toFixed(1)} of this item. Proceed anyway?`)) return; 
                 }
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(-amt)},{merge:true}); 
-                dat[staffKey] = (dat[staffKey]||0) + amt;
-                window.showToast(`Sent ${amt} to staff.`); 
-                window.sendNotificationAlert(uid, `Admin sent you ${amt} units of inventory.`);
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{products:{[currentTransferProduct]:{...adminProduct,[adminKey]:(adminProduct[adminKey]||0)-amt}}},{merge:true}); 
+                staffProduct[staffKey] = (staffProduct[staffKey]||0) + amt;
+                window.showToast(`Sent ${amt} ${currentTransferProduct} to staff.`); 
+                window.sendNotificationAlert(uid, `Admin sent you ${amt} units of ${currentTransferProduct} inventory.`);
             } else if (action === 'reclaim') {
-                if((dat[staffKey] || 0) < amt) return window.showToast("Staff does not have that much inventory to reclaim!");
-                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{[adminKey]:increment(amt)},{merge:true}); 
-                dat[staffKey] = (dat[staffKey]||0) - amt;
-                window.showToast(`Reclaimed ${amt} from staff.`); 
-                window.sendNotificationAlert(uid, `Admin reclaimed ${amt} units of inventory.`);
+                if((staffProduct[staffKey] || 0) < amt) return window.showToast("Staff does not have that much inventory to reclaim!");
+                await setDoc(doc(db,'artifacts',appId,'public','data','inventory','master'),{products:{[currentTransferProduct]:{...adminProduct,[adminKey]:(adminProduct[adminKey]||0)+amt}}},{merge:true}); 
+                staffProduct[staffKey] = (staffProduct[staffKey]||0) - amt;
+                window.showToast(`Reclaimed ${amt} ${currentTransferProduct} from staff.`); 
+                window.sendNotificationAlert(uid, `Admin reclaimed ${amt} units of ${currentTransferProduct} inventory.`);
             }
             
             await setDoc(r, {json:JSON.stringify(dat), lastUpdated:Date.now()}); 
-            await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), { weight: dat.weight, unitsFull: dat.unitsFull, unitsUsual: dat.unitsUsual }, {merge:true}); 
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',uid), { products: dat.products, weight: (dat.products.soft.rawWeight||0)+(dat.products.hard.rawWeight||0), unitsFull: (dat.products.soft.unitsFull||0)+(dat.products.hard.unitsFull||0), unitsUsual: (dat.products.soft.unitsUsual||0)+(dat.products.hard.unitsUsual||0) }, {merge:true}); 
             document.getElementById('transfer-amount').value = ''; 
             window.updateTransferPreview();
         };
@@ -3341,6 +3707,35 @@
                 window.sendNotificationAlert(currentDetailUid, `Admin logged a $${amt} cash advance/debt to your account.`); 
                 window.viewDriverDetails(currentDetailUid);
             }
+        };
+
+        window.adminSetCustomPricing = async () => {
+            if (!currentDetailUid) return window.showToast("Open a staff member first.");
+            const rosterEntry = getRosterEntry(currentDetailUid);
+            const existing = rosterEntry.customPricing || {};
+            const softFull = prompt("Soft full-unit price override (blank to keep current):", existing.soft?.full ?? '');
+            if (softFull === null) return;
+            const softUsual = prompt("Soft usual-unit price override (blank to keep current):", existing.soft?.usual ?? '');
+            if (softUsual === null) return;
+            const hardFull = prompt("Hard full-unit price override (blank to keep current):", existing.hard?.full ?? '');
+            if (hardFull === null) return;
+            const hardUsual = prompt("Hard usual-unit price override (blank to keep current):", existing.hard?.usual ?? '');
+            if (hardUsual === null) return;
+
+            const normalizePrice = (value, fallback) => value === '' ? fallback : parseFloat(value);
+            const customPricing = {
+                soft: {
+                    full: normalizePrice(softFull, existing.soft?.full),
+                    usual: normalizePrice(softUsual, existing.soft?.usual)
+                },
+                hard: {
+                    full: normalizePrice(hardFull, existing.hard?.full),
+                    usual: normalizePrice(hardUsual, existing.hard?.usual)
+                }
+            };
+            await setDoc(doc(db,'artifacts',appId,'public','data','roster',currentDetailUid), { customPricing }, { merge: true });
+            await setDoc(doc(db,'artifacts',appId,'users',currentDetailUid,'settings','pricing'), { customPricing }, { merge: true });
+            window.showToast("Custom pricing updated.");
         };
 
         window.viewDriverDetails = (uid) => { 
