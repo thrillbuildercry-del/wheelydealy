@@ -141,7 +141,66 @@
             50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
         }
         .mobile-shell {
-            padding-bottom: var(--safe-bottom);
+            padding-bottom: calc(var(--safe-bottom) + 7rem);
+        }
+        .screen-shell {
+            padding-bottom: calc(var(--safe-bottom) + 7.5rem);
+        }
+        .settings-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 1rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+        .toggle-pill {
+            position: relative;
+            width: 3.25rem;
+            height: 1.9rem;
+            border-radius: 9999px;
+            background: rgba(71, 85, 105, 0.8);
+            transition: background 0.2s ease;
+        }
+        .toggle-pill::after {
+            content: "";
+            position: absolute;
+            top: 0.2rem;
+            left: 0.2rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            background: white;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.35);
+            transition: transform 0.2s ease;
+        }
+        .toggle-pill.is-on {
+            background: linear-gradient(135deg, rgba(111, 125, 255, 0.95), rgba(29, 211, 255, 0.85));
+        }
+        .toggle-pill.is-on::after {
+            transform: translateX(1.35rem);
+        }
+        .message-thread {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .message-bubble {
+            padding: 0.85rem 0.95rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+        .message-bubble.is-mine {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(14, 165, 233, 0.16));
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+        .message-bubble.is-note {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(251, 191, 36, 0.12));
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        .message-bubble.is-group {
+            background: rgba(15, 23, 42, 0.56);
         }
         .bottom-nav {
             position: fixed;
@@ -217,7 +276,7 @@
         }
     </style>
 </head>
-<body class="neo-grid bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen pb-6">
+<body class="neo-grid bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen screen-shell">
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="modal-overlay z-[150]">
@@ -287,6 +346,22 @@
                     <span class="font-medium dark:text-white">Change Display Name</span>
                     <i data-lucide="edit-3" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
                 </button>
+
+                <div class="settings-toggle">
+                    <div>
+                        <div class="font-medium dark:text-white">Notifications</div>
+                        <div id="settings-notification-copy" class="text-xs text-gray-500 dark:text-gray-400">Allow app alerts and message updates.</div>
+                    </div>
+                    <button id="settings-notification-toggle" onclick="window.toggleNotificationPreference()" class="toggle-pill" aria-label="Toggle notifications"></button>
+                </div>
+
+                <div class="settings-toggle">
+                    <div>
+                        <div class="font-medium dark:text-white">Push Setup</div>
+                        <div id="settings-push-copy" class="text-xs text-gray-500 dark:text-gray-400">Enable browser push on this device.</div>
+                    </div>
+                    <button onclick="window.enableNotifications()" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold btn-interactive">Enable</button>
+                </div>
                 
                 <button onclick="window.toggleTheme()" class="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl btn-interactive">
                     <span class="font-medium dark:text-white">Toggle Dark Mode</span>
@@ -739,13 +814,22 @@
                     <h3 class="font-bold text-gray-800 dark:text-white mb-2 flex items-center">
                         <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-blue-500"></i> Admin Messages
                     </h3>
-                    <p class="text-[10px] text-gray-500 mb-3">Send a direct message or leave a note for admin review.</p>
+                    <p class="text-[10px] text-gray-500 mb-3">Team room, direct messages, and notes all live here.</p>
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <button onclick="window.setStaffMessageMode('group')" id="staff-msg-mode-group" class="py-2 rounded-xl bg-blue-600 text-white text-xs font-bold btn-interactive">Group</button>
+                        <button onclick="window.setStaffMessageMode('direct')" id="staff-msg-mode-direct" class="py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-xs font-bold dark:text-white btn-interactive">Direct</button>
+                        <button onclick="window.setStaffMessageMode('note')" id="staff-msg-mode-note" class="py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-xs font-bold dark:text-white btn-interactive">Note</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Recipient</label>
+                        <select id="staff-message-target" onchange="window.renderMessageUI()" class="w-full mt-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white text-sm outline-none font-bold"></select>
+                    </div>
                     <textarea id="staff-admin-message" placeholder="Type your message or note..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-3 text-sm dark:text-white outline-none min-h-[100px] mb-3"></textarea>
                     <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button onclick="window.sendAdminMessage('message')" class="bg-blue-600 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Send Message</button>
-                        <button onclick="window.sendAdminMessage('note')" class="bg-amber-500 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Leave Note</button>
+                        <button onclick="window.sendStaffMessage()" class="bg-blue-600 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Send</button>
+                        <button onclick="window.refreshMessageTargets()" class="bg-gray-900 dark:bg-gray-600 text-white font-bold py-3 rounded-xl btn-interactive text-sm">Refresh Targets</button>
                     </div>
-                    <div id="staff-message-list" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar text-sm"></div>
+                    <div id="staff-message-list" class="message-thread max-h-64 overflow-y-auto hide-scrollbar text-sm"></div>
                 </div>
             </div>
 
@@ -1184,9 +1268,17 @@
                     <div class="mb-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl border border-gray-200 dark:border-gray-600">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Message Inbox</h4>
-                            <button onclick="window.replyToMessage()" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold btn-interactive">Reply</button>
+                            <button onclick="window.refreshMessageTargets()" class="text-xs bg-gray-800 text-white px-3 py-1.5 rounded-lg font-bold btn-interactive">Refresh</button>
                         </div>
-                        <div id="admin-message-list" class="space-y-2 max-h-56 overflow-y-auto hide-scrollbar text-sm"></div>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="window.setAdminMessageMode('group')" id="admin-msg-mode-group" class="py-2 rounded-xl bg-blue-600 text-white text-xs font-bold btn-interactive">Team Room</button>
+                            <button onclick="window.setAdminMessageMode('direct')" id="admin-msg-mode-direct" class="py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-xs font-bold dark:text-white btn-interactive">Direct</button>
+                        </div>
+                        <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2 mb-3">
+                            <select id="admin-message-target" onchange="window.renderMessageUI()" class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white text-sm outline-none font-bold"></select>
+                            <button onclick="window.replyToMessage()" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold btn-interactive">Send</button>
+                        </div>
+                        <div id="admin-message-list" class="message-thread max-h-64 overflow-y-auto hide-scrollbar text-sm"></div>
                     </div>
                     
                     <!-- Broadcast Tool -->
@@ -1455,6 +1547,12 @@
         let currentTransferProduct = 'soft';
         let currentInboxTarget = null;
         let messageFeed = [];
+        let staffMessageMode = 'group';
+        let adminMessageMode = 'group';
+        let appSettings = {
+            notificationsEnabled: true,
+            pushEnabled: false
+        };
 
         // Staff State
         let appData = { 
@@ -1613,6 +1711,37 @@
         function getActiveAdminProductState() {
             masterData.products = ensureProducts(masterData.products, defaultMasterProductConfig);
             return masterData.products[currentAdminProduct];
+        }
+
+        function getActiveRosterTargets() {
+            return globalRoster
+                .filter((user) => user.status === 'active')
+                .map((user) => ({ id: user.id, name: user.name || user.id, role: user.role || 'staff' }));
+        }
+
+        function getAllMessageParticipants(includeSelf = true) {
+            const ids = getActiveRosterTargets().map((user) => user.id);
+            if (includeSelf && currentUser?.uid && !ids.includes(currentUser.uid)) ids.push(currentUser.uid);
+            return Array.from(new Set(ids));
+        }
+
+        function getThreadLabel(msg) {
+            if (msg.category === 'group') return 'Team Room';
+            if (msg.category === 'note') return 'Admin Note';
+            const otherUid = msg.fromUid === currentUser?.uid ? msg.toUid : msg.fromUid;
+            return getRosterEntry(otherUid)?.name || (otherUid === 'admin' ? 'Admin' : otherUid);
+        }
+
+        function isNotificationEnabled() {
+            return appSettings.notificationsEnabled !== false;
+        }
+
+        async function saveAppSettings(patch = {}) {
+            appSettings = { ...appSettings, ...patch };
+            if (currentUser) {
+                await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'preferences'), appSettings, { merge: true });
+            }
+            if (typeof window.renderSettingsUI === 'function') window.renderSettingsUI();
         }
 
         function loadLocalJSON(key, fallback) {
@@ -1875,10 +2004,17 @@
         // NOTIFICATIONS API 
         // ---------------------------------------------------------
         window.checkPushSetup = () => { 
+            const banner = userRole === 'admin' ? document.getElementById('admin-push-setup-banner') : document.getElementById('push-setup-banner');
+            if (!banner) return;
+            if (!isNotificationEnabled()) {
+                banner.classList.add('hidden');
+                return;
+            }
             if ("Notification" in window && Notification.permission !== "granted") { 
-                const banner = userRole === 'admin' ? document.getElementById('admin-push-setup-banner') : document.getElementById('push-setup-banner'); 
-                if(banner) banner.classList.remove('hidden'); 
-            } 
+                banner.classList.remove('hidden'); 
+            } else {
+                banner.classList.add('hidden');
+            }
         };
         
         window.enableNotifications = async () => {
@@ -1899,11 +2035,13 @@
                                 updatedAt: Date.now() 
                             }, { merge: true });
                         }
+                        await saveAppSettings({ pushEnabled: true, notificationsEnabled: true });
                         window.showToast("Push Notifications Enabled!");
-                        document.getElementById('push-setup-banner').classList.add('hidden'); 
-                        document.getElementById('admin-push-setup-banner').classList.add('hidden');
+                        document.getElementById('push-setup-banner')?.classList.add('hidden'); 
+                        document.getElementById('admin-push-setup-banner')?.classList.add('hidden');
                     }
                 } else { 
+                    await saveAppSettings({ pushEnabled: false });
                     window.showToast("Notification permission denied."); 
                 }
             } catch (error) { 
@@ -1912,6 +2050,7 @@
         };
 
         window.fireLocalNotification = (title, body) => { 
+            if (!isNotificationEnabled()) return;
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification(title, { body: body }); 
             }
@@ -2037,11 +2176,15 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+                const prefSnap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'preferences')).catch(() => null);
+                appSettings = { ...appSettings, ...(prefSnap && prefSnap.exists() ? prefSnap.data() : {}) };
+                window.renderSettingsUI();
                 
                 // CRITICAL FIX: Ensure roster listener fires for EVERYONE to fuel global stats
                 unsubRoster = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'roster'), (snap) => {
                     globalRoster = [];
                     snap.forEach(d => { globalRoster.push({ id: d.id, ...d.data() }); });
+                    window.refreshMessageTargets();
                     if(userRole === 'admin' && typeof processAdminRosterUI === 'function') processAdminRosterUI();
                     if(userRole === 'staff' && typeof window.updateStaffGlobalStats === 'function') window.updateStaffGlobalStats(); 
                 });
@@ -2064,11 +2207,13 @@
                         document.getElementById('approval-modal').classList.add('hidden');
                         document.getElementById('staff-app').classList.add('hidden');
                         initAdminDashboard(user);
+                        window.renderSettingsUI();
                         window.checkPushSetup();
                     } else if (status === 'active') {
                         document.getElementById('approval-modal').classList.add('hidden');
                         document.getElementById('admin-app').classList.add('hidden');
                         initStaffApp(user);
+                        window.renderSettingsUI();
                         window.checkPushSetup();
                     } else {
                         document.getElementById('approval-modal').classList.remove('hidden'); 
@@ -2155,6 +2300,80 @@
             }); 
         };
 
+        window.renderSettingsUI = () => {
+            const toggle = document.getElementById('settings-notification-toggle');
+            const copy = document.getElementById('settings-notification-copy');
+            const pushCopy = document.getElementById('settings-push-copy');
+            if (toggle) toggle.classList.toggle('is-on', isNotificationEnabled());
+            if (copy) copy.innerText = isNotificationEnabled()
+                ? 'Alerts and chat notifications are enabled on this account.'
+                : 'Notifications are muted for this account.';
+            if (pushCopy) {
+                const permission = ("Notification" in window) ? Notification.permission : 'unsupported';
+                pushCopy.innerText = permission === 'granted'
+                    ? 'Browser push is enabled on this device.'
+                    : 'Enable browser push on this device.';
+            }
+        };
+
+        window.toggleNotificationPreference = async () => {
+            await saveAppSettings({ notificationsEnabled: !isNotificationEnabled() });
+            window.showToast(isNotificationEnabled() ? "Notifications enabled." : "Notifications muted.");
+        };
+
+        window.setStaffMessageMode = (mode = 'group') => {
+            staffMessageMode = mode;
+            document.getElementById('staff-msg-mode-group')?.classList.toggle('bg-blue-600', mode === 'group');
+            document.getElementById('staff-msg-mode-group')?.classList.toggle('text-white', mode === 'group');
+            document.getElementById('staff-msg-mode-direct')?.classList.toggle('bg-blue-600', mode === 'direct');
+            document.getElementById('staff-msg-mode-direct')?.classList.toggle('text-white', mode === 'direct');
+            document.getElementById('staff-msg-mode-note')?.classList.toggle('bg-blue-600', mode === 'note');
+            document.getElementById('staff-msg-mode-note')?.classList.toggle('text-white', mode === 'note');
+            const target = document.getElementById('staff-message-target');
+            if (target) target.disabled = mode === 'note' || mode === 'group';
+            window.refreshMessageTargets();
+            window.renderMessageUI();
+        };
+
+        window.setAdminMessageMode = (mode = 'group') => {
+            adminMessageMode = mode;
+            document.getElementById('admin-msg-mode-group')?.classList.toggle('bg-blue-600', mode === 'group');
+            document.getElementById('admin-msg-mode-group')?.classList.toggle('text-white', mode === 'group');
+            document.getElementById('admin-msg-mode-direct')?.classList.toggle('bg-blue-600', mode === 'direct');
+            document.getElementById('admin-msg-mode-direct')?.classList.toggle('text-white', mode === 'direct');
+            window.refreshMessageTargets();
+            window.renderMessageUI();
+        };
+
+        window.refreshMessageTargets = () => {
+            const staffSelect = document.getElementById('staff-message-target');
+            if (staffSelect) {
+                const targets = [
+                    { id: 'admin', name: 'Admin' },
+                    ...getActiveRosterTargets().filter((user) => user.id !== currentUser?.uid)
+                ];
+                staffSelect.innerHTML = targets.map((user) => `<option value="${user.id}">${user.name}${user.role === 'admin' || user.id === 'admin' ? ' (Admin)' : ''}</option>`).join('');
+                if (staffMessageMode === 'note') staffSelect.value = 'admin';
+                if (currentInboxTarget?.uid && targets.some((user) => user.id === currentInboxTarget.uid)) {
+                    staffSelect.value = currentInboxTarget.uid;
+                }
+            }
+
+            const adminSelect = document.getElementById('admin-message-target');
+            if (adminSelect) {
+                const targets = getActiveRosterTargets().filter((user) => user.id !== currentUser?.uid);
+                adminSelect.innerHTML = [
+                    `<option value="team">Team Room</option>`,
+                    ...targets.map((user) => `<option value="${user.id}">${user.name}</option>`)
+                ].join('');
+                if (adminMessageMode === 'direct' && currentInboxTarget?.uid && targets.some((user) => user.id === currentInboxTarget.uid)) {
+                    adminSelect.value = currentInboxTarget.uid;
+                } else if (adminMessageMode === 'group') {
+                    adminSelect.value = 'team';
+                }
+            }
+        };
+
         function setupMessageListener(user, role) {
             if (unsubMessages) unsubMessages();
             const baseMessagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
@@ -2165,76 +2384,127 @@
                 messageFeed = [];
                 snap.forEach((docSnap) => messageFeed.push({ id: docSnap.id, ...docSnap.data() }));
                 messageFeed.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                window.refreshMessageTargets();
                 if (typeof window.renderMessageUI === 'function') window.renderMessageUI();
             });
         }
 
         window.sendAdminMessage = async (category = 'message') => {
+            staffMessageMode = category === 'note' ? 'note' : 'direct';
+            return window.sendStaffMessage();
+        };
+
+        window.sendStaffMessage = async () => {
             if (!currentUser) return;
             const input = document.getElementById('staff-admin-message');
             const body = input.value.trim();
             if (!body) return window.showToast("Enter a message first.");
+            const targetSelect = document.getElementById('staff-message-target');
+            const targetUid = staffMessageMode === 'group' ? 'team' : (staffMessageMode === 'note' ? 'admin' : (targetSelect?.value || 'admin'));
+            const targetName = targetUid === 'team' ? 'Team Room' : (getRosterEntry(targetUid)?.name || (targetUid === 'admin' ? 'Admin' : targetUid));
+            const category = staffMessageMode === 'note' ? 'note' : (staffMessageMode === 'group' ? 'group' : 'direct');
+            const participants = category === 'group'
+                ? getAllMessageParticipants()
+                : Array.from(new Set([currentUser.uid, targetUid].filter(Boolean)));
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                 fromUid: currentUser.uid,
                 fromName: window.currentUserName || 'Staff',
-                toUid: 'admin',
-                participants: [currentUser.uid, 'admin'],
+                toUid: targetUid,
+                toName: targetName,
+                participants,
                 body,
                 category,
                 timestamp: Date.now()
             });
             input.value = '';
-            window.showToast(category === 'note' ? "Note sent to admin." : "Message sent.");
+            currentInboxTarget = category === 'direct' ? { uid: targetUid, name: targetName } : null;
+            window.showToast(category === 'note' ? "Note sent to admin." : category === 'group' ? "Sent to team room." : `Message sent to ${targetName}.`);
         };
 
         window.replyToMessage = async () => {
-            if (!currentInboxTarget) return window.showToast("Select a message first.");
-            const reply = prompt(`Reply to ${currentInboxTarget.name}:`);
+            const adminTarget = document.getElementById('admin-message-target')?.value;
+            const isGroup = adminMessageMode === 'group' || adminTarget === 'team';
+            const targetUid = isGroup ? 'team' : (adminTarget || currentInboxTarget?.uid);
+            const targetName = isGroup ? 'Team Room' : (getRosterEntry(targetUid)?.name || currentInboxTarget?.name || targetUid);
+            if (!isGroup && !targetUid) return window.showToast("Select a user first.");
+            const reply = prompt(isGroup ? "Send message to Team Room:" : `Reply to ${targetName}:`);
             if (!reply || !reply.trim()) return;
+            const participants = isGroup
+                ? getAllMessageParticipants()
+                : Array.from(new Set([currentUser.uid, targetUid].filter(Boolean)));
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
                 fromUid: currentUser.uid,
                 fromName: window.currentUserName || 'Admin',
-                toUid: currentInboxTarget.uid,
-                participants: [currentUser.uid, currentInboxTarget.uid],
+                toUid: isGroup ? 'team' : targetUid,
+                toName: targetName,
+                participants,
                 body: reply.trim(),
-                category: 'reply',
+                category: isGroup ? 'group' : 'direct',
                 timestamp: Date.now()
             });
+            if (!isGroup) currentInboxTarget = { uid: targetUid, name: targetName };
             window.showToast("Reply sent.");
         };
 
         window.renderMessageUI = () => {
             const staffList = document.getElementById('staff-message-list');
             if (staffList) {
-                const staffMessages = messageFeed.filter((msg) => msg.toUid === 'admin' || msg.fromUid === 'admin').slice(0, 12);
+                const selectedTarget = document.getElementById('staff-message-target')?.value || 'admin';
+                const staffMessages = messageFeed
+                    .filter((msg) => {
+                        if (staffMessageMode === 'group') return msg.category === 'group';
+                        if (staffMessageMode === 'note') return msg.category === 'note' && (msg.toUid === 'admin' || msg.fromUid === 'admin');
+                        return msg.category !== 'group' && msg.category !== 'note'
+                            && [msg.fromUid, msg.toUid].includes(currentUser?.uid)
+                            && [msg.fromUid, msg.toUid].includes(selectedTarget);
+                    })
+                    .slice(0, 20);
                 staffList.innerHTML = staffMessages.length ? staffMessages.map((msg) => `
-                    <div class="p-3 rounded-xl border ${msg.fromUid === 'admin' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}">
+                    <div class="message-bubble ${msg.fromUid === currentUser?.uid ? 'is-mine' : ''} ${msg.category === 'note' ? 'is-note' : ''} ${msg.category === 'group' ? 'is-group' : ''}">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-500' : 'text-gray-500'}">${msg.category}</span>
+                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-400' : 'text-cyan-300'}">${getThreadLabel(msg)}</span>
                             <span class="text-[10px] text-gray-500">${new Date(msg.timestamp || Date.now()).toLocaleString()}</span>
                         </div>
-                        <div class="text-sm font-bold ${msg.fromUid === 'admin' ? 'text-blue-300' : 'dark:text-white'}">${msg.fromName}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">${msg.body}</div>
-                    </div>`).join('') : '<div class="text-xs text-gray-400 italic">No admin messages yet.</div>';
+                        <div class="text-sm font-bold dark:text-white">${msg.fromName}</div>
+                        <div class="text-sm text-gray-300 mt-1">${msg.body}</div>
+                    </div>`).join('') : '<div class="text-xs text-gray-400 italic">No messages for this view yet.</div>';
             }
 
             const adminList = document.getElementById('admin-message-list');
             if (adminList) {
-                adminList.innerHTML = messageFeed.length ? messageFeed.slice(0, 25).map((msg) => `
-                    <button onclick="window.selectInboxTarget('${msg.fromUid === currentUser?.uid ? msg.toUid : msg.fromUid}', '${(msg.fromUid === currentUser?.uid ? (getRosterEntry(msg.toUid)?.name || msg.toUid) : msg.fromName || 'User').replace(/'/g, "\\'")}')" class="w-full text-left p-3 rounded-xl border ${msg.category === 'note' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}">
+                const selectedTarget = document.getElementById('admin-message-target')?.value || 'team';
+                const visibleMessages = messageFeed
+                    .filter((msg) => {
+                        if (adminMessageMode === 'group') return msg.category === 'group';
+                        if (!selectedTarget || selectedTarget === 'team') return msg.category !== 'group';
+                        return msg.category !== 'group' && [msg.fromUid, msg.toUid].includes(selectedTarget);
+                    })
+                    .slice(0, 30);
+                adminList.innerHTML = visibleMessages.length ? visibleMessages.map((msg) => {
+                    const otherUid = msg.fromUid === currentUser?.uid ? msg.toUid : msg.fromUid;
+                    const otherName = getRosterEntry(otherUid)?.name || msg.toName || msg.fromName || otherUid;
+                    return `
+                    <button onclick="window.selectInboxTarget('${otherUid}', '${String(otherName).replace(/'/g, "\\'")}')" class="w-full text-left message-bubble ${msg.fromUid === currentUser?.uid ? 'is-mine' : ''} ${msg.category === 'note' ? 'is-note' : ''} ${msg.category === 'group' ? 'is-group' : ''}">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-500' : 'text-blue-500'}">${msg.category}</span>
+                            <span class="text-[10px] uppercase tracking-widest font-bold ${msg.category === 'note' ? 'text-amber-400' : 'text-cyan-300'}">${getThreadLabel(msg)}</span>
                             <span class="text-[10px] text-gray-500">${new Date(msg.timestamp || Date.now()).toLocaleString()}</span>
                         </div>
-                        <div class="text-sm font-bold dark:text-white">${msg.fromName} <span class="text-[10px] text-gray-500">to ${msg.toUid === 'admin' ? 'Admin' : (getRosterEntry(msg.toUid)?.name || msg.toUid)}</span></div>
-                        <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">${msg.body}</div>
-                    </button>`).join('') : '<div class="text-xs text-gray-400 italic">No messages yet.</div>';
+                        <div class="text-sm font-bold dark:text-white">${msg.fromName}</div>
+                        <div class="text-sm text-gray-300 mt-1">${msg.body}</div>
+                    </button>`;
+                }).join('') : '<div class="text-xs text-gray-400 italic">No messages yet.</div>';
             }
             applyFuturisticSkin();
         };
 
         window.selectInboxTarget = (uid, name) => {
             currentInboxTarget = { uid, name };
+            adminMessageMode = 'direct';
+            window.setAdminMessageMode('direct');
+            const adminTarget = document.getElementById('admin-message-target');
+            if (adminTarget) adminTarget.value = uid;
+            const staffTarget = document.getElementById('staff-message-target');
+            if (staffTarget) staffTarget.value = uid;
             window.showToast(`Reply target set: ${name}`);
         };
 
@@ -2294,6 +2564,9 @@
         function initStaffApp(user) {
             document.getElementById('staff-app').classList.remove('hidden');
             window.setStaffProduct(currentStaffProduct);
+            window.setStaffMessageMode(staffMessageMode);
+            window.refreshMessageTargets();
+            window.renderSettingsUI();
             applyFuturisticSkin();
             flushOfflineSales().catch(console.error);
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
@@ -2896,6 +3169,9 @@
             document.getElementById('admin-app').classList.remove('hidden');
             window.setAdminProduct(currentAdminProduct);
             window.setTransferProduct(currentTransferProduct);
+            window.setAdminMessageMode(adminMessageMode);
+            window.refreshMessageTargets();
+            window.renderSettingsUI();
             applyFuturisticSkin();
             
             unsubUserData = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'app_state'), (snap) => { 
