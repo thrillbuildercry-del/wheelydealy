@@ -1,0 +1,13 @@
+{
+  "name": "wheelydealy",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm --workspace frontend run dev",
+    "build": "npm --workspace frontend run build",
+    "preview": "npm --workspace frontend run preview",
+    "install:deps": "./scripts-install.sh"
+  }
+}
